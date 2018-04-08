@@ -1,0 +1,7 @@
+# Ichain
+
+# Get started
+
+```
+$ make
+````
