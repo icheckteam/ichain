@@ -23,8 +23,6 @@
     "client/lcd",
     "client/rpc",
     "client/tx",
-    "examples/basecoin/app",
-    "examples/basecoin/types",
     "mock",
     "server",
     "store",
@@ -491,6 +489,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ca2bb637540d2e47a15dd7578b6ce6276b8916468f6fbbe8dfbf5e85d3d0a171"
+  inputs-digest = "1151ded384df1fa78a2fd109f6fd189711e68d55a56c2e8a3903019e1656e73b"
   solver-name = "gps-cdcl"
   solver-version = 1

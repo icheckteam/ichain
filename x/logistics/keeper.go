@@ -1,8 +1,8 @@
 package trace
 
 import (
-	"github.com/cosmos-sdk/x/bank"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // Keeper ...

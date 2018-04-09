@@ -19,7 +19,9 @@ ichainctl:
 ### Tools & dependencies
 
 get_vendor_deps:
-	dep ensure -v
+	@rm -rf vendor/
+	@dep ensure
+
 
 dep: $(GOPATH)/bin/dep
 $(GOPATH)/bin/dep:

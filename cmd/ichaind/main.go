@@ -49,19 +49,19 @@ func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error
 }
 
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
-	dbMain, err := dbm.NewGoLevelDB("basecoin", filepath.Join(rootDir, "data"))
+	dbMain, err := dbm.NewGoLevelDB("ichain", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
-	dbAcc, err := dbm.NewGoLevelDB("basecoin-acc", filepath.Join(rootDir, "data"))
+	dbAcc, err := dbm.NewGoLevelDB("ichain-acc", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
-	dbIBC, err := dbm.NewGoLevelDB("basecoin-ibc", filepath.Join(rootDir, "data"))
+	dbIBC, err := dbm.NewGoLevelDB("ichain-ibc", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
-	dbStaking, err := dbm.NewGoLevelDB("basecoin-staking", filepath.Join(rootDir, "data"))
+	dbStaking, err := dbm.NewGoLevelDB("ichain-staking", filepath.Join(rootDir, "data"))
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func main() {
 	)
 
 	// prepare and add flags
-	rootDir := os.ExpandEnv("$HOME/.basecoind")
+	rootDir := os.ExpandEnv("$HOME/.ichaind")
 	executor := cli.PrepareBaseCmd(ichaindCmd, "BC", rootDir)
 	executor.Execute()
 }
