@@ -89,3 +89,10 @@ func (msg MsgChangeRecordOwner) GetSignBytes() []byte {
 	}
 	return b
 }
+
+// Record record
+type Record struct {
+	ID    string
+	Name  string
+	Owner sdk.Address
+}
