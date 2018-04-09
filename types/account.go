@@ -1,111 +1,26 @@
 package types
 
 import (
-	"bytes"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/tendermint/go-crypto"
 )
 
-// EntityType string identifiers
-const (
-	AccountUser  = "user"
-	AccountAsset = "asset"
-)
+var _ sdk.Account = (*AppAccount)(nil)
 
-// ensure AppAccount implements the sdk.Account interface
-var (
-	_ sdk.Account = (*AppAccount)(nil)
-	_ LegalEntity = (*AppAccount)(nil)
-	_ UserAccount = (*AppAccount)(nil)
-)
-
-// UserAccount is the interface that wraps the basic
-// accessor methods to set and get user accounts attributes.
-type UserAccount interface {
-	GetAccountType() string
-	IsAdmin() bool
-	IsActive() bool
-}
-
-// AppAccount defines the properties of an AppAccount.
+// Custom extensions for this application.  This is just an example of
+// extending auth.BaseAccount with custom fields.
+//
+// This is compatible with the stock auth.AccountStore, since
+// auth.AccountStore uses the flexible go-wire library.
 type AppAccount struct {
 	auth.BaseAccount
-	BaseLegalEntity
-	Creator     sdk.Address
-	AccountType string
-	Active      bool
-	Admin       bool
+	Name string `json:"name"`
 }
 
-// NewAppAccount constructs a new account instance.
-func newAppAccount(pub crypto.PubKey, cash sdk.Coins, creator sdk.Address, typ string,
-	isActive bool, isAdmin bool, entityName, entityType string) *AppAccount {
-	baseaccount := auth.BaseAccount{
-		Address: pub.Address(),
-		PubKey:  pub,
-		Coins:   cash,
-	}
-	entity := BaseLegalEntity{
-		EntityName: entityName,
-		EntityType: entityType,
-	}
-	return &AppAccount{
-		BaseAccount:     baseaccount,
-		BaseLegalEntity: entity,
-		Creator:         creator,
-		AccountType:     typ,
-		Active:          isActive,
-		Admin:           isAdmin,
-	}
-}
-
-// NewOpUser constructs a new account instance, setting cash to nil.
-func NewOpUser(pub crypto.PubKey, creator sdk.Address, entityName, entityType string) *AppAccount {
-	return newAppAccount(pub, nil, creator, AccountUser, true, false, entityName, entityType)
-}
-
-// NewAdminUser constructs a new account instance, setting cash to nil.
-func NewAdminUser(pub crypto.PubKey, creator sdk.Address, entityName, entityType string) *AppAccount {
-	return newAppAccount(pub, nil, creator, AccountUser, true, true, entityName, entityType)
-}
-
-// NewAssetAccount constructs a new account instance.
-func NewAssetAccount(pub crypto.PubKey, cash sdk.Coins, creator sdk.Address, entityName, entityType string) *AppAccount {
-	return newAppAccount(pub, cash, creator, AccountAsset, true, false, entityName, entityType)
-}
-
-// GetAccountType returns the account type.
-func (a AppAccount) GetAccountType() string {
-	return a.AccountType
-}
-
-// IsActive returns true if the account is active; false otherwise.
-func (a AppAccount) IsActive() bool {
-	return a.Active
-}
-
-// IsAdmin returns true if the account is admin; false otherwise.
-func (a AppAccount) IsAdmin() bool {
-	return a.Admin
-}
-
-// IsUser returns true if the account holds user data; false otherwise.
-func IsUser(a UserAccount) bool {
-	return a.GetAccountType() == AccountUser
-}
-
-// IsAsset returns true if the account holds assets; false otherwise.
-func IsAsset(a UserAccount) bool {
-	return a.GetAccountType() == AccountAsset
-}
-
-// NewAccountMapper creates an account mapper given a storekey
-func NewAccountMapper(capKey sdk.StoreKey) sdk.AccountMapper {
-	return auth.NewAccountMapperSealed(capKey, &AppAccount{})
-}
+// nolint
+func (acc AppAccount) GetName() string      { return acc.Name }
+func (acc *AppAccount) SetName(name string) { acc.Name = name }
 
 // Get the AccountDecoder function for the custom AppAccount
 func GetAccountDecoder(cdc *wire.Codec) sdk.AccountDecoder {
@@ -122,15 +37,36 @@ func GetAccountDecoder(cdc *wire.Codec) sdk.AccountDecoder {
 	}
 }
 
-/* auxiliary functions */
+//___________________________________________________________________________________
 
-func accountEqual(a1, a2 *AppAccount) bool {
-	return ((a1.AccountType == a2.AccountType) &&
-		(a1.Admin == a2.Admin) &&
-		(a1.Active == a2.Active) &&
-		bytes.Equal(a1.Address, a2.Address) &&
-		(bytes.Equal(a1.GetPubKey().Bytes(), a2.GetPubKey().Bytes())) &&
-		BelongToSameEntity(a1, a2) &&
-		bytes.Equal(a1.Creator, a2.Creator) &&
-		a1.GetCoins().IsEqual(a2.GetCoins()))
+// State to Unmarshal
+type GenesisState struct {
+	Accounts []*GenesisAccount `json:"accounts"`
+}
+
+// GenesisAccount doesn't need pubkey or sequence
+type GenesisAccount struct {
+	Name    string      `json:"name"`
+	Address sdk.Address `json:"address"`
+	Coins   sdk.Coins   `json:"coins"`
+}
+
+func NewGenesisAccount(aa *AppAccount) *GenesisAccount {
+	return &GenesisAccount{
+		Name:    aa.Name,
+		Address: aa.Address,
+		Coins:   aa.Coins,
+	}
+}
+
+// convert GenesisAccount to AppAccount
+func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount, err error) {
+	baseAcc := auth.BaseAccount{
+		Address: ga.Address,
+		Coins:   ga.Coins,
+	}
+	return &AppAccount{
+		BaseAccount: baseAcc,
+		Name:        ga.Name,
+	}, nil
 }
