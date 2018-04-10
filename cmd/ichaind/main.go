@@ -53,9 +53,9 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 
 func main() {
 	server.AddCommands(rootCmd, server.DefaultGenAppState, generateApp, context)
-
 	// prepare and add flags
 	rootDir := os.ExpandEnv("$HOME/.ichaind")
-	executor := cli.PrepareBaseCmd(rootCmd, "BC", rootDir)
+	context.Config.RootDir = rootDir
+	executor := cli.PrepareBaseCmd(rootCmd, "IC", rootDir)
 	executor.Execute()
 }

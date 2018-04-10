@@ -10,11 +10,17 @@ type Keeper struct {
 	ck bank.CoinKeeper
 
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
+
+	recordIndexNumber uint
 }
 
 // NewKeeper - Returns the Keeper
 func NewKeeper(key sdk.StoreKey, bankKeeper bank.CoinKeeper) Keeper {
-	return Keeper{bankKeeper, key}
+	return Keeper{
+		storeKey:          key,
+		recordIndexNumber: 0,
+		ck:                bankKeeper,
+	}
 }
 
 func (k Keeper) createRecord(ctx sdk.Context, record Record) {

@@ -27,3 +27,4 @@ _cgo_export.*
 
 /vendor
 /.idea
+build
