@@ -1,66 +1,45 @@
 PACKAGES=$(shell go list ./... | grep -v '/vendor/')
-BUILD_FLAGS = -ldflags "-X github.com/icheckteam/ichain.Version=`git describe`"
-TARGETS = ichainctl ichaind
+COMMIT_HASH := $(shell git rev-parse --short HEAD)
+BUILD_FLAGS = -ldflags "-X github.com/icheckteam/ichain/version.GitCommit=${COMMIT_HASH}"
 
-all: dist-clean get_vendor_deps build test
+all: get_vendor_deps build test
 
 ########################################
 ### Build
 
-build: $(TARGETS)
-
-ichaind:
-	go build $(BUILD_FLAGS) ./cmd/ichaind
-ichainctl:
-	go build $(BUILD_FLAGS) ./cmd/ichainctl
+# This can be unified later, here for easy demos
+build:
+	go build $(BUILD_FLAGS) -o build/ichaind ./cmd/ichaind
+	go build $(BUILD_FLAGS) -o build/ichaincli ./cmd/ichaincli
 
 
-########################################
-### Tools & dependencies
+install: 
+	go install $(BUILD_FLAGS) ./cmd/ichaind
+	go install $(BUILD_FLAGS) ./cmd/ichaincli
+
 
 get_vendor_deps:
 	@rm -rf vendor/
-	@dep ensure
+	@echo "--> Running dep ensure"
+	@dep ensure -v
 
-
-dep: $(GOPATH)/bin/dep
-$(GOPATH)/bin/dep:
-	mkdir -p $(GOPATH)/bin
-	wget https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 -O $@ && chmod +x $@
 
 
 ########################################
 ### Testing
 
-test: coverage.txt
-coverage.txt: clean
-	touch $@
-	for p in $(PACKAGES); do \
-	  rm -f profile.out ;\
-	  go test -v -race -coverprofile=profile.out -covermode=atomic $$p;\
-	  [ ! -f profile.out ] || \
-	    ( cat profile.out >> $@ ; rm profile.out ) \
-	done
+test: test_unit # test_cli
 
+# Must  be run in each package seperately for the visualization
+# Added here for easy reference
+# coverage:
+#	 go test -coverprofile=c.out && go tool cover -html=c.out
 
-dist-clean: clean clean-vendor
-clean: clean-arch clean-noarch
+test_unit:
+	@go test $(PACKAGES)
 
-clean-arch:
-	rm -f $(TARGETS)
-
-clean-noarch:
-	rm -f profile.out coverage.txt
-
-clean-vendor:
-	@echo "--> Purge vendor/ directory"
-	rm -rf vendor/
+test_cover:
+	@bash tests/test_cover.sh
 
 benchmark:
 	@go test -bench=. $(PACKAGES)
-
-
-# To avoid unintended conflicts with file names, always add to .PHONY
-# unless there is a reason not to.
-# https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: build dep get_vendor_deps test benchmark clean clean-arch clean-noarch clean-vendor dist-clean

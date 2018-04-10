@@ -18,7 +18,8 @@
   packages = [
     "baseapp",
     "client",
-    "client/builder",
+    "client/context",
+    "client/core",
     "client/keys",
     "client/lcd",
     "client/rpc",
@@ -41,8 +42,8 @@
     "x/simplestake",
     "x/simplestake/commands"
   ]
-  revision = "797aec2e717cb177c5481a16bb4ef6fc052e379c"
-  version = "v0.13.0"
+  revision = "40ed65d1103a9490b66e236682d81dc00f641765"
+  version = "v0.14.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -148,7 +149,7 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "f40e974e75af4e271d97ce0fc917af5898ae7bda"
+  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
   branch = "master"
@@ -214,7 +215,7 @@
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
-  revision = "8732c616f52954686704c8645fe1a9d59e9df7c1"
+  revision = "d932a24a8ccb8fcadc993e5c6c58f93dac168294"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -222,8 +223,8 @@
     ".",
     "mem"
   ]
-  revision = "bb8f1927f2a9d3ab41c9340aa034f6b803f4359c"
-  version = "v1.0.2"
+  revision = "63644898a8da0bc22138abf860edaf5277b6102e"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/spf13/cast"
@@ -292,8 +293,8 @@
     "server",
     "types"
   ]
-  revision = "46686763ba8ea595ede16530ed4a40fb38f49f94"
-  version = "v0.10.2"
+  revision = "78a8905690ef54f9d57e3b2b0ee7ad3a04ef3f1f"
+  version = "v0.10.3"
 
 [[projects]]
   branch = "master"
@@ -372,8 +373,8 @@
     "version",
     "wire"
   ]
-  revision = "6f9956990c444d53f62f2a3905ed410cfe9afe77"
-  version = "v0.17.1"
+  revision = "4930b61a381b9fb9bc530eb5deb56ea6429a1c3a"
+  version = "v0.18.0"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -390,8 +391,8 @@
     "pubsub",
     "pubsub/query"
   ]
-  revision = "24da7009c3d8c019b40ba4287495749e3160caca"
-  version = "v0.7.1"
+  revision = "2e24b64fc121dcdf1cabceab8dc2f7257675483c"
+  version = "v0.8.1"
 
 [[projects]]
   branch = "master"
@@ -407,7 +408,7 @@
     "ripemd160",
     "salsa20/salsa"
   ]
-  revision = "12892e8c234f4fe6f6803f052061de9057903bb2"
+  revision = "beb2a9779c3b677077c41673505f150149fce895"
 
 [[projects]]
   branch = "master"
@@ -421,13 +422,13 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
+  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
+  revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -454,7 +455,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "ab0870e398d5dd054b868c0db1481ab029b9a9f2"
+  revision = "51d0944304c3cbce4afe9e5247e21100037bff78"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -489,6 +490,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1151ded384df1fa78a2fd109f6fd189711e68d55a56c2e8a3903019e1656e73b"
+  inputs-digest = "cdedd3c94f9e5fdcbdb3a5681245fd3d7eced42423394aa2cbc043e1ef2fbdc2"
   solver-name = "gps-cdcl"
   solver-version = 1

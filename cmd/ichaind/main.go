@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -10,43 +8,21 @@ import (
 
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/tmlibs/cli"
-	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/icheckteam/ichain/app"
 )
 
-// ichaindCmd is the entry point for this binary
+// rootCmd is the entry point for this binary
 var (
-	ichaindCmd = &cobra.Command{
+	context = server.NewDefaultContext()
+	rootCmd = &cobra.Command{
 		Use:   "ichaind",
 		Short: "Ichaind Daemon (server)",
 	}
 )
-
-// defaultOptions sets up the app_options for the
-// default genesis file
-func defaultOptions(args []string) (json.RawMessage, string, cmn.HexBytes, error) {
-	addr, secret, err := server.GenerateCoinKey()
-	if err != nil {
-		return nil, "", nil, err
-	}
-	opts := fmt.Sprintf(`{
-      "accounts": [{
-        "address": "%s",
-        "coins": [
-          {
-            "denom": "mycoin",
-            "amount": 9007199254740992
-          }
-        ]
-      }]
-    }`, addr)
-	return json.RawMessage(opts), secret, addr, nil
-}
 
 func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	dbMain, err := dbm.NewGoLevelDB("ichain", filepath.Join(rootDir, "data"))
@@ -76,21 +52,10 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 }
 
 func main() {
-	// TODO: set logger through CLI
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).
-		With("module", "main")
-
-	ichaindCmd.AddCommand(
-		server.InitCmd(defaultOptions, logger),
-		server.StartCmd(generateApp, logger),
-		server.UnsafeResetAllCmd(logger),
-		server.ShowNodeIdCmd(logger),
-		server.ShowValidatorCmd(logger),
-		version.VersionCmd,
-	)
+	server.AddCommands(rootCmd, server.DefaultGenAppState, generateApp, context)
 
 	// prepare and add flags
 	rootDir := os.ExpandEnv("$HOME/.ichaind")
-	executor := cli.PrepareBaseCmd(ichaindCmd, "BC", rootDir)
+	executor := cli.PrepareBaseCmd(rootCmd, "BC", rootDir)
 	executor.Execute()
 }
