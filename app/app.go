@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 
 	abci "github.com/tendermint/abci/types"
 	oldwire "github.com/tendermint/go-wire"
@@ -25,7 +24,7 @@ const (
 	appName = "IchainApp"
 )
 
-// IchainApp suply chain traceabality application
+// IchainApp Extended ABCI application
 type IchainApp struct {
 	*bam.BaseApp
 	cdc *wire.Codec
@@ -40,6 +39,7 @@ type IchainApp struct {
 	accountMapper sdk.AccountMapper
 }
 
+// NewIchainApp  new ichain application
 func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	// create your application object
 	var app = &IchainApp{
@@ -146,7 +146,7 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
 		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
-	fmt.Printf("%+v", genesisState)
+
 	for _, gacc := range genesisState.Accounts {
 		acc, err := gacc.ToAppAccount()
 		if err != nil {
