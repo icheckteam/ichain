@@ -1,4 +1,4 @@
-package trace
+package chain
 
 import (
 	"encoding/json"
@@ -78,6 +78,7 @@ func (msg MsgChangeRecordOwner) ValidateBasic() sdk.Error {
 	if len(msg.To) == 0 {
 		return sdk.ErrUnknownAddress(msg.To.String()).Trace("")
 	}
+
 	return nil
 }
 
