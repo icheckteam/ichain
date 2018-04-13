@@ -1,4 +1,4 @@
-package chain
+package asset
 
 import (
 	"fmt"
@@ -11,10 +11,10 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgRecordCreate:
-			return handleCreateRecord(ctx, k, msg)
-		case MsgChangeRecordOwner:
-			return handlerChangeRecordOwner(ctx, k, msg)
+		case AssetCreateMsg:
+			return handleCreateAsset(ctx, k, msg)
+		case TransferMsg:
+			return handleTrasfer(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -22,12 +22,12 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleCreateRecord(ctx sdk.Context, k Keeper, msg MsgRecordCreate) sdk.Result {
-	record := k.GetRecord(ctx, msg.RecordID)
-	if record.ID != "" {
+func handleCreateAsset(ctx sdk.Context, k Keeper, msg AssetCreateMsg) sdk.Result {
+	asset := k.GetAsset(ctx, msg.RecordID)
+	if asset.ID != "" {
 		return InvalidTransaction("Record already exists").Result()
 	}
-	k.createRecord(ctx, Record{
+	k.createAsset(ctx, Asset{
 		ID:    msg.RecordID,
 		Owner: msg.Sender,
 		Name:  msg.RecordName,
@@ -35,7 +35,7 @@ func handleCreateRecord(ctx sdk.Context, k Keeper, msg MsgRecordCreate) sdk.Resu
 	return sdk.Result{}
 }
 
-func handlerChangeRecordOwner(ctx sdk.Context, k Keeper, msg MsgChangeRecordOwner) sdk.Result {
+func handleTrasfer(ctx sdk.Context, k Keeper, msg TransferMsg) sdk.Result {
 	if err := k.Transfer(ctx, msg.Sender, msg.To, msg.RecordID); err != nil {
 		return err.Result()
 	}

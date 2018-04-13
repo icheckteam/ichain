@@ -1,4 +1,4 @@
-package chain
+package asset
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,42 +25,42 @@ func NewKeeper(key sdk.StoreKey, bankKeeper bank.CoinKeeper, cdc *wire.Codec) Ke
 	}
 }
 
-func (k Keeper) createRecord(ctx sdk.Context, record Record) {
+func (k Keeper) createAsset(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
 	// marshal the record and add to the state
-	bz, err := k.cdc.MarshalBinary(record)
+	bz, err := k.cdc.MarshalBinary(asset)
 	if err != nil {
 		panic(err)
 	}
 
-	store.Set(GetRecordKey([]byte(record.ID)), bz)
+	store.Set(GetAssetKey([]byte(asset.ID)), bz)
 }
 
-// GetRecord get record by IDS
-func (k Keeper) GetRecord(ctx sdk.Context, uid string) Record {
+// GetAsset get asset by IDS
+func (k Keeper) GetAsset(ctx sdk.Context, uid string) Asset {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetRecordKey([]byte(uid)))
-	record := Record{}
+	b := store.Get(GetAssetKey([]byte(uid)))
+	asset := Asset{}
 
 	// marshal the record and add to the state
-	if err := k.cdc.UnmarshalBinary(b, &record); err != nil {
+	if err := k.cdc.UnmarshalBinary(b, &asset); err != nil {
 		panic(err)
 	}
-	return record
+	return asset
 }
 
 // Transfer change owner
 func (k Keeper) Transfer(ctx sdk.Context, fromAddress sdk.Address, toAddress sdk.Address, uid string) sdk.Error {
-	record := k.GetRecord(ctx, uid)
-	if record.ID == "" {
-		return ErrUnknownRecord("Record not found")
+	asset := k.GetAsset(ctx, uid)
+	if asset.ID == "" {
+		return ErrUnknownRecord("Asset not found")
 	}
 
 	// check record owner
-	if record.Owner.String() != fromAddress.String() {
+	if asset.Owner.String() != fromAddress.String() {
 		return sdk.ErrUnauthorized(fromAddress.String())
 	}
-	record.Owner = toAddress
-	k.createRecord(ctx, record)
+	asset.Owner = toAddress
+	k.createAsset(ctx, asset)
 	return nil
 }
