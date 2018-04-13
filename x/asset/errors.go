@@ -9,13 +9,13 @@ import (
 // ABCI Response Codes
 // Base SDK reserves 500 - 599.
 const (
-	CodeUnknownRecord      sdk.CodeType = 500
+	CodeUnknownAsset       sdk.CodeType = 500
 	CodeInvalidTransaction sdk.CodeType = 501
 )
 
-// ErrUnknownRecord ...
-func ErrUnknownRecord(msg string) sdk.Error {
-	return newError(CodeUnknownRecord, msg)
+// ErrUnknownAsset ...
+func ErrUnknownAsset(msg string) sdk.Error {
+	return newError(CodeUnknownAsset, msg)
 }
 
 // InvalidTransaction ...
@@ -26,8 +26,8 @@ func InvalidTransaction(msg string) sdk.Error {
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.
 func CodeToDefaultMsg(code sdk.CodeType) string {
 	switch code {
-	case CodeUnknownRecord:
-		return "Unknown Record"
+	case CodeUnknownAsset:
+		return "Unknown asset"
 	default:
 		return fmt.Sprintf("Unknown code %d", code)
 	}

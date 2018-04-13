@@ -53,7 +53,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) Asset {
 func (k Keeper) Transfer(ctx sdk.Context, fromAddress sdk.Address, toAddress sdk.Address, uid string) sdk.Error {
 	asset := k.GetAsset(ctx, uid)
 	if asset.ID == "" {
-		return ErrUnknownRecord("Asset not found")
+		return ErrUnknownAsset("Asset not found")
 	}
 
 	// check record owner
