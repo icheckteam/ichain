@@ -27,6 +27,7 @@ func NewKeeper(key sdk.StoreKey, bankKeeper bank.CoinKeeper, cdc *wire.Codec) Ke
 
 func (k Keeper) createAsset(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
+
 	// marshal the record and add to the state
 	bz, err := k.cdc.MarshalBinary(asset)
 	if err != nil {
@@ -55,12 +56,5 @@ func (k Keeper) Transfer(ctx sdk.Context, fromAddress sdk.Address, toAddress sdk
 	if asset.ID == "" {
 		return ErrUnknownAsset("Asset not found")
 	}
-
-	// check record owner
-	if asset.Owner.String() != fromAddress.String() {
-		return sdk.ErrUnauthorized(fromAddress.String())
-	}
-	asset.Owner = toAddress
-	k.createAsset(ctx, asset)
 	return nil
 }

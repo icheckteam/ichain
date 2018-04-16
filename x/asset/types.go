@@ -92,8 +92,11 @@ func (msg TransferMsg) GetSignBytes() []byte {
 }
 
 // Asset record
+// NewAsset("0001", "Cu cai", "0x199...", 100, {"weight": 100})
 type Asset struct {
-	ID    string
-	Name  string
-	Owner sdk.Address
+	ID         string
+	Name       string
+	Issuer     sdk.Address
+	Quantity   uint64
+	Properties map[string]interface{}
 }
