@@ -3,7 +3,7 @@
 
 Vietnameses | [English](README.md)
 
-Chào mứng bạn đến với thư viên mã nguồn Ichain
+Chào mừng bạn đến với thư viện mã nguồn Ichain
 
 Ichain sử dụng blockchain trong truy xuất chuỗi cung ứng. Ichain giúp triển khai và chạy ứng dụng truy xuất chuỗi cung ứng trên blockchain dễ dàng hơn.
 
@@ -62,7 +62,7 @@ melody tunnel slice calm basket round retreat cry impulse tail tunnel awkward mo
 
 Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
 
-### Ví dụ Trao đổi tài sản
+### Trao đổi tài sản
 ```
 ./ichaincli transfer --name testaccount --amount 100tomato --to 283873F09FEBC7EC95BCFBD43B37CF0678B8232A
 ```
