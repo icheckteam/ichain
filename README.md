@@ -19,12 +19,12 @@ Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng d�
 - Triển khai và quản lý dòng chảy của sản phẩm.
 - Có thể mở rộng hợp đồng thông minh.
 - Trao đổi tài sản nhanh chóng.
-- Nhân dạng danh tính.
+- Nhận dạng danh tính kỹ thuật số.
 
 ## Các module
 
-1. Identity là một module giúp nhận dạng danh tính các thực thể và các đối tượng, nhận dạng sản phẩm trong chuỗi cung ứng.
-2. Asset là một module khởi tạo tài sản, trao đổi và quản lý dòng chảy của tài sản.
+1. Identity là một module quản lý và nhận dạng danh tính kỹ thuật số.
+2. Asset là một module quản lý, và trao đổi tài sản ký thuật số.
 
 #### Bắt đầu
 
