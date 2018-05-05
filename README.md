@@ -22,8 +22,9 @@ Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng d�
 - Nhân dạng danh tính.
 
 ## Các module
-1. Identity là một module nhận dạng danh tính cá nhân, tổ chức, doanh nghiệp, quyền sở hữu tài sản, nhận dạng sản phẩm trong truy xuất chuỗi cung ứng...
-2. Asset là một module khởi tạo tài sản, trao đổi và quản lý dòng chảy.
+
+1. Identity là một module giúp nhận dạng danh tính các thực thể và các đối tượng, nhận dạng sản phẩm trong chuỗi cung ứng.
+2. Asset là một module khởi tạo tài sản, trao đổi và quản lý dòng chảy của tài sản.
 
 #### Bắt đầu
 
@@ -65,6 +66,5 @@ Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
 ```
 ./ichaincli transfer --name testaccount --amount 100tomato --to 283873F09FEBC7EC95BCFBD43B37CF0678B8232A
 ```
-
 ### Đóng góp
 Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (hotro@icheck.vn)

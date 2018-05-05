@@ -27,6 +27,7 @@ func NewKeeper(key sdk.StoreKey, bankKeeper bank.CoinKeeper, cdc *wire.Codec) Ke
 
 func (k Keeper) createAsset(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
+	assetKey := GetAssetKey([]byte(asset.ID))
 
 	// marshal the record and add to the state
 	bz, err := k.cdc.MarshalBinary(asset)
@@ -34,7 +35,14 @@ func (k Keeper) createAsset(ctx sdk.Context, asset Asset) {
 		panic(err)
 	}
 
-	store.Set(GetAssetKey([]byte(asset.ID)), bz)
+	store.Set(assetKey, bz)
+}
+
+// Has asset
+func (k Keeper) Has(ctx sdk.Context, id string) bool {
+	store := ctx.KVStore(k.storeKey)
+	assetKey := GetAssetKey([]byte(id))
+	return store.Has(assetKey)
 }
 
 // GetAsset get asset by IDS

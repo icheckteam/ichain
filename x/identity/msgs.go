@@ -1,4 +1,4 @@
-package actor
+package idetify
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 // MsgType name to idetify transaction types
-const MsgType = "actor"
+const MsgType = "idetify"
 
 // MsgClaim ..
 type MsgClaim struct {

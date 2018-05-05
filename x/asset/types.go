@@ -29,7 +29,7 @@ func NewAssetCreateMsg(sender sdk.Address, recordID, recordName string) AssetCre
 // enforce the msg type at compile time
 var _ sdk.Msg = AssetCreateMsg{}
 
-// nolint
+// nolint ...
 func (msg AssetCreateMsg) Type() string                            { return msgType }
 func (msg AssetCreateMsg) Get(key interface{}) (value interface{}) { return nil }
 func (msg AssetCreateMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }

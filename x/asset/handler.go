@@ -15,7 +15,6 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleCreateAsset(ctx, k, msg)
 		case TransferMsg:
 			return handleTrasfer(ctx, k, msg)
-		// ActionAddMsg  Action{Name: string, Value: Interface, AssetID: String}
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -24,8 +23,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleCreateAsset(ctx sdk.Context, k Keeper, msg AssetCreateMsg) sdk.Result {
-	asset := k.GetAsset(ctx, msg.RecordID)
-	if asset.ID != "" {
+	if k.Has(ctx, msg.RecordID) {
 		return InvalidTransaction("Record already exists").Result()
 	}
 	k.createAsset(ctx, Asset{
