@@ -1,5 +1,5 @@
-<h1 align="center">Ichain </h1>
-<h4 align="center">Version 0.0.1 </h4>
+<h1>Ichain </h1>
+<h4>Version 0.0.1 </h4>
 
 Vietnameses | [English](README.md)
 
@@ -23,8 +23,8 @@ Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng d�
 
 ## Các module
 
-1. Identity(https://github.com/icheckteam/documentation/blob/master/Identity.md) là một module quản lý và nhận dạng danh tính kỹ thuật số.
-2. Asset(https://github.com/icheckteam/documentation/blob/master/Asset.md) là một module quản lý, và trao đổi tài sản ký thuật số.
+1. [Identity](https://github.com/icheckteam/documentation/blob/master/Identity.md) là một module quản lý và nhận dạng danh tính kỹ thuật số.
+2. [Asset](https://github.com/icheckteam/documentation/blob/master/Asset.md) là một module quản lý, và trao đổi tài sản ký thuật số.
 
 #### Bắt đầu
 
