@@ -1,4 +1,4 @@
-package idetify
+package identity
 
 import (
 	"time"
@@ -11,11 +11,11 @@ type Claim struct {
 	ID       string                 `json:"id"`
 	Context  string                 `json:"context"`
 	Content  map[string]interface{} `json:"content"`
-	Metadata Metadata               `json:"metadata"`
+	Metadata ClaimMetadata          `json:"metadata"`
 }
 
-// Metadata the claim metadata
-type Metadata struct {
+// ClaimMetadata the claim metadata
+type ClaimMetadata struct {
 	CreateTime     time.Time   `json:"create_time"`
 	Issuer         sdk.Address `json:"issuer"`
 	Recipient      sdk.Address `json:"recipient"`

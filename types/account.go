@@ -15,7 +15,9 @@ var _ sdk.Account = (*AppAccount)(nil)
 // auth.AccountStore uses the flexible go-wire library.
 type AppAccount struct {
 	auth.BaseAccount
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	Identities []*Identity
+	Assets     []*Asset
 }
 
 // nolint
