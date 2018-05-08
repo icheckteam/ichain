@@ -11,15 +11,14 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/icheckteam/ichain/client/lcd"
 
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/commands"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/commands"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/commands"
-	simplestakingcmd "github.com/cosmos/cosmos-sdk/x/simplestake/commands"
 )
 
 // rootCmd is the entry point for this binary
@@ -59,15 +58,6 @@ func main() {
 	rootCmd.AddCommand(
 		client.PostCommands(
 			ibccmd.IBCTransferCmd(cdc),
-		)...)
-	rootCmd.AddCommand(
-		client.PostCommands(
-			ibccmd.IBCRelayCmd(cdc),
-			simplestakingcmd.BondTxCmd(cdc),
-		)...)
-	rootCmd.AddCommand(
-		client.PostCommands(
-			simplestakingcmd.UnbondTxCmd(cdc),
 		)...)
 
 	// add proxy, version and key info

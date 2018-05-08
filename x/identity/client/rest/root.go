@@ -10,5 +10,5 @@ import (
 func RegisterRoutes(r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
 	r.HandleFunc("/claims", CreateClaimHandlerFn(cdc, kb)).Methods("POST")
 	r.HandleFunc("/claims/{id}/revoke", RevokeHandlerFn(cdc, kb)).Methods("POST")
-	r.HandleFunc("/claims/{id}", QueryClaimRequestHandlerFn("cb", cdc)).Methods("GET")
+	r.HandleFunc("/claims/{id}", QueryClaimRequestHandlerFn("identity", cdc)).Methods("GET")
 }
