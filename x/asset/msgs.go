@@ -3,7 +3,6 @@ package asset
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -63,7 +62,7 @@ type TransferMsg struct {
 	Sender   sdk.Address
 	To       sdk.Address
 	AssetID  string
-	Quantity big.Int
+	Quantity int64
 }
 
 // nolint
