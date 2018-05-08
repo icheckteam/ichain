@@ -94,6 +94,7 @@ func buildTransferMsg(creator sdk.Address, assetID string, body transferBody) sd
 	return asset.TransferMsg{
 		Sender:   creator,
 		AssetID:  assetID,
+		To:       body.To,
 		Quantity: body.Quantity,
 	}
 }
