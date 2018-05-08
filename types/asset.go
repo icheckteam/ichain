@@ -7,3 +7,6 @@ type Asset struct {
 	AssetID string
 	Amount  big.Int
 }
+
+// Assets ...
+type Assets []*Identity

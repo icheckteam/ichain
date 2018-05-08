@@ -15,12 +15,18 @@ var _ sdk.Account = (*AppAccount)(nil)
 // auth.AccountStore uses the flexible go-wire library.
 type AppAccount struct {
 	auth.BaseAccount
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	Identities Identities
+	Assets     Assets
 }
 
 // nolint
-func (acc AppAccount) GetName() string      { return acc.Name }
-func (acc *AppAccount) SetName(name string) { acc.Name = name }
+func (acc AppAccount) GetName() string                      { return acc.Name }
+func (acc *AppAccount) SetName(name string)                 { acc.Name = name }
+func (acc AppAccount) GetIdentities() Identities            { return acc.Identities }
+func (acc *AppAccount) SetIdentities(identities Identities) { acc.Identities = identities }
+func (acc AppAccount) GetAssets() Assets                    { return acc.Assets }
+func (acc *AppAccount) SetAssets(assets Assets)             { acc.Assets = assets }
 
 // GetAccountDecoder Get the AccountDecoder function for the custom AppAccount
 func GetAccountDecoder(cdc *wire.Codec) sdk.AccountDecoder {
