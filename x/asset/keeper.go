@@ -11,13 +11,15 @@ import (
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
+	am       sdk.AccountMapper
 }
 
 // NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc:      cdc,
+		am:       am,
 	}
 }
 
@@ -59,7 +61,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg TransferMsg) sdk.Error {
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if asset.IsOwner(msg.Sender) {
+	if !asset.IsOwner(msg.Sender) {
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 	return nil
@@ -71,7 +73,7 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) sdk.Error {
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if asset.IsOwner(msg.Sender) {
+	if !asset.IsOwner(msg.Sender) {
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 
@@ -86,7 +88,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if asset.IsOwner(msg.Sender) {
+	if !asset.IsOwner(msg.Sender) {
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 
@@ -101,11 +103,12 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.E
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if asset.IsOwner(msg.Sender) {
+	if !asset.IsOwner(msg.Sender) {
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 
 	asset.Quantity -= msg.Quantity
+
 	k.setAsset(ctx, *asset)
 	return nil
 }

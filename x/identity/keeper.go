@@ -5,10 +5,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// Keeper ....
+// Keeper ...
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
+	am       sdk.AccountMapper
+}
+
+// NewKeeper - Returns the Keeper
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
+	return Keeper{
+		storeKey: key,
+		cdc:      cdc,
+		am:       am,
+	}
 }
 
 // ClaimIssue ...

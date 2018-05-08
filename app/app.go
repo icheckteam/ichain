@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/icheckteam/ichain/x/identity"
+
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -16,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc"
 
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 const (
@@ -28,10 +31,12 @@ type IchainApp struct {
 	cdc *wire.Codec
 
 	// keys to access the substores
-	capKeyMainStore    *sdk.KVStoreKey
-	capKeyAccountStore *sdk.KVStoreKey
-	capKeyIBCStore     *sdk.KVStoreKey
-	capKeyStakingStore *sdk.KVStoreKey
+	capKeyMainStore     *sdk.KVStoreKey
+	capKeyAccountStore  *sdk.KVStoreKey
+	capKeyIBCStore      *sdk.KVStoreKey
+	capKeyStakingStore  *sdk.KVStoreKey
+	capKeyIdentityStore *sdk.KVStoreKey
+	capKeyAssetStore    *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountMapper sdk.AccountMapper
@@ -46,12 +51,14 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	var cdc = MakeCodec()
 	// create your application object
 	var app = &IchainApp{
-		BaseApp:            bam.NewBaseApp(appName, logger, dbs["main"]),
-		cdc:                cdc,
-		capKeyMainStore:    sdk.NewKVStoreKey("main"),
-		capKeyAccountStore: sdk.NewKVStoreKey("acc"),
-		capKeyIBCStore:     sdk.NewKVStoreKey("ibc"),
-		capKeyStakingStore: sdk.NewKVStoreKey("stake"),
+		BaseApp:             bam.NewBaseApp(appName, logger, dbs["main"]),
+		cdc:                 cdc,
+		capKeyMainStore:     sdk.NewKVStoreKey("main"),
+		capKeyAccountStore:  sdk.NewKVStoreKey("acc"),
+		capKeyIBCStore:      sdk.NewKVStoreKey("ibc"),
+		capKeyStakingStore:  sdk.NewKVStoreKey("stake"),
+		capKeyIdentityStore: sdk.NewKVStoreKey("identity"),
+		capKeyAssetStore:    sdk.NewKVStoreKey("asset"),
 	}
 
 	// define the accountMapper
@@ -63,10 +70,14 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 
 	// add handlers
 	coinKeeper := bank.NewCoinKeeper(app.accountMapper)
+	assetKeeper := asset.NewKeeper(app.capKeyAssetStore, cdc, app.accountMapper)
+	identityKeeper := identity.NewKeeper(app.capKeyIdentityStore, cdc, app.accountMapper)
 	ibcMapper := ibc.NewIBCMapper(cdc, app.capKeyIBCStore)
 	app.Router().
 		AddRoute("bank", bank.NewHandler(coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(ibcMapper, coinKeeper))
+		AddRoute("ibc", ibc.NewHandler(ibcMapper, coinKeeper)).
+		AddRoute("asset", asset.NewHandler(assetKeeper)).
+		AddRoute("identity", identity.NewHandler(identityKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler
@@ -78,6 +89,9 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	app.MountStoreWithDB(app.capKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
 	app.MountStoreWithDB(app.capKeyIBCStore, sdk.StoreTypeIAVL, dbs["ibc"])
 	app.MountStoreWithDB(app.capKeyStakingStore, sdk.StoreTypeIAVL, dbs["staking"])
+	app.MountStoreWithDB(app.capKeyIdentityStore, sdk.StoreTypeIAVL, dbs["identity"])
+	app.MountStoreWithDB(app.capKeyAssetStore, sdk.StoreTypeIAVL, dbs["asset"])
+
 	// NOTE: Broken until #532 lands
 	//app.MountStoresIAVL(app.capKeyMainStore, app.capKeyIBCStore, app.capKeyStakingStore)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeHandler))

@@ -211,3 +211,75 @@ func (msg SubtractQuantityMsg) GetSignBytes() []byte {
 	}
 	return b
 }
+
+//----------------------------------------
+// Input
+
+// Transaction Output
+type Input struct {
+	Address sdk.Address `json:"address"`
+	Assets  sdk.Coins   `json:"assets"`
+}
+
+// ValidateBasic - validate transaction input
+func (in Input) ValidateBasic() sdk.Error {
+	if len(in.Address) == 0 {
+		return sdk.ErrInvalidAddress(in.Address.String())
+	}
+	if !in.Assets.IsValid() {
+		return sdk.ErrInvalidCoins(in.Assets.String())
+	}
+	if !in.Assets.IsPositive() {
+		return sdk.ErrInvalidCoins(in.Assets.String())
+	}
+	return nil
+}
+
+func (in Input) String() string {
+	return fmt.Sprintf("Input{%v,%v}", in.Address, in.Assets)
+}
+
+// NewInput - create a transaction input, used with SendMsg
+func NewInput(addr sdk.Address, assets sdk.Coins) Input {
+	input := Input{
+		Address: addr,
+		Assets:  assets,
+	}
+	return input
+}
+
+//----------------------------------------
+// Output
+
+// Transaction Output
+type Output struct {
+	Address sdk.Address `json:"address"`
+	Assets  sdk.Coins   `json:"assets"`
+}
+
+// ValidateBasic - validate transaction output
+func (out Output) ValidateBasic() sdk.Error {
+	if len(out.Address) == 0 {
+		return sdk.ErrInvalidAddress(out.Address.String())
+	}
+	if !out.Assets.IsValid() {
+		return sdk.ErrInvalidCoins(out.Assets.String())
+	}
+	if !out.Assets.IsPositive() {
+		return sdk.ErrInvalidCoins(out.Assets.String())
+	}
+	return nil
+}
+
+func (out Output) String() string {
+	return fmt.Sprintf("Output{%v,%v}", out.Address, out.Assets)
+}
+
+// NewOutput - create a transaction output, used with SendMsg
+func NewOutput(addr sdk.Address, assets sdk.Coins) Output {
+	output := Output{
+		Address: addr,
+		Assets:  assets,
+	}
+	return output
+}

@@ -43,11 +43,21 @@ func generateApp(rootDir string, logger log.Logger) (abci.Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	dbAsset, err := dbm.NewGoLevelDB("ichain-asset", dataDir)
+	if err != nil {
+		return nil, err
+	}
+	dbIdentity, err := dbm.NewGoLevelDB("ichain-identity", dataDir)
+	if err != nil {
+		return nil, err
+	}
 	dbs := map[string]dbm.DB{
-		"main":    dbMain,
-		"acc":     dbAcc,
-		"ibc":     dbIBC,
-		"staking": dbStaking,
+		"main":     dbMain,
+		"acc":      dbAcc,
+		"ibc":      dbIBC,
+		"staking":  dbStaking,
+		"asset":    dbAsset,
+		"identity": dbIdentity,
 	}
 	bapp := app.NewIchainApp(logger, dbs)
 	return bapp, nil
