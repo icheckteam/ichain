@@ -94,7 +94,7 @@ func newBasecoinApp() *IchainApp {
 func setGenesisAccounts(bapp *IchainApp, accs ...auth.BaseAccount) error {
 	genaccs := make([]*types.GenesisAccount, len(accs))
 	for i, acc := range accs {
-		genaccs[i] = types.NewGenesisAccount(&types.AppAccount{acc, accName})
+		genaccs[i] = types.NewGenesisAccount(&types.AppAccount{BaseAccount: acc, Name: accName})
 	}
 
 	genesisState := types.GenesisState{
@@ -144,7 +144,7 @@ func TestGenesis(t *testing.T) {
 		Address: addr,
 		Coins:   coins,
 	}
-	acc := &types.AppAccount{baseAcc, "foobart"}
+	acc := &types.AppAccount{BaseAccount: baseAcc, Name: "foobart"}
 
 	err = setGenesisAccounts(bapp, baseAcc)
 	assert.Nil(t, err)
@@ -297,12 +297,10 @@ func TestQuizMsg(t *testing.T) {
 
 	// Construct genesis state
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
-	coins := sdk.Coins{}
 	baseAcc := auth.BaseAccount{
 		Address: addr1,
-		Coins:   coins,
 	}
-	acc1 := &types.AppAccount{baseAcc, "foobart"}
+	acc1 := &types.AppAccount{BaseAccount: baseAcc, Name: "foobart"}
 
 	// Construct genesis state
 	genesisState := map[string]interface{}{
@@ -335,7 +333,7 @@ func TestIBCMsgs(t *testing.T) {
 		Address: addr1,
 		Coins:   coins,
 	}
-	acc1 := &types.AppAccount{baseAcc, "foobart"}
+	acc1 := &types.AppAccount{BaseAccount: baseAcc, Name: "foobart"}
 
 	err := setGenesisAccounts(bapp, baseAcc)
 	assert.Nil(t, err)

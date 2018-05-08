@@ -1,8 +1,8 @@
 package identity
 
 import (
-	"github.com/cosmos-sdk/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // Keeper ....

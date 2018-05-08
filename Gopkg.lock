@@ -42,8 +42,8 @@
     "x/simplestake",
     "x/simplestake/commands"
   ]
-  revision = "40ed65d1103a9490b66e236682d81dc00f641765"
-  version = "v0.14.1"
+  revision = "0fb189777c2d573a8504582343fb7d39c2cd26e3"
+  version = "v0.15.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -307,6 +307,12 @@
   revision = "d8387025d2b9d158cf4efb07e7ebf814bcce2057"
 
 [[projects]]
+  name = "github.com/tendermint/go-amino"
+  packages = ["."]
+  revision = "ed62928576cfcaf887209dc96142cd79cdfff389"
+  version = "0.9.9"
+
+[[projects]]
   name = "github.com/tendermint/go-crypto"
   packages = [
     ".",
@@ -315,17 +321,13 @@
     "keys/words",
     "keys/words/wordlist"
   ]
-  revision = "c3e19f3ea26f5c3357e0bcbb799b0761ef923755"
-  version = "v0.5.0"
+  revision = "915416979bf70efa4bcbf1c6cd5d64c5fff9fc19"
+  version = "v0.6.2"
 
 [[projects]]
   name = "github.com/tendermint/go-wire"
-  packages = [
-    ".",
-    "data"
-  ]
+  packages = ["."]
   revision = "fa721242b042ecd4c6ed1a934ee740db4f74e45c"
-  source = "github.com/tendermint/go-amino"
   version = "v0.7.3"
 
 [[projects]]
@@ -353,7 +355,6 @@
     "p2p",
     "p2p/conn",
     "p2p/pex",
-    "p2p/trust",
     "p2p/upnp",
     "proxy",
     "rpc/client",
@@ -370,11 +371,10 @@
     "state/txindex/null",
     "types",
     "types/priv_validator",
-    "version",
-    "wire"
+    "version"
   ]
-  revision = "4930b61a381b9fb9bc530eb5deb56ea6429a1c3a"
-  version = "v0.18.0"
+  revision = "64408a40419a5fa6f156dd96a2ab2fffa3c8ab96"
+  version = "v0.19.2"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -391,8 +391,8 @@
     "pubsub",
     "pubsub/query"
   ]
-  revision = "2e24b64fc121dcdf1cabceab8dc2f7257675483c"
-  version = "v0.8.1"
+  revision = "d94e312673e16a11ea55d742cefb3e331228f898"
+  version = "v0.8.2"
 
 [[projects]]
   branch = "master"
@@ -490,6 +490,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2ef3173d1aaa1cf4633c8651be65cbc1c8152f84979787273f572d4b7b5cf32"
+  inputs-digest = "e0e4526d82f02b2d302678406e5e74d91e94fa713f172d8f7ae90337ac9c6bb4"
   solver-name = "gps-cdcl"
   solver-version = 1

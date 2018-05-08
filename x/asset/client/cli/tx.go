@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/spf13/cobra"
 )
 
