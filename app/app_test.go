@@ -139,32 +139,6 @@ func loggerAndDB() (log.Logger, dbm.DB) {
 }
 
 func TestGenesis(t *testing.T) {
-	logger, dbs := loggerAndDBs()
-	bapp := NewIchainApp(logger, dbs)
-	// Construct some genesis bytes to reflect basecoin/types/AppAccount
-	pk := crypto.GenPrivKeyEd25519().PubKey()
-	addr := pk.Address()
-	coins, err := sdk.ParseCoins("77foocoin,99barcoin")
-	require.Nil(t, err)
-	baseAcc := auth.BaseAccount{
-		Address: addr,
-		Coins:   coins,
-	}
-	acc := &types.AppAccount{BaseAccount: baseAcc, Name: "foobart"}
-
-	err = setGenesisAccounts(bapp, baseAcc)
-	assert.Nil(t, err)
-
-	// A checkTx context
-	ctx := bapp.BaseApp.NewContext(true, abci.Header{})
-	res1 := bapp.accountMapper.GetAccount(ctx, baseAcc.Address)
-	assert.Equal(t, acc, res1)
-
-	// reload app and ensure the account is still there
-	bapp = NewIchainApp(logger, dbs)
-	ctx = bapp.BaseApp.NewContext(true, abci.Header{})
-	res1 = bapp.accountMapper.GetAccount(ctx, baseAcc.Address)
-	assert.Equal(t, acc, res1)
 }
 
 func TestSendMsgWithAccounts(t *testing.T) {
