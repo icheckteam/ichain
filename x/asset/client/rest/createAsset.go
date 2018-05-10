@@ -16,10 +16,16 @@ import (
 type createAssetBody struct {
 	LocalAccountName string `json:"account_name"`
 	Password         string `json:"password"`
-	AssetID          string `json:"asset_id"`
-	AssetName        string `json:"asset_name"`
-	Quantity         int64  `json:"quantity"`
-	Sequence         int64  `json:"sequence"`
+	Asset            assetBody
+	Sequence         int64
+}
+
+type assetBody struct {
+	ID       string
+	Name     string
+	Company  string
+	Email    string
+	Quantity int64
 }
 
 // Create asset REST handler
@@ -48,13 +54,13 @@ func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 			return
 		}
 
-		if m.AssetName == "" {
+		if m.Asset.Name == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset_name is required"))
 			return
 		}
 
-		if m.Quantity == 0 {
+		if m.Asset.Quantity == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("quantity is required"))
 			return
@@ -104,10 +110,12 @@ func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 }
 
 func buildCreateAssetMsg(creator sdk.Address, body createAssetBody) sdk.Msg {
-	return asset.AssetCreateMsg{
-		Sender:    creator,
-		AssetID:   body.AssetID,
-		AssetName: body.AssetName,
-		Quantity:  body.Quantity,
-	}
+	return asset.NewAssetCreateMsg(
+		creator,
+		body.Asset.ID,
+		body.Asset.Name,
+		body.Asset.Quantity,
+		body.Asset.Company,
+		body.Asset.Email,
+	)
 }

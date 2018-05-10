@@ -16,15 +16,21 @@ type AssetCreateMsg struct {
 	AssetID   string
 	AssetName string
 	Quantity  int64
+
+	// Company info
+	Company string
+	Email   string
 }
 
 // NewAssetCreateMsg new record create msg
-func NewAssetCreateMsg(sender sdk.Address, assetID, assetName string, quantity int64) AssetCreateMsg {
+func NewAssetCreateMsg(sender sdk.Address, assetID, assetName string, quantity int64, company, email string) AssetCreateMsg {
 	return AssetCreateMsg{
 		Sender:    sender,
 		AssetID:   assetID,
 		Quantity:  quantity,
 		AssetName: assetID,
+		Company:   company,
+		Email:     email,
 	}
 }
 
@@ -59,29 +65,55 @@ func (msg AssetCreateMsg) GetSignBytes() []byte {
 // TransferMsg A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
 type TransferMsg struct {
-	Sender   sdk.Address
-	To       sdk.Address
-	AssetID  string
-	Quantity int64
+	Inputs  []Input
+	Outputs []Output
+}
+
+// NewTrasferMsg - construct arbitrary multi-in, multi-out send msg.
+func NewTrasferMsg(in []Input, out []Output) TransferMsg {
+	return TransferMsg{Inputs: in, Outputs: out}
 }
 
 // nolint
 func (msg TransferMsg) Type() string                            { return msgType }
 func (msg TransferMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg TransferMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg TransferMsg) GetSigners() []sdk.Address {
+	addrs := make([]sdk.Address, len(msg.Inputs))
+	for i, in := range msg.Inputs {
+		addrs[i] = in.Address
+	}
+	return addrs
+}
 func (msg TransferMsg) String() string {
-	return fmt.Sprintf("TransferMsg{Sender: %v, To: %s, AssetID: %s, Quantity: %d}", msg.Sender, msg.To, msg.AssetID, msg.Quantity)
+	return fmt.Sprintf("TransferMsg{%v->%v}", msg.Inputs, msg.Outputs)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg TransferMsg) ValidateBasic() sdk.Error {
-	if len(msg.Sender) == 0 {
-		return sdk.ErrUnknownAddress(msg.Sender.String()).Trace("")
+	if len(msg.Inputs) == 0 {
+		return ErrNoInputs().Trace("")
 	}
-	if len(msg.To) == 0 {
-		return sdk.ErrUnknownAddress(msg.To.String()).Trace("")
+	if len(msg.Outputs) == 0 {
+		return ErrNoOutputs().Trace("")
+	}
+	var totalIn, totalOut sdk.Coins
+	for _, in := range msg.Inputs {
+		if err := in.ValidateBasic(); err != nil {
+			return err.Trace("")
+		}
+		totalIn = totalIn.Plus(in.Assets)
 	}
 
+	for _, out := range msg.Outputs {
+		if err := out.ValidateBasic(); err != nil {
+			return err
+		}
+		totalOut = totalOut.Plus(out.Assets)
+	}
+
+	if !totalIn.IsEqual(totalOut) {
+		return ErrInvalidAssets(totalIn.String()).Trace("inputs and outputs don't match")
+	}
 	return nil
 }
 

@@ -5,22 +5,39 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // Keeper ...
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
-	am       sdk.AccountMapper
+	bank     bank.CoinKeeper
 }
 
 // NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.CoinKeeper) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc:      cdc,
-		am:       am,
+		bank:     bank,
 	}
+}
+
+// Register register new asset
+func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) sdk.Error {
+	if k.Has(ctx, asset.ID) {
+		return InvalidTransaction("Asset already exists")
+	}
+	// update asset info
+	k.setAsset(ctx, asset)
+
+	// add coin ...
+	_, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
+	})
+
+	return err
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
@@ -56,17 +73,6 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
 	return asset
 }
 
-func (k Keeper) Transfer(ctx sdk.Context, msg TransferMsg) sdk.Error {
-	asset := k.GetAsset(ctx, msg.AssetID)
-	if asset == nil {
-		return ErrUnknownAsset("Asset not found")
-	}
-	if !asset.IsOwner(msg.Sender) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
-	}
-	return nil
-}
-
 // UpdateAttribute ...
 func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) sdk.Error {
 	asset := k.GetAsset(ctx, msg.AssetID)
@@ -94,7 +100,11 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
 
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
-	return nil
+	// add coin ...
+	_, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
+	})
+	return err
 }
 
 // SubtractQuantity ...
@@ -110,5 +120,9 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.E
 	asset.Quantity -= msg.Quantity
 
 	k.setAsset(ctx, *asset)
-	return nil
+	// add coin ...
+	_, err := k.bank.SubtractCoins(ctx, asset.Issuer, sdk.Coins{
+		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
+	})
+	return err
 }

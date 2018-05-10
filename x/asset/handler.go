@@ -12,9 +12,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case AssetCreateMsg:
-			return handleCreateAsset(ctx, k, msg)
-		case TransferMsg:
-			return handleTrasfer(ctx, k, msg)
+			return handleRegisterAsset(ctx, k, msg)
 		case SubtractQuantityMsg:
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
@@ -28,20 +26,14 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleCreateAsset(ctx sdk.Context, k Keeper, msg AssetCreateMsg) sdk.Result {
-	if k.Has(ctx, msg.AssetID) {
-		return InvalidTransaction("Asset already exists").Result()
+func handleRegisterAsset(ctx sdk.Context, k Keeper, msg AssetCreateMsg) sdk.Result {
+	asset := Asset{
+		ID:       msg.AssetID,
+		Name:     msg.AssetName,
+		Issuer:   msg.Sender,
+		Quantity: msg.Quantity,
 	}
-	k.setAsset(ctx, Asset{
-		ID:     msg.AssetID,
-		Issuer: msg.Sender,
-		Name:   msg.AssetName,
-	})
-	return sdk.Result{}
-}
-
-func handleTrasfer(ctx sdk.Context, k Keeper, msg TransferMsg) sdk.Result {
-	if err := k.Transfer(ctx, msg); err != nil {
+	if err := k.RegisterAsset(ctx, asset); err != nil {
 		return err.Result()
 	}
 	return sdk.Result{}
