@@ -35,7 +35,7 @@ var (
 	priv4     = crypto.GenPrivKeyEd25519()
 	addr4     = priv4.PubKey().Address()
 	coins     = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 10}}
-	halfCoins = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 10}}
+	halfCoins = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 5}}
 	fee       = sdk.StdFee{
 		Amount: sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 0}},
 		Gas:    0,
@@ -86,7 +86,7 @@ func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	return logger, dbs
 }
 
-func newBasecoinApp() *IchainApp {
+func newIchainApp() *IchainApp {
 	logger, dbs := loggerAndDBs()
 	return NewIchainApp(logger, dbs)
 }
@@ -117,7 +117,7 @@ func setGenesisAccounts(bapp *IchainApp, accs ...auth.BaseAccount) error {
 //_______________________________________________________________________
 
 func TestMsgs(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	msgs := []struct {
 		msg sdk.Msg
@@ -162,7 +162,7 @@ func TestGenesis(t *testing.T) {
 }
 
 func TestSendMsgWithAccounts(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
 	// Give 77 foocoin to the first key
@@ -203,7 +203,7 @@ func TestSendMsgWithAccounts(t *testing.T) {
 }
 
 func TestSendMsgMultipleOut(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	genCoins, err := sdk.ParseCoins("42foocoin")
 	require.Nil(t, err)
@@ -231,7 +231,7 @@ func TestSendMsgMultipleOut(t *testing.T) {
 }
 
 func TestSengMsgMultipleInOut(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	genCoins, err := sdk.ParseCoins("42foocoin")
 	require.Nil(t, err)
@@ -265,7 +265,7 @@ func TestSengMsgMultipleInOut(t *testing.T) {
 }
 
 func TestSendMsgDependent(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	genCoins, err := sdk.ParseCoins("42foocoin")
 	require.Nil(t, err)
@@ -293,7 +293,7 @@ func TestSendMsgDependent(t *testing.T) {
 }
 
 func TestQuizMsg(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	// Construct genesis state
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
@@ -324,7 +324,7 @@ func TestQuizMsg(t *testing.T) {
 }
 
 func TestIBCMsgs(t *testing.T) {
-	bapp := newBasecoinApp()
+	bapp := newIchainApp()
 
 	sourceChain := "source-chain"
 	destChain := "dest-chain"
