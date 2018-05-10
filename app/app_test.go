@@ -78,10 +78,11 @@ var (
 func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
 	dbs := map[string]dbm.DB{
-		"main":    dbm.NewMemDB(),
-		"acc":     dbm.NewMemDB(),
-		"ibc":     dbm.NewMemDB(),
-		"staking": dbm.NewMemDB(),
+		"main":     dbm.NewMemDB(),
+		"acc":      dbm.NewMemDB(),
+		"ibc":      dbm.NewMemDB(),
+		"identity": dbm.NewMemDB(),
+		"asset":    dbm.NewMemDB(),
 	}
 	return logger, dbs
 }
@@ -131,10 +132,15 @@ func TestMsgs(t *testing.T) {
 	}
 }
 
+func loggerAndDB() (log.Logger, dbm.DB) {
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
+	db := dbm.NewMemDB()
+	return logger, db
+}
+
 func TestGenesis(t *testing.T) {
 	logger, dbs := loggerAndDBs()
 	bapp := NewIchainApp(logger, dbs)
-
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
 	pk := crypto.GenPrivKeyEd25519().PubKey()
 	addr := pk.Address()
