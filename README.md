@@ -1,13 +1,12 @@
 <h1>Ichain </h1>
 <h4>Version 0.0.1 </h4>
-
+Vietnameses | [English](README.md)
 
 Branch    | Tests | Coverage
 ----------|-------|---------
 develop   | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/develop.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/develop) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/develop/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 master    | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/master) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/master/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 
-Vietnameses | [English](README.md)
 
 Chào mừng bạn đến với thư viện mã nguồn Ichain
 
