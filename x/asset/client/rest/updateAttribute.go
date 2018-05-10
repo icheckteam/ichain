@@ -98,9 +98,9 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 
 func buildUpdateAttributeMsg(creator sdk.Address, assetID string, body updateAttributeBody) sdk.Msg {
 	return asset.UpdateAttrMsg{
-		Sender:         creator,
-		AssetID:        assetID,
-		AttributeName:  body.AttributeName,
-		AttributeValue: body.AttributeValue,
+		Issuer: creator,
+		ID:     assetID,
+		Name:   body.AttributeName,
+		Value:  body.AttributeValue,
 	}
 }

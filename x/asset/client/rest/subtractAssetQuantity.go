@@ -90,8 +90,8 @@ func SubtractQuantityBodyHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.R
 
 func buildsubtractAssetQuantityMsg(creator sdk.Address, assetID string, body addAssetQuantityBody) sdk.Msg {
 	return asset.SubtractQuantityMsg{
-		Sender:   creator,
-		AssetID:  assetID,
+		Issuer:   creator,
+		ID:       assetID,
 		Quantity: body.Quantity,
 	}
 }

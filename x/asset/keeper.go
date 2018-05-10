@@ -75,27 +75,27 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
 
 // UpdateAttribute ...
 func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) sdk.Error {
-	asset := k.GetAsset(ctx, msg.AssetID)
+	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if !asset.IsOwner(msg.Sender) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
+	if !asset.IsOwner(msg.Issuer) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
-	asset.Attributes[msg.AttributeName] = msg.AttributeValue
+	asset.Attributes[msg.Name] = msg.Value
 	k.setAsset(ctx, *asset)
 	return nil
 }
 
 // AddQuantity ...
 func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
-	asset := k.GetAsset(ctx, msg.AssetID)
+	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if !asset.IsOwner(msg.Sender) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
+	if !asset.IsOwner(msg.Issuer) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
 	asset.Quantity += msg.Quantity
@@ -109,12 +109,12 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
 
 // SubtractQuantity ...
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.Error {
-	asset := k.GetAsset(ctx, msg.AssetID)
+	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return ErrUnknownAsset("Asset not found")
 	}
-	if !asset.IsOwner(msg.Sender) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
+	if !asset.IsOwner(msg.Issuer) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
 	// add coin ...
@@ -129,3 +129,6 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.E
 	k.setAsset(ctx, *asset)
 	return err
 }
+
+// ------------------------------------------
+// AddQuantity Tests

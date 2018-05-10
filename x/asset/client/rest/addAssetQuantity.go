@@ -91,8 +91,8 @@ func AddAssetQuantityHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respo
 
 func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, body addAssetQuantityBody) sdk.Msg {
 	return asset.AddQuantityMsg{
-		Sender:   creator,
-		AssetID:  assetID,
+		Issuer:   creator,
+		ID:       assetID,
 		Quantity: body.Quantity,
 	}
 }

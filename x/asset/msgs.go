@@ -78,32 +78,32 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 // UpdateAttrMsg ...
 // ---------------------------------------------------------------
 type UpdateAttrMsg struct {
-	Sender         sdk.Address
-	AssetID        string
-	AttributeName  string
-	AttributeValue interface{}
+	Issuer sdk.Address `json:"issuer"`
+	ID     string      `json:"id"`
+	Name   string      `json:"name"`
+	Value  interface{} `json:"value"`
 }
 
 func (msg UpdateAttrMsg) Type() string                            { return msgType }
 func (msg UpdateAttrMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg UpdateAttrMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg UpdateAttrMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg UpdateAttrMsg) String() string {
-	return fmt.Sprintf("UpdateAttrMsg{Sender: %v}", msg.Sender)
+	return fmt.Sprintf("UpdateAttrMsg{%s: %s -> %v }", msg.ID, msg.Name, msg.Value)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
-	if len(msg.Sender) == 0 {
-		return sdk.ErrUnknownAddress(msg.Sender.String()).Trace("")
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.AssetID) == 0 {
-		return sdk.ErrUnknownAddress(msg.AssetID).Trace("")
+	if len(msg.ID) == 0 {
+		return ErrMissingField("id")
 	}
-	if len(msg.AttributeName) == 0 {
-		return sdk.ErrInternal("Attribute name is required").Trace("")
+	if len(msg.Name) == 0 {
+		return ErrMissingField("name")
 	}
-	if msg.AttributeValue == 0 {
-		return sdk.ErrInternal("Attribute value is required").Trace("")
+	if msg.Value == 0 {
+		return ErrMissingField("value")
 	}
 	return nil
 }
@@ -120,28 +120,28 @@ func (msg UpdateAttrMsg) GetSignBytes() []byte {
 // AddQuantityMsg ...
 // ---------------------------------------------------------------
 type AddQuantityMsg struct {
-	Sender   sdk.Address
-	AssetID  string
-	Quantity int64
+	Issuer   sdk.Address `json:"issuer"`
+	ID       string      `json:"id"`
+	Quantity int64       `json:"quantity"`
 }
 
 func (msg AddQuantityMsg) Type() string                            { return msgType }
 func (msg AddQuantityMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg AddQuantityMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg AddQuantityMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg AddQuantityMsg) String() string {
-	return fmt.Sprintf("AddQuantityMsg{Sender: %v, quantity: %v}", msg.Sender, msg.Quantity)
+	return fmt.Sprintf("AddQuantityMsg{Sender: %v, quantity: %v}", msg.Issuer, msg.Quantity)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg AddQuantityMsg) ValidateBasic() sdk.Error {
-	if len(msg.Sender) == 0 {
-		return sdk.ErrUnknownAddress(msg.Sender.String()).Trace("")
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.AssetID) == 0 {
-		return sdk.ErrUnknownAddress(msg.AssetID).Trace("")
+	if len(msg.ID) == 0 {
+		return ErrMissingField("id")
 	}
 	if msg.Quantity <= 0 {
-		return sdk.ErrInternal("Quantity is required").Trace("")
+		return ErrMissingField("quantity")
 	}
 	return nil
 }
@@ -158,28 +158,28 @@ func (msg AddQuantityMsg) GetSignBytes() []byte {
 // AddQuantityMsg ...
 // ---------------------------------------------------------------
 type SubtractQuantityMsg struct {
-	Sender   sdk.Address
-	AssetID  string
-	Quantity int64
+	Issuer   sdk.Address `json:"issuer"`
+	ID       string      `json:"id"`
+	Quantity int64       `json:"quantity"`
 }
 
 func (msg SubtractQuantityMsg) Type() string                            { return msgType }
 func (msg SubtractQuantityMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg SubtractQuantityMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg SubtractQuantityMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg SubtractQuantityMsg) String() string {
-	return fmt.Sprintf("SubtractQuantityMsg{Sender: %v, quantity: %v}", msg.Sender, msg.Quantity)
+	return fmt.Sprintf("SubtractQuantityMsg{Issuer: %v, quantity: %v}", msg.Issuer, msg.Quantity)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg SubtractQuantityMsg) ValidateBasic() sdk.Error {
-	if len(msg.Sender) == 0 {
-		return sdk.ErrUnknownAddress(msg.Sender.String()).Trace("")
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.AssetID) == 0 {
-		return sdk.ErrUnknownAddress(msg.AssetID).Trace("")
+	if len(msg.ID) == 0 {
+		return ErrMissingField("id")
 	}
 	if msg.Quantity <= 0 {
-		return sdk.ErrInternal("Quantity is required").Trace("")
+		return ErrMissingField("quantity")
 	}
 	return nil
 }
