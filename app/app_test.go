@@ -34,11 +34,11 @@ var (
 	addr3     = crypto.GenPrivKeyEd25519().PubKey().Address()
 	priv4     = crypto.GenPrivKeyEd25519()
 	addr4     = priv4.PubKey().Address()
-	coins     = sdk.Coins{{"foocoin", 10}}
-	halfCoins = sdk.Coins{{"foocoin", 5}}
+	coins     = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 10}}
+	halfCoins = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 10}}
 	fee       = sdk.StdFee{
-		sdk.Coins{{"foocoin", 0}},
-		0,
+		Amount: sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 0}},
+		Gas:    0,
 	}
 
 	sendMsg1 = bank.SendMsg{
@@ -108,7 +108,7 @@ func setGenesisAccounts(bapp *IchainApp, accs ...auth.BaseAccount) error {
 
 	// Initialize the chain
 	vals := []abci.Validator{}
-	bapp.InitChain(abci.RequestInitChain{vals, stateBytes})
+	bapp.InitChain(abci.RequestInitChain{Validators: vals, AppStateBytes: stateBytes})
 	bapp.Commit()
 
 	return nil
@@ -313,7 +313,7 @@ func TestQuizMsg(t *testing.T) {
 
 	// Initialize the chain (nil)
 	vals := []abci.Validator{}
-	bapp.InitChain(abci.RequestInitChain{vals, stateBytes})
+	bapp.InitChain(abci.RequestInitChain{Validators: vals, AppStateBytes: stateBytes})
 	bapp.Commit()
 
 	// A checkTx context (true)
