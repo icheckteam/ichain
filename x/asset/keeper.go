@@ -117,12 +117,15 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.E
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 
-	asset.Quantity -= msg.Quantity
-
-	k.setAsset(ctx, *asset)
 	// add coin ...
 	_, err := k.bank.SubtractCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
 	})
+
+	if err != nil {
+		return err
+	}
+	asset.Quantity -= msg.Quantity
+	k.setAsset(ctx, *asset)
 	return err
 }
