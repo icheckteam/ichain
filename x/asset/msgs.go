@@ -9,52 +9,65 @@ import (
 
 const msgType = "asset"
 
-// AssetCreateMsg A really msg record create type, these fields are can be entirely arbitrary and
+// RegisterMsg A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
-type AssetCreateMsg struct {
-	Sender    sdk.Address
-	AssetID   string
-	AssetName string
-	Quantity  int64
+type RegisterMsg struct {
+	Issuer   sdk.Address `json:"issuer"`
+	ID       string      `json:"id"`
+	Name     string      `json:"name"`
+	Quantity int64       `json:"quantity"`
 
 	// Company info
-	Company string
-	Email   string
+	Company string `json:"company"`
+	Email   string `json:"email"`
 }
 
-// NewAssetCreateMsg new record create msg
-func NewAssetCreateMsg(sender sdk.Address, assetID, assetName string, quantity int64, company, email string) AssetCreateMsg {
-	return AssetCreateMsg{
-		Sender:    sender,
-		AssetID:   assetID,
-		Quantity:  quantity,
-		AssetName: assetID,
-		Company:   company,
-		Email:     email,
+// NewRegisterMsg new record create msg
+func NewRegisterMsg(issuer sdk.Address, id, name string, quantity int64, company, email string) RegisterMsg {
+	return RegisterMsg{
+		Issuer:   issuer,
+		ID:       id,
+		Quantity: quantity,
+		Name:     name,
+		Company:  company,
+		Email:    email,
 	}
 }
 
 // enforce the msg type at compile time
-var _ sdk.Msg = AssetCreateMsg{}
+var _ sdk.Msg = RegisterMsg{}
 
 // nolint ...
-func (msg AssetCreateMsg) Type() string                            { return msgType }
-func (msg AssetCreateMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg AssetCreateMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg AssetCreateMsg) String() string {
-	return fmt.Sprintf("AssetCreateMsg{Sender: %v, RecordID: %s, RecordName: %s}", msg.Sender, msg.AssetID, msg.AssetName)
+func (msg RegisterMsg) Type() string                            { return msgType }
+func (msg RegisterMsg) Get(key interface{}) (value interface{}) { return nil }
+func (msg RegisterMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg RegisterMsg) String() string {
+	return fmt.Sprintf("RegisterMsg{%s->%s->%d}", msg.Issuer, msg.Name, msg.Quantity)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg AssetCreateMsg) ValidateBasic() sdk.Error {
-	if len(msg.Sender) == 0 {
-		return sdk.ErrUnknownAddress(msg.Sender.String()).Trace("")
+func (msg RegisterMsg) ValidateBasic() sdk.Error {
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
+
+	if len(msg.ID) == 0 {
+		return ErrMissingField("asset_id")
+	}
+
+	if len(msg.Name) == 0 {
+		return ErrMissingField("asset_name")
+	}
+
+	if msg.Quantity == 0 {
+		return ErrMissingField("asset_quantity")
+	}
+
 	return nil
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg AssetCreateMsg) GetSignBytes() []byte {
+func (msg RegisterMsg) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)

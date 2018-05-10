@@ -14,11 +14,17 @@ const (
 	CodeInvalidInput       sdk.CodeType = 502
 	CodeInvalidOutput      sdk.CodeType = 503
 	CodeInvalidAssets      sdk.CodeType = 504
+	CodeMissingField       sdk.CodeType = 505
 )
 
 // ErrUnknownAsset ...
 func ErrUnknownAsset(msg string) sdk.Error {
 	return newError(CodeUnknownAsset, msg)
+}
+
+// ErrMissingField ...
+func ErrMissingField(field string) sdk.Error {
+	return newError(CodeMissingField, fmt.Sprintf("missing %s", field))
 }
 
 // InvalidTransaction ...

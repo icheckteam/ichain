@@ -110,7 +110,7 @@ func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 }
 
 func buildCreateAssetMsg(creator sdk.Address, body createAssetBody) sdk.Msg {
-	return asset.NewAssetCreateMsg(
+	return asset.NewRegisterMsg(
 		creator,
 		body.Asset.ID,
 		body.Asset.Name,
