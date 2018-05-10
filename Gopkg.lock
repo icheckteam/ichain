@@ -21,7 +21,6 @@
     "client/context",
     "client/core",
     "client/keys",
-    "client/lcd",
     "client/rpc",
     "client/tx",
     "mock",
@@ -38,9 +37,7 @@
     "x/bank/rest",
     "x/ibc",
     "x/ibc/commands",
-    "x/ibc/rest",
-    "x/simplestake",
-    "x/simplestake/commands"
+    "x/ibc/rest"
   ]
   revision = "0fb189777c2d573a8504582343fb7d39c2cd26e3"
   version = "v0.15.1"
@@ -490,6 +487,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0e4526d82f02b2d302678406e5e74d91e94fa713f172d8f7ae90337ac9c6bb4"
+  inputs-digest = "cb7bc4b0de0ed1ff61170306c05991faa915547aadf9b6fd148d87a1fb7eace1"
   solver-name = "gps-cdcl"
   solver-version = 1
