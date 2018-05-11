@@ -14,18 +14,19 @@ import (
 )
 
 type createAssetBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	Asset            assetBody
-	Sequence         int64
+	LocalAccountName string    `json:"account_name"`
+	Password         string    `json:"password"`
+	Asset            assetBody `json:"asset"`
+	ChainID          string    `json:"chain_id"`
+	Sequence         int64     `json:"sequence"`
 }
 
 type assetBody struct {
-	ID       string
-	Name     string
-	Company  string
-	Email    string
-	Quantity int64
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Company  string `json:"company"`
+	Email    string `json:"email"`
+	Quantity int64  `json:"quantity"`
 }
 
 // Create asset REST handler
@@ -56,16 +57,21 @@ func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 
 		if m.Asset.Name == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset_name is required"))
+			w.Write([]byte("asset.name is required"))
 			return
 		}
 
 		if m.Asset.Quantity == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("quantity is required"))
+			w.Write([]byte("asset.quantity is required"))
 			return
 		}
 
+		if m.Asset.ID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("asset.id is required"))
+			return
+		}
 		info, err := kb.Get(m.LocalAccountName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -80,9 +86,9 @@ func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		// sign
-		ctx = ctx.WithSequence(m.Sequence)
+		ctx = ctx.WithSequence(m.Sequence).
+			WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

@@ -32,6 +32,8 @@ func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result 
 		Name:     msg.Name,
 		Issuer:   msg.Issuer,
 		Quantity: msg.Quantity,
+		Company:  msg.Company,
+		Email:    msg.Email,
 	}
 	if err := k.RegisterAsset(ctx, asset); err != nil {
 		return err.Result()

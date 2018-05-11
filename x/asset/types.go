@@ -6,12 +6,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Assets ...
 type Asset struct {
 	ID         string
 	Name       string
 	Issuer     sdk.Address
 	Quantity   int64
 	Attributes map[string]interface{}
+	Company    string
+	Email      string
 }
 
 // IsOwner ....

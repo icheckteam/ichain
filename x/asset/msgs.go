@@ -42,7 +42,17 @@ func (msg RegisterMsg) Type() string                            { return msgType
 func (msg RegisterMsg) Get(key interface{}) (value interface{}) { return nil }
 func (msg RegisterMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg RegisterMsg) String() string {
-	return fmt.Sprintf("RegisterMsg{%s->%s->%d}", msg.Issuer, msg.Name, msg.Quantity)
+	return fmt.Sprintf(`RegisterMsg{
+		Issuer:   %s,
+		ID:       %s,
+		Quantity: %d,
+		Name:     %s,
+		Company:  %s,
+		Email:    %s,
+	}`,
+		msg.Issuer, msg.ID, msg.Quantity,
+		msg.Name, msg.Company, msg.Email,
+	)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly

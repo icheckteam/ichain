@@ -1,20 +1,20 @@
 <h1>Ichain </h1>
 <h4>Version 0.0.1 </h4>
-Vietnameses | [English](README.md)
 
 Branch    | Tests | Coverage
 ----------|-------|---------
 develop   | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/develop.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/develop) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/develop/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 master    | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/master) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/master/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 
+Vietnameses | [English](README.md)
 
 Chào mừng bạn đến với thư viện mã nguồn Ichain
 
-Ichain sử dụng blockchain trong truy xuất chuỗi cung ứng. Ichain giúp triển khai và chạy ứng dụng truy xuất chuỗi cung ứng trên blockchain dễ dàng hơn.
+Ichain là một blockchain được phát triển dựa trên tendermint giúp triển khai, kết nối đa mạng lưới và chạy ứng dụng truy xuất chuỗi cung ứng dễ dàng hơn.  
 
 Mã nguồn hiện đang ở giai đoạn thử nghiệm, đang trong quá trình phát triển nhanh chóng. Mã chính hiện tại không ổn định, các phiên bản ổn định sẽ được liệt kê trên trang phát hành.
 
-Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng dụng xin vui lòng gửi đến email (hotro@icheck.vn)
+Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng dụng xin vui lòng gửi đến email (dev@icheck.vn)
 
 
 #### Các tính năng
@@ -72,4 +72,4 @@ Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
 ./ichaincli transfer --name testaccount --amount 100tomato --to 283873F09FEBC7EC95BCFBD43B37CF0678B8232A
 ```
 ### Đóng góp
-Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (hotro@icheck.vn)
+Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (dev@icheck.vn)
