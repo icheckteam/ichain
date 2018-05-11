@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -102,4 +103,55 @@ func TestCreateMsgValidation(t *testing.T) {
 			assert.NotNil(t, err, "%d", i)
 		}
 	}
+}
+
+func TestCreateMsgGet(t *testing.T) {
+	var msg = CreateMsg{}
+	res := msg.Get(nil)
+	assert.Nil(t, res)
+}
+
+func TestCreateMsgGetSignBytes(t *testing.T) {
+	addr := sdk.Address([]byte("input"))
+	addr1 := sdk.Address([]byte("input1"))
+
+	creatTime, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
+	expiration, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
+
+	var msg = CreateMsg{
+		ID:      "1",
+		Context: "1",
+		Content: map[string]interface{}{"content": "1"},
+		Metadata: ClaimMetadata{
+			Recipient:      addr,
+			Issuer:         addr1,
+			CreateTime:     creatTime,
+			ExpirationTime: expiration,
+		}}
+
+	res := msg.GetSignBytes()
+	// TODO bad results
+	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":{\"content\":\"1\"},\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expiration_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"}}")
+}
+
+func TestCreateMsgGetSigners(t *testing.T) {
+	addr := sdk.Address([]byte("input"))
+	addr1 := sdk.Address([]byte("input1"))
+
+	creatTime, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
+	expiration, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
+
+	var msg = CreateMsg{
+		ID:      "1",
+		Context: "1",
+		Content: map[string]interface{}{"content": "1"},
+		Metadata: ClaimMetadata{
+			Recipient:      addr1,
+			Issuer:         addr,
+			CreateTime:     creatTime,
+			ExpirationTime: expiration,
+		}}
+	res := msg.GetSigners()
+	// TODO bad results
+	assert.Equal(t, fmt.Sprintf("%v", res), `[696E707574]`)
 }
