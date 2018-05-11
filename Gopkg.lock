@@ -34,7 +34,6 @@
     "x/auth/rest",
     "x/bank",
     "x/bank/commands",
-    "x/bank/rest",
     "x/ibc",
     "x/ibc/commands",
     "x/ibc/rest"
@@ -487,6 +486,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb7bc4b0de0ed1ff61170306c05991faa915547aadf9b6fd148d87a1fb7eace1"
+  inputs-digest = "347bb9a371acbc7968f48711091ed20dfcbdec986ced5a1da33c527a5175440c"
   solver-name = "gps-cdcl"
   solver-version = 1

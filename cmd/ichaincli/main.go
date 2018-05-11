@@ -17,9 +17,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/commands"
-	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/commands"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/commands"
 	assetcmd "github.com/icheckteam/ichain/x/asset/client/cli"
+	bankcmd "github.com/icheckteam/ichain/x/bank/commands"
 )
 
 // rootCmd is the entry point for this binary

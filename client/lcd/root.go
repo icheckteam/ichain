@@ -19,9 +19,9 @@ import (
 	version "github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/rest"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/rest"
-	ibc "github.com/cosmos/cosmos-sdk/x/ibc/rest"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
+	bank "github.com/icheckteam/ichain/x/bank/rest"
+	ibc "github.com/icheckteam/ichain/x/ibc/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
 )
 

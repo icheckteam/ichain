@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/icheckteam/ichain/x/bank"
 )
 
 // Keeper ...
@@ -26,6 +26,10 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.CoinKeeper) Keeper {
 
 // Register register new asset
 func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) sdk.Error {
+	if asset.ID == "icc" {
+		return InvalidTransaction("Asset already exists")
+	}
+
 	if k.Has(ctx, asset.ID) {
 		return InvalidTransaction("Asset already exists")
 	}
