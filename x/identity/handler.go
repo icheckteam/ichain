@@ -11,7 +11,7 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case ClaimIssueMsg:
+		case CreateMsg:
 			return handleClaimIssue(ctx, k, msg)
 		case RevokeMsg:
 			return handleRevokeMsg(ctx, k, msg)
@@ -22,7 +22,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleClaimIssue(ctx sdk.Context, k Keeper, msg ClaimIssueMsg) sdk.Result {
+func handleClaimIssue(ctx sdk.Context, k Keeper, msg CreateMsg) sdk.Result {
 	if err := k.ClaimIssue(ctx, msg); err != nil {
 		return err.Result()
 	}

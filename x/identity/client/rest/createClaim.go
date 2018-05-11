@@ -93,12 +93,10 @@ func CreateClaimHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 }
 
 func buildCreateClaimMsg(creator sdk.Address, body createClaimBody) sdk.Msg {
-	return identity.ClaimIssueMsg{
-		Claim: identity.Claim{
-			ID:       body.ClaimID,
-			Context:  body.Context,
-			Content:  body.Content,
-			Metadata: body.Metadata,
-		},
+	return identity.CreateMsg{
+		ID:       body.ClaimID,
+		Context:  body.Context,
+		Content:  body.Content,
+		Metadata: body.Metadata,
 	}
 }
