@@ -19,6 +19,7 @@ import (
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/commands"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/commands"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/commands"
+	assetcmd "github.com/icheckteam/ichain/x/asset/client/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -54,6 +55,7 @@ func main() {
 	rootCmd.AddCommand(
 		client.PostCommands(
 			bankcmd.SendTxCmd(cdc),
+			assetcmd.CreateAssetCmd(cdc),
 		)...)
 	rootCmd.AddCommand(
 		client.PostCommands(

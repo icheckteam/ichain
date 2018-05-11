@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -72,6 +73,13 @@ var (
 		Outputs: []bank.Output{
 			bank.NewOutput(addr1, coins),
 		},
+	}
+
+	registerAssetMsg = asset.RegisterMsg{
+		ID:       "assetid",
+		Name:     "1",
+		Issuer:   addr1,
+		Quantity: 1,
 	}
 )
 
@@ -296,6 +304,27 @@ func TestSendMsgDependent(t *testing.T) {
 
 	// Check balances
 	CheckBalance(t, bapp, addr1, "42foocoin")
+}
+
+func TestRegisterAsset(t *testing.T) {
+	bapp := newIchainApp()
+
+	genCoins, err := sdk.ParseCoins("42foocoin")
+	require.Nil(t, err)
+
+	acc1 := auth.BaseAccount{
+		Address: addr1,
+		Coins:   genCoins,
+	}
+
+	err = setGenesisAccounts(bapp, acc1)
+	assert.Nil(t, err)
+
+	// CheckDeliver
+	SignCheckDeliver(t, bapp, registerAssetMsg, []int64{0}, true, priv1)
+
+	// Check balances
+	CheckBalance(t, bapp, addr1, "1assetid,42foocoin")
 }
 
 func TestQuizMsg(t *testing.T) {
