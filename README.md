@@ -10,7 +10,7 @@ Vietnameses | [English](README.md)
 
 Chào mừng bạn đến với thư viện mã nguồn Ichain
 
-Ichain là một blockchain được phát triển dựa trên tendermint giúp triển khai, k
+Ichain là một blockchain được phát triển dựa trên tendermint giúp triển khai, kết nối đa mạng lưới và chạy ứng dụng truy xuất chuỗi cung ứng dễ dàng hơn.  
 
 Mã nguồn hiện đang ở giai đoạn thử nghiệm, đang trong quá trình phát triển nhanh chóng. Mã chính hiện tại không ổn định, các phiên bản ổn định sẽ được liệt kê trên trang phát hành.
 
