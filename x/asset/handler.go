@@ -47,7 +47,7 @@ func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result 
 				Value: []byte(asset.ID),
 			},
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(msg.Issuer),
 			},
 		},
@@ -65,7 +65,7 @@ func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
 				Value: []byte(msg.ID),
 			},
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(msg.Issuer),
 			},
 		},
@@ -83,7 +83,7 @@ func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result
 				Value: []byte(msg.ID),
 			},
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(msg.Issuer),
 			},
 		},
@@ -101,7 +101,7 @@ func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) 
 				Value: []byte(msg.ID),
 			},
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(msg.Issuer),
 			},
 		},

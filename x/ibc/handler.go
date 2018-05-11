@@ -39,11 +39,11 @@ func handleIBCTransferMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, m
 	return sdk.Result{
 		Tags: []common.KVPair{
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(packet.SrcAddr),
 			},
 			common.KVPair{
-				Key:   []byte("to_address"),
+				Key:   []byte("address"),
 				Value: []byte(packet.DestAddr),
 			},
 		},
@@ -69,11 +69,11 @@ func handleIBCReceiveMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, ms
 	return sdk.Result{
 		Tags: []common.KVPair{
 			common.KVPair{
-				Key:   []byte("from_address"),
+				Key:   []byte("address"),
 				Value: []byte(packet.SrcAddr),
 			},
 			common.KVPair{
-				Key:   []byte("to_address"),
+				Key:   []byte("address"),
 				Value: []byte(packet.DestAddr),
 			},
 		},
