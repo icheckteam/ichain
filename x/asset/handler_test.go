@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRegister(t *testing.T) {
+func TestHandleRegister(t *testing.T) {
 	ctx, _, keeper := createTestInput(t, false, 1000)
 	addr := addrs[0]
 
