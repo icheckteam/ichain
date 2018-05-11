@@ -114,6 +114,14 @@ func MakeCodec() *wire.Codec {
 	cdc.RegisterConcrete(ibc.IBCTransferMsg{}, "ichain/IBCTransferMsg", nil)
 	cdc.RegisterConcrete(ibc.IBCReceiveMsg{}, "ichain/IBCReceiveMsg", nil)
 
+	cdc.RegisterConcrete(asset.RegisterMsg{}, "ichain/RegisterMsg", nil)
+	cdc.RegisterConcrete(asset.AddQuantityMsg{}, "ichain/AddQuantityMsg", nil)
+	cdc.RegisterConcrete(asset.SubtractQuantityMsg{}, "ichain/SubtractQuantityMsg", nil)
+	cdc.RegisterConcrete(asset.UpdateAttrMsg{}, "ichain/UpdateAttrMsg", nil)
+
+	cdc.RegisterConcrete(identity.ClaimIssueMsg{}, "ichain/ClaimIssueMsg", nil)
+	cdc.RegisterConcrete(identity.RevokeMsg{}, "ichain/RevokeMsg", nil)
+
 	// Register AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)

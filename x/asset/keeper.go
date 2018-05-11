@@ -68,7 +68,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
 
 	// marshal the record and add to the state
 	if err := k.cdc.UnmarshalBinary(b, asset); err != nil {
-		panic(err)
+		return nil
 	}
 	return asset
 }
@@ -102,7 +102,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
 	k.setAsset(ctx, *asset)
 	// add coin ...
 	_, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
-		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
+		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
 	return err
 }
@@ -119,7 +119,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.E
 
 	// add coin ...
 	_, err := k.bank.SubtractCoins(ctx, asset.Issuer, sdk.Coins{
-		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
+		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
 
 	if err != nil {
