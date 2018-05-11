@@ -10,7 +10,7 @@ Vietnameses | [English](README.md)
 
 Chào mừng bạn đến với thư viện mã nguồn Ichain
 
-Ichain sử dụng blockchain trong truy xuất chuỗi cung ứng. Ichain giúp triển khai và chạy ứng dụng truy xuất chuỗi cung ứng trên blockchain dễ dàng hơn.
+Ichain là một blockchain được phát triển dựa trên tendermint giúp triển khai, k
 
 Mã nguồn hiện đang ở giai đoạn thử nghiệm, đang trong quá trình phát triển nhanh chóng. Mã chính hiện tại không ổn định, các phiên bản ổn định sẽ được liệt kê trên trang phát hành.
 
