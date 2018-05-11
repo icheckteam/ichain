@@ -8,15 +8,31 @@ all: get_vendor_deps build test
 ### Build
 
 # This can be unified later, here for easy demos
-build:
+ifeq ($(OS),Windows_NT)
+	go build $(BUILD_FLAGS) -o build/ichaind.exe ./cmd/ichaind
+	go build $(BUILD_FLAGS) -o build/ichaincli.exe ./cmd/ichaincli
+else
 	go build $(BUILD_FLAGS) -o build/ichaind ./cmd/ichaind
 	go build $(BUILD_FLAGS) -o build/ichaincli ./cmd/ichaincli
+endif
+
 
 
 install: 
 	go install $(BUILD_FLAGS) ./cmd/ichaind
 	go install $(BUILD_FLAGS) ./cmd/ichaincli
 
+########################################
+### Tools & dependencies
+
+check_tools:
+	cd tools && $(MAKE) check_tools
+
+update_tools:
+	cd tools && $(MAKE) update_tools
+
+get_tools:
+	cd tools && $(MAKE) get_tools
 
 get_vendor_deps:
 	@rm -rf vendor/
