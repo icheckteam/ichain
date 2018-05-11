@@ -14,7 +14,7 @@ Ichain sử dụng blockchain trong truy xuất chuỗi cung ứng. Ichain giúp
 
 Mã nguồn hiện đang ở giai đoạn thử nghiệm, đang trong quá trình phát triển nhanh chóng. Mã chính hiện tại không ổn định, các phiên bản ổn định sẽ được liệt kê trên trang phát hành.
 
-Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng dụng xin vui lòng gửi đến email (hotro@icheck.vn)
+Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng dụng xin vui lòng gửi đến email (dev@icheck.vn)
 
 
 #### Các tính năng
@@ -72,4 +72,4 @@ Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
 ./ichaincli transfer --name testaccount --amount 100tomato --to 283873F09FEBC7EC95BCFBD43B37CF0678B8232A
 ```
 ### Đóng góp
-Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (hotro@icheck.vn)
+Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (dev@icheck.vn)
