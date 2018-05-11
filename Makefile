@@ -6,8 +6,8 @@ all: get_vendor_deps build test
 
 ########################################
 ### Build
-
 # This can be unified later, here for easy demos
+build:
 ifeq ($(OS),Windows_NT)
 	go build $(BUILD_FLAGS) -o build/ichaind.exe ./cmd/ichaind
 	go build $(BUILD_FLAGS) -o build/ichaincli.exe ./cmd/ichaincli
