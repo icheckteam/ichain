@@ -17,7 +17,8 @@ type subtractAssetQuantityBody struct {
 	LocalAccountName string `json:"account_name"`
 	Password         string `json:"password"`
 	Quantity         int64  `json:"quantity"`
-	Sequence         int64
+	ChainID          string `json:"chain_id"`
+	Sequence         int64  `json:"sequence"`
 }
 
 func SubtractQuantityBodyHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -61,7 +62,7 @@ func SubtractQuantityBodyHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.R
 		msg := buildsubtractAssetQuantityMsg(info.PubKey.Address(), vars["id"], m)
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence)
+		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

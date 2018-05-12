@@ -16,7 +16,9 @@ import (
 type uPass struct {
 	LocalAccountName string `json:"account_name"`
 	Password         string `json:"password"`
-	Sequence         int64
+	ChainID          string `json:"chain_id"`
+	Sequence         int64  `json:"sequence"`
+	Revocation       string `json:"revocation"`
 }
 
 func RevokeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -51,10 +53,10 @@ func RevokeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter,
 			return
 		}
 		// build message
-		msg := buildRevokeMsg(info.PubKey.Address(), vars["id"])
+		msg := buildRevokeMsg(info.PubKey.Address(), vars["id"], m.Revocation)
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence)
+		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -81,9 +83,10 @@ func RevokeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter,
 	}
 }
 
-func buildRevokeMsg(creator sdk.Address, claimID string) sdk.Msg {
+func buildRevokeMsg(creator sdk.Address, claimID string, revocation string) sdk.Msg {
 	return identity.RevokeMsg{
-		Sender:  creator,
-		ClaimID: claimID,
+		Sender:     creator,
+		ClaimID:    claimID,
+		Revocation: revocation,
 	}
 }

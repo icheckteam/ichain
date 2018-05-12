@@ -18,6 +18,7 @@ type updateAttributeBody struct {
 	Password         string `json:"password"`
 	AttributeName    string `json:"attribute_name"`
 	AttributeValue   string `json:"attribute_value"`
+	ChainID          string `json:"chain_id"`
 	Sequence         int64  `json:"sequence"`
 }
 
@@ -69,7 +70,7 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 		msg := buildUpdateAttributeMsg(info.PubKey.Address(), vars["id"], m)
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence)
+		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

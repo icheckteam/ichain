@@ -1,13 +1,13 @@
 package rest
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/x/identity"
 )
 
 ///////////////////////////
@@ -19,20 +19,92 @@ func QueryClaimRequestHandlerFn(storeName string, cdc *wire.Codec) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		assetID := vars["id"]
+		key := identity.GetClaimRecordKey(assetID)
+		res, err := ctx.Query(key, storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Could't query asset. Error: %s", err.Error())))
+			return
+		}
+		var claim identity.Claim
+		err = cdc.UnmarshalBinary(res, &claim)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+			return
+		}
 
-		hash, err := hex.DecodeString(assetID)
+		output, err := cdc.MarshalJSON(claim)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		res, err := ctx.Query(hash, storeName)
+		w.Write(output)
+	}
+}
+
+// QueryClaimsOwner
+func QueryClaimsOwner(storeName string, cdc *wire.Codec) http.HandlerFunc {
+	ctx := context.NewCoreContextFromViper()
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		addr := vars["address"]
+		key := identity.GetClaimsOwnerKey(addr)
+		res, err := ctx.Query(key, storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query asset. Error: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf("Could't query claim. Error: %s", err.Error())))
 			return
 		}
-		w.Write(res)
+		var claims []identity.Claim
+		err = cdc.UnmarshalBinary(res, &claims)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+			return
+		}
+
+		output, err := cdc.MarshalJSON(claims)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+// QueryClaimsOwner
+func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
+	ctx := context.NewCoreContextFromViper()
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		addr := vars["address"]
+		key := identity.GetClaimsAccountKey(addr)
+		res, err := ctx.Query(key, storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Could't query claim. Error: %s", err.Error())))
+			return
+		}
+		var claims []identity.Claim
+		err = cdc.UnmarshalBinary(res, &claims)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+			return
+		}
+
+		output, err := cdc.MarshalJSON(claims)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
 	}
 }

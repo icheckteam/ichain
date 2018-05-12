@@ -21,7 +21,8 @@ type createClaimBody struct {
 	Content  map[string]interface{} `json:"content"`
 	Metadata identity.ClaimMetadata `json:"metadata"`
 
-	Sequence int64
+	ChainID  string `json:"chain_id"`
+	Sequence int64  `json:"sequence"`
 }
 
 func CreateClaimHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
