@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	cmn "github.com/tendermint/tmlibs/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -70,14 +71,14 @@ func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
 		Tx:     tx,
 		Result: res.TxResult,
 		Type:   fmt.Sprintf("%s/%s", tx.GetMsg().Type(), reflect.TypeOf(tx.GetMsg()).Name()),
-		TxID:   res.Tx.Hash(),
+		ID:     res.Hash,
 	}
 	return info, nil
 }
 
 // txInfo is used to prepare info to display
 type txInfo struct {
-	TxID   []byte                 `json:"tx_id"`
+	ID     cmn.HexBytes           `json:"id"`
 	Height int64                  `json:"height"`
 	Tx     sdk.Tx                 `json:"tx"`
 	Result abci.ResponseDeliverTx `json:"result"`
