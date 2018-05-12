@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -36,7 +37,7 @@ func SearchTxCmd(cmdr commander) *cobra.Command {
 	return cmd
 }
 
-func (c commander) searchTx(tags []string) ([]byte, error) {
+func (c commander) searchTx(tags []string) ([]txInfo, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("Must declare at least one tag to search")
 	}
@@ -54,17 +55,7 @@ func (c commander) searchTx(tags []string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	info, err := formatTxResults(c.cdc, res)
-	if err != nil {
-		return nil, err
-	}
-
-	output, err := c.cdc.MarshalJSON(info)
-	if err != nil {
-		return nil, err
-	}
-	return output, nil
+	return formatTxResults(c.cdc, res)
 }
 
 func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) {
@@ -83,13 +74,12 @@ func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) 
 
 func (c commander) searchAndPrintTx(cmd *cobra.Command, args []string) error {
 	tags := viper.GetStringSlice(flagTags)
-
 	output, err := c.searchTx(tags)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(string(output))
+	fmt.Printf("%+v", output)
 	return nil
 }
 
@@ -98,20 +88,39 @@ func (c commander) searchAndPrintTx(cmd *cobra.Command, args []string) error {
 func SearchTxRequestHandler(cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	c := commander{cdc}
 	return func(w http.ResponseWriter, r *http.Request) {
-		tag := r.FormValue("tag")
-		if tag == "" {
-			w.WriteHeader(400)
-			w.Write([]byte("You need to provide a tag to search for."))
-			return
+		tags := []string{}
+
+		// add hash tag ...
+		hash := r.URL.Query().Get("hash")
+		if hash != "" {
+			tags = append(tags, fmt.Sprintf("tx.hash='%s'", hash))
 		}
 
-		tags := []string{tag}
+		// add hash tag ...
+		assetID := r.URL.Query().Get("asset_id")
+		if assetID != "" {
+			tags = append(tags, fmt.Sprintf("asset_id='%s'", assetID))
+		}
+
+		// add hash tag ...
+		owner := r.URL.Query().Get("owner")
+		if owner != "" {
+			tags = append(tags, fmt.Sprintf("owner='%s'", owner))
+		}
+
 		output, err := c.searchTx(tags)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))
 			return
 		}
-		w.Write(output)
+
+		b, err := json.Marshal(output)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(b)
 	}
 }

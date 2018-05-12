@@ -9,9 +9,9 @@ import (
 )
 
 type SignTxBody struct {
-	Name     string `json="name"`
-	Password string `json="password"`
-	TxBytes  string `json="tx"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+	TxBytes  string `json:"tx"`
 }
 
 func SignTxRequstHandler(w http.ResponseWriter, r *http.Request) {

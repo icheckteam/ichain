@@ -8,7 +8,7 @@ import (
 )
 
 type BroadcastTxBody struct {
-	TxBytes string `json="tx"`
+	TxBytes string `json:"tx"`
 }
 
 func BroadcastTxRequestHandler(w http.ResponseWriter, r *http.Request) {
