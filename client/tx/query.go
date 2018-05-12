@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -68,6 +69,7 @@ func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
 		Height: res.Height,
 		Tx:     tx,
 		Result: res.TxResult,
+		Type:   fmt.Sprintf("%s/%s", tx.GetMsg().Type(), reflect.TypeOf(tx.GetMsg()).Name()),
 	}
 	return info, nil
 }
@@ -77,6 +79,7 @@ type txInfo struct {
 	Height int64                  `json:"height"`
 	Tx     sdk.Tx                 `json:"tx"`
 	Result abci.ResponseDeliverTx `json:"result"`
+	Type   string                 `json:"type"`
 }
 
 func parseTx(cdc *wire.Codec, txBytes []byte) (sdk.Tx, error) {
