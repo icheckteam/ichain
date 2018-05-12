@@ -46,6 +46,15 @@ func (k Keeper) Create(ctx sdk.Context, msg CreateMsg) (types.Tags, sdk.Error) {
 	// append tags
 	allTags.AppendTag("owner", msg.Metadata.Issuer)
 	allTags.AppendTag("owner", msg.Metadata.Recipient)
+
+	err = k.addClaimsAccount(ctx, msg.Metadata.Recipient, msg.ID)
+	if err != nil {
+		return allTags, err
+	}
+	err = k.addClaimsOwner(ctx, msg.Metadata.Issuer, msg.ID)
+	if err != nil {
+		return allTags, err
+	}
 	return allTags, nil
 }
 
@@ -86,4 +95,76 @@ func (k Keeper) Revoke(ctx sdk.Context, claimID, revocation string) (types.Tags,
 	allTags.AppendTag("owner", claim.Metadata.Issuer)
 	allTags.AppendTag("owner", claim.Metadata.Recipient)
 	return allTags, nil
+}
+
+func (k Keeper) getClaimsAccount(ctx sdk.Context, addr sdk.Address) ([]string, sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetClaimsAccountKey(addr)
+	claimIDS := []string{}
+	b := store.Get(key)
+	if len(b) == 0 {
+		return nil, nil
+	}
+	// marshal the claim and add to the state
+	if err := k.cdc.UnmarshalBinary(b, &claimIDS); err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+	return claimIDS, nil
+}
+
+func (k Keeper) setClaimsAccount(ctx sdk.Context, addr sdk.Address, ids []string) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetClaimsAccountKey(addr)
+
+	bz, err := k.cdc.MarshalBinary(ids)
+	if err != nil {
+		panic(err)
+	}
+	store.Set(key, bz)
+}
+
+func (k Keeper) addClaimsAccount(ctx sdk.Context, addr sdk.Address, id string) sdk.Error {
+	claimIDS, err := k.getClaimsAccount(ctx, addr)
+	if err != nil {
+		return err
+	}
+	claimIDS = append(claimIDS, id)
+	k.setClaimsAccount(ctx, addr, claimIDS)
+	return nil
+}
+
+func (k Keeper) getClaimsOwner(ctx sdk.Context, addr sdk.Address) ([]string, sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetClaimsOwnerKey(addr)
+	claimIDS := []string{}
+	b := store.Get(key)
+	if len(b) == 0 {
+		return nil, nil
+	}
+	// marshal the claim and add to the state
+	if err := k.cdc.UnmarshalBinary(b, &claimIDS); err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+	return claimIDS, nil
+}
+
+func (k Keeper) setClaimsOwner(ctx sdk.Context, addr sdk.Address, ids []string) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetClaimsOwnerKey(addr)
+
+	bz, err := k.cdc.MarshalBinary(ids)
+	if err != nil {
+		panic(err)
+	}
+	store.Set(key, bz)
+}
+
+func (k Keeper) addClaimsOwner(ctx sdk.Context, addr sdk.Address, id string) sdk.Error {
+	claimIDS, err := k.getClaimsOwner(ctx, addr)
+	if err != nil {
+		return err
+	}
+	claimIDS = append(claimIDS, id)
+	k.setClaimsOwner(ctx, addr, claimIDS)
+	return nil
 }

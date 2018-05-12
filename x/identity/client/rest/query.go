@@ -1,10 +1,12 @@
 package rest
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
@@ -51,7 +53,14 @@ func QueryClaimsOwner(storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		addr := vars["address"]
-		key := identity.GetClaimsOwnerKey(addr)
+
+		bz, err := hex.DecodeString(addr)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		key := identity.GetClaimsOwnerKey(sdk.Address(bz))
 		res, err := ctx.Query(key, storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -83,7 +92,13 @@ func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		addr := vars["address"]
-		key := identity.GetClaimsAccountKey(addr)
+		bz, err := hex.DecodeString(addr)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		key := identity.GetClaimsAccountKey(bz)
 		res, err := ctx.Query(key, storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

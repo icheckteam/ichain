@@ -13,11 +13,11 @@ func GetClaimRecordKey(uuid string) []byte {
 }
 
 // GetClaimRecordKey ...
-func GetClaimsAccountKey(uuid string) []byte {
-	return append(ClaimsAccountKeyPrefix, []byte(uuid)...)
+func GetClaimsAccountKey(addr []byte) []byte {
+	return append(ClaimsAccountKeyPrefix, addr...)
 }
 
 // GetClaimRecordKey ...
-func GetClaimsOwnerKey(uuid string) []byte {
-	return append(ClaimsOwnerKeyPrefix, []byte(uuid)...)
+func GetClaimsOwnerKey(addr []byte) []byte {
+	return append(ClaimsOwnerKeyPrefix, addr...)
 }
