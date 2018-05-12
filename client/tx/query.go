@@ -70,12 +70,14 @@ func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
 		Tx:     tx,
 		Result: res.TxResult,
 		Type:   fmt.Sprintf("%s/%s", tx.GetMsg().Type(), reflect.TypeOf(tx.GetMsg()).Name()),
+		TxID:   res.Tx.Hash(),
 	}
 	return info, nil
 }
 
 // txInfo is used to prepare info to display
 type txInfo struct {
+	TxID   []byte                 `json:"tx_id"`
 	Height int64                  `json:"height"`
 	Tx     sdk.Tx                 `json:"tx"`
 	Result abci.ResponseDeliverTx `json:"result"`

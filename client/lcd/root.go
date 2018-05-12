@@ -13,11 +13,11 @@ import (
 	cmn "github.com/tendermint/tmlibs/common"
 
 	client "github.com/cosmos/cosmos-sdk/client"
-	keys "github.com/cosmos/cosmos-sdk/client/keys"
 	rpc "github.com/cosmos/cosmos-sdk/client/rpc"
 	version "github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/rest"
+	keys "github.com/icheckteam/ichain/client/keys"
 	tx "github.com/icheckteam/ichain/client/tx"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	bank "github.com/icheckteam/ichain/x/bank/rest"
