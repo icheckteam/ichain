@@ -135,15 +135,17 @@ func printCreate(info keys.Info, seed string) {
 	}
 }
 
+/////////////////////////////
 // REST
 
+// new key request REST body
 type NewKeyBody struct {
-	Type     string `json:"type"`
 	Name     string `json:"name"`
 	Password string `json:"password"`
 	Seed     string `json:"seed"`
 }
 
+// add new key REST handler
 func AddNewKeyRequestHandler(w http.ResponseWriter, r *http.Request) {
 	var kb keys.Keybase
 	var m NewKeyBody
@@ -173,9 +175,10 @@ func AddNewKeyRequestHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("You have to specify a password for the locally stored account."))
 		return
 	}
-
-	if m.Type == "" {
-		m.Type = "ed25519"
+	if m.Seed == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("You have to specify a seed for the locally stored account."))
+		return
 	}
 
 	// check if already exists
@@ -187,42 +190,15 @@ func AddNewKeyRequestHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if m.Seed != "" {
-		// create account
-		info, err := kb.Recover(m.Name, m.Password, m.Seed)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.Write([]byte(info.PubKey.Address().String()))
-	} else {
-		algo := keys.CryptoAlgo(m.Type)
-		info, seed, err := kb.Create(m.Name, m.Password, algo)
 
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		type response struct {
-			keys.Info `json:"infor"`
-			Seed      string `json:"seed"`
-		}
-		res := response{
-			Info: info,
-			Seed: seed,
-		}
-		b, err := MarshalJSON(res)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.Write([]byte(b))
+	// create account
+	info, err := kb.Recover(m.Name, m.Password, m.Seed)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
-
+	w.Write([]byte(info.PubKey.Address().String()))
 }
 
 // function to just a new seed to display in the UI before actually persisting it in the keybase
@@ -235,6 +211,7 @@ func getSeed(algo keys.CryptoAlgo) string {
 	return seed
 }
 
+// Seed REST request handler
 func SeedRequestHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	algoType := vars["type"]
