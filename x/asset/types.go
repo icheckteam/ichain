@@ -8,13 +8,13 @@ import (
 
 // Assets ...
 type Asset struct {
-	ID         string
-	Name       string
-	Issuer     sdk.Address
-	Quantity   int64
-	Attributes map[string]interface{}
-	Company    string
-	Email      string
+	ID         string                 `json:"id"`
+	Name       string                 `json:"name"`
+	Issuer     sdk.Address            `json:"issuer"`
+	Quantity   int64                  `json:"quantity"`
+	Attributes map[string]interface{} `json:"attributes"`
+	Company    string                 `json:"company"`
+	Email      string                 `json:"email"`
 }
 
 // IsOwner ....

@@ -72,7 +72,7 @@ func SendRequestHandler(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWrit
 		}
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence)
+		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, c.Cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

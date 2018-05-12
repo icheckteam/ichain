@@ -34,15 +34,28 @@ func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
 	tags := []common.KVPair{}
 	for _, in := range msg.Inputs {
 		tags = append(tags, common.KVPair{
-			Key:   []byte(in.Address.String()),
-			Value: in.Address.Bytes(),
+			Key:   []byte("owner"),
+			Value: []byte(in.Address.String()),
 		})
+
+		for _, coin := range in.Coins {
+			tags = append(tags, common.KVPair{
+				Key:   []byte("asset_id"),
+				Value: []byte(coin.Denom),
+			})
+		}
 	}
 	for _, out := range msg.Outputs {
 		tags = append(tags, common.KVPair{
 			Key:   []byte("owner"),
 			Value: []byte(out.Address.String()),
 		})
+		for _, coin := range out.Coins {
+			tags = append(tags, common.KVPair{
+				Key:   []byte("asset_id"),
+				Value: []byte(coin.Denom),
+			})
+		}
 	}
 	return sdk.Result{
 		Tags: tags,

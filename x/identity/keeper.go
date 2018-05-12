@@ -22,7 +22,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
 }
 
 // ClaimIssue ...
-func (k Keeper) ClaimIssue(ctx sdk.Context, msg CreateMsg) sdk.Error {
+func (k Keeper) Create(ctx sdk.Context, msg CreateMsg) sdk.Error {
 	key := GetClaimRecordKey(msg.ID)
 	store := ctx.KVStore(k.storeKey)
 	if store.Has(key) == false {

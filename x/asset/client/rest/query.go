@@ -1,13 +1,13 @@
 package rest
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 ///////////////////////////
@@ -19,20 +19,23 @@ func QueryAssetRequestHandlerFn(storeName string, cdc *wire.Codec) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		assetID := vars["id"]
+		key := asset.GetAssetKey([]byte(assetID))
+		res, err := ctx.Query(key, storeName)
+		var asset asset.Asset
+		err = cdc.UnmarshalBinary(res, &asset)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
+			return
+		}
 
-		hash, err := hex.DecodeString(assetID)
+		output, err := cdc.MarshalJSON(asset)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		res, err := ctx.Query(hash, storeName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query asset. Error: %s", err.Error())))
-			return
-		}
-		w.Write(res)
+		w.Write(output)
 	}
 }
