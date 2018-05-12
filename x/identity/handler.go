@@ -23,15 +23,19 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleCreate(ctx sdk.Context, k Keeper, msg CreateMsg) sdk.Result {
-	if err := k.Create(ctx, msg); err != nil {
+	tags, err := k.Create(ctx, msg)
+	if err != nil {
 		return err.Result()
 	}
-	return sdk.Result{}
+	return sdk.Result{Tags: tags}
 }
 
 func handleRevokeMsg(ctx sdk.Context, k Keeper, msg RevokeMsg) sdk.Result {
-	if err := k.Revoke(ctx, msg.ClaimID); err != nil {
+	tags, err := k.Revoke(ctx, msg.ClaimID, msg.Revocation)
+	if err != nil {
 		return err.Result()
 	}
-	return sdk.Result{}
+	return sdk.Result{
+		Tags: tags,
+	}
 }

@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"encoding/hex"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,4 +22,8 @@ type ClaimMetadata struct {
 	Recipient      sdk.Address `json:"recipient"`
 	ExpirationTime time.Time   `json:"expiration_time"`
 	Revocation     string      `json:"revocation"`
+}
+
+func (c Claim) IsOwner(addr sdk.Address) bool {
+	return hex.EncodeToString(c.Metadata.Issuer) == hex.EncodeToString(addr)
 }

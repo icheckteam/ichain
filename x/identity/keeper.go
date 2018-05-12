@@ -3,6 +3,7 @@ package identity
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	types "github.com/icheckteam/ichain/types"
 )
 
 // Keeper ...
@@ -22,21 +23,30 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
 }
 
 // ClaimIssue ...
-func (k Keeper) Create(ctx sdk.Context, msg CreateMsg) sdk.Error {
-	key := GetClaimRecordKey(msg.ID)
-	store := ctx.KVStore(k.storeKey)
-	if store.Has(key) == false {
-		return sdk.ErrInternal("Claim already exists")
+func (k Keeper) Create(ctx sdk.Context, msg CreateMsg) (types.Tags, sdk.Error) {
+	allTags := types.EmptyTags()
+	claim, err := k.GetClaim(ctx, msg.ID)
+	if err != nil {
+		return allTags, err
 	}
 
+	if claim == nil || !claim.IsOwner(msg.Metadata.Issuer) {
+		return allTags, sdk.ErrUnauthorized("")
+	}
+
+	key := GetClaimRecordKey(msg.ID)
+	store := ctx.KVStore(k.storeKey)
 	var b []byte
 	// marshal the claim and add to the state
 	if err := k.cdc.UnmarshalBinary(b, &msg); err != nil {
-		return sdk.ErrInternal(err.Error())
+		return allTags, sdk.ErrInternal(err.Error())
 	}
 
 	store.Set(key, b)
-	return nil
+	// append tags
+	allTags.AppendTag("owner", msg.Metadata.Issuer)
+	allTags.AppendTag("owner", msg.Metadata.Recipient)
+	return allTags, nil
 }
 
 // GetClaim ...
@@ -45,6 +55,11 @@ func (k Keeper) GetClaim(ctx sdk.Context, claimID string) (*Claim, sdk.Error) {
 	key := GetClaimRecordKey(claimID)
 	claim := &Claim{}
 	b := store.Get(key)
+
+	if len(b) == 0 {
+		return nil, nil
+	}
+
 	// marshal the claim and add to the state
 	if err := k.cdc.UnmarshalBinary(b, &claim); err != nil {
 		return nil, sdk.ErrInternal(err.Error())
@@ -53,19 +68,22 @@ func (k Keeper) GetClaim(ctx sdk.Context, claimID string) (*Claim, sdk.Error) {
 }
 
 // Revoke ...
-func (k Keeper) Revoke(ctx sdk.Context, claimID string) sdk.Error {
+func (k Keeper) Revoke(ctx sdk.Context, claimID, revocation string) (types.Tags, sdk.Error) {
+	allTags := types.EmptyTags()
 	store := ctx.KVStore(k.storeKey)
 	key := GetClaimRecordKey(claimID)
 	claim, err := k.GetClaim(ctx, claimID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var b []byte
 	// marshal the claim and add to the state
 	if err := k.cdc.UnmarshalBinary(b, &claim); err != nil {
-		return sdk.ErrInternal(err.Error())
+		return nil, sdk.ErrUnauthorized(err.Error())
 	}
 
 	store.Set(key, b)
-	return nil
+	allTags.AppendTag("owner", claim.Metadata.Issuer)
+	allTags.AppendTag("owner", claim.Metadata.Recipient)
+	return allTags, nil
 }

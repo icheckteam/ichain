@@ -65,8 +65,9 @@ func (msg CreateMsg) ValidateBasic() sdk.Error {
 
 // RevokeMsg ...
 type RevokeMsg struct {
-	ClaimID string
-	Sender  sdk.Address
+	ClaimID    string
+	Sender     sdk.Address
+	Revocation string
 }
 
 // nolint ...
