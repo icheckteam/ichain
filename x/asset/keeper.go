@@ -38,14 +38,9 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, types.Ta
 	k.setAsset(ctx, asset)
 
 	// add coin ...
-	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	return k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	tags.AppendTag("asset_id", []byte(asset.ID))
-	return coins, tags, nil
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
@@ -112,14 +107,9 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, typ
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
 	// add coin ...
-	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	return k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	tags.AppendTag("asset_id", []byte(asset.ID))
-	return coins, tags, nil
 }
 
 // SubtractQuantity ...
@@ -140,11 +130,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	if err != nil {
 		return nil, nil, err
 	}
-	tags.AppendTag("asset_id", []byte(asset.ID))
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
 	return coins, tags, err
 }
-
-// ------------------------------------------
-// AddQuantity Tests

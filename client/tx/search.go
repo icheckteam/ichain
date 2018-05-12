@@ -1,7 +1,6 @@
 package tx
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -107,16 +105,8 @@ func SearchTxRequestHandler(cdc *wire.Codec) func(http.ResponseWriter, *http.Req
 		// add hash tag ...
 		owner := r.URL.Query().Get("owner")
 		if owner != "" {
-			bz, err := hex.DecodeString(owner)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
-				return
-			}
-			key := sdk.Address(bz)
-			tags = append(tags, fmt.Sprintf("owner='%s'", string(key.Bytes())))
+			tags = append(tags, fmt.Sprintf("owner='%s'", owner))
 		}
-
 		output, err := c.searchTx(tags)
 		if err != nil {
 			w.WriteHeader(500)
