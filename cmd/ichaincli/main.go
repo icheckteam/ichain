@@ -10,8 +10,8 @@ import (
 	"github.com/tendermint/tmlibs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/icheckteam/ichain/client/keys"
 	"github.com/icheckteam/ichain/client/lcd"
 	"github.com/icheckteam/ichain/client/tx"
 
