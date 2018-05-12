@@ -69,7 +69,7 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	).Seal()
 
 	// add handlers
-	coinKeeper := bank.NewCoinKeeper(app.accountMapper)
+	coinKeeper := bank.NewKeeper(app.accountMapper)
 	assetKeeper := asset.NewKeeper(app.capKeyAssetStore, cdc, coinKeeper)
 	identityKeeper := identity.NewKeeper(app.capKeyIdentityStore, cdc, app.accountMapper)
 	ibcMapper := ibc.NewIBCMapper(cdc, app.capKeyIBCStore)

@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	itypes "github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/bank"
 )
 
@@ -31,7 +32,7 @@ func newAddress() crypto.Address {
 	return crypto.GenPrivKeyEd25519().PubKey().Address()
 }
 
-func getCoins(ck bank.CoinKeeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, sdk.Error) {
+func getCoins(ck bank.Keeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, itypes.Tags, sdk.Error) {
 	zero := sdk.Coins(nil)
 	return ck.AddCoins(ctx, addr, zero)
 }
@@ -61,7 +62,7 @@ func TestIBC(t *testing.T) {
 	ctx := defaultContext(key)
 
 	am := auth.NewAccountMapper(cdc, key, &auth.BaseAccount{})
-	ck := bank.NewCoinKeeper(am)
+	ck := bank.NewKeeper(am)
 
 	src := newAddress()
 	dest := newAddress()
@@ -69,7 +70,7 @@ func TestIBC(t *testing.T) {
 	zero := sdk.Coins(nil)
 	mycoins := sdk.Coins{sdk.Coin{Denom: "mycoin", Amount: 10}}
 
-	coins, err := ck.AddCoins(ctx, src, mycoins)
+	coins, _, err := ck.AddCoins(ctx, src, mycoins)
 	assert.Nil(t, err)
 	assert.Equal(t, mycoins, coins)
 
@@ -99,7 +100,7 @@ func TestIBC(t *testing.T) {
 	res = h(ctx, msg)
 	assert.True(t, res.IsOK())
 
-	coins, err = getCoins(ck, ctx, src)
+	coins, _, err = getCoins(ck, ctx, src)
 	assert.Nil(t, err)
 	assert.Equal(t, zero, coins)
 
@@ -117,7 +118,7 @@ func TestIBC(t *testing.T) {
 	res = h(ctx, msg)
 	assert.True(t, res.IsOK())
 
-	coins, err = getCoins(ck, ctx, dest)
+	coins, _, err = getCoins(ck, ctx, dest)
 	assert.Nil(t, err)
 	assert.Equal(t, mycoins, coins)
 

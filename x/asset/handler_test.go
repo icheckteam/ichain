@@ -3,7 +3,6 @@ package asset
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,8 +27,8 @@ func TestHandleRegister(t *testing.T) {
 	asset := keeper.GetAsset(ctx, msg.ID)
 	require.True(t, asset != nil)
 	assert.Equal(t, msg.Quantity, asset.Quantity)
-	assert.Equal(t, msg.Quantity, keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Amount)
-	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Denom)
+	assert.Equal(t, msg.Quantity, keeper.bank.GetCoins(ctx, addr)[0].Amount)
+	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr)[0].Denom)
 
 	// Test handle add quantity
 	got = handleAddQuantity(ctx, keeper, AddQuantityMsg{
@@ -42,8 +41,8 @@ func TestHandleRegister(t *testing.T) {
 	asset = keeper.GetAsset(ctx, msg.ID)
 	require.True(t, asset != nil)
 	assert.Equal(t, int64(12), asset.Quantity)
-	assert.Equal(t, int64(12), keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Amount)
-	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Denom)
+	assert.Equal(t, int64(12), keeper.bank.GetCoins(ctx, addr)[0].Amount)
+	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr)[0].Denom)
 
 	// Test handle add quantity
 	got = handleSubtractQuantity(ctx, keeper, SubtractQuantityMsg{
@@ -56,8 +55,8 @@ func TestHandleRegister(t *testing.T) {
 	asset = keeper.GetAsset(ctx, msg.ID)
 	require.True(t, asset != nil)
 	assert.Equal(t, int64(2), asset.Quantity)
-	assert.Equal(t, int64(2), keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Amount)
-	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr, sdk.Coins{})[0].Denom)
+	assert.Equal(t, int64(2), keeper.bank.GetCoins(ctx, addr)[0].Amount)
+	assert.Equal(t, msg.ID, keeper.bank.GetCoins(ctx, addr)[0].Denom)
 
 	got = handleSubtractQuantity(ctx, keeper, SubtractQuantityMsg{
 		Issuer:   addr,
@@ -69,7 +68,7 @@ func TestHandleRegister(t *testing.T) {
 	asset = keeper.GetAsset(ctx, msg.ID)
 	require.True(t, asset != nil)
 	assert.Equal(t, int64(0), asset.Quantity)
-	assert.Equal(t, true, keeper.bank.GetCoins(ctx, addr, sdk.Coins{}).IsZero())
+	assert.Equal(t, true, keeper.bank.GetCoins(ctx, addr).IsZero())
 
 	got = handleSubtractQuantity(ctx, keeper, SubtractQuantityMsg{
 		Issuer:   addr,

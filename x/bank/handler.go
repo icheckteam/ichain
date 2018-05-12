@@ -4,11 +4,10 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tmlibs/common"
 )
 
 // NewHandler returns a handler for "bank" type messages.
-func NewHandler(ck CoinKeeper) sdk.Handler {
+func NewHandler(ck Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case SendMsg:
@@ -23,39 +22,11 @@ func NewHandler(ck CoinKeeper) sdk.Handler {
 }
 
 // Handle SendMsg.
-func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
+func handleSendMsg(ctx sdk.Context, ck Keeper, msg SendMsg) sdk.Result {
 	// NOTE: totalIn == totalOut should already have been checked
-
-	err := ck.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
+	tags, err := ck.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
 	if err != nil {
 		return err.Result()
-	}
-
-	tags := []common.KVPair{}
-	for _, in := range msg.Inputs {
-		tags = append(tags, common.KVPair{
-			Key:   []byte("owner"),
-			Value: []byte(in.Address.String()),
-		})
-
-		for _, coin := range in.Coins {
-			tags = append(tags, common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(coin.Denom),
-			})
-		}
-	}
-	for _, out := range msg.Outputs {
-		tags = append(tags, common.KVPair{
-			Key:   []byte("owner"),
-			Value: []byte(out.Address.String()),
-		})
-		for _, coin := range out.Coins {
-			tags = append(tags, common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(coin.Denom),
-			})
-		}
 	}
 	return sdk.Result{
 		Tags: tags,
@@ -63,6 +34,6 @@ func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
 }
 
 // Handle IssueMsg.
-func handleIssueMsg(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
+func handleIssueMsg(ctx sdk.Context, ck Keeper, msg IssueMsg) sdk.Result {
 	panic("not implemented yet")
 }

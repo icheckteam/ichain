@@ -5,10 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/bank"
-	"github.com/tendermint/tmlibs/common"
 )
 
-func NewHandler(ibcm IBCMapper, ck bank.CoinKeeper) sdk.Handler {
+func NewHandler(ibcm IBCMapper, ck bank.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
 		case IBCTransferMsg:
@@ -23,10 +22,10 @@ func NewHandler(ibcm IBCMapper, ck bank.CoinKeeper) sdk.Handler {
 }
 
 // IBCTransferMsg deducts coins from the account and creates an egress IBC packet.
-func handleIBCTransferMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, msg IBCTransferMsg) sdk.Result {
+func handleIBCTransferMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.Keeper, msg IBCTransferMsg) sdk.Result {
 	packet := msg.IBCPacket
 
-	_, err := ck.SubtractCoins(ctx, packet.SrcAddr, packet.Coins)
+	_, tags, err := ck.SubtractCoins(ctx, packet.SrcAddr, packet.Coins)
 	if err != nil {
 		return err.Result()
 	}
@@ -37,21 +36,12 @@ func handleIBCTransferMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, m
 	}
 
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(packet.SrcAddr.String()),
-			},
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(packet.DestAddr.String()),
-			},
-		},
+		Tags: tags,
 	}
 }
 
 // IBCReceiveMsg adds coins to the destination address and creates an ingress IBC packet.
-func handleIBCReceiveMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, msg IBCReceiveMsg) sdk.Result {
+func handleIBCReceiveMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.Keeper, msg IBCReceiveMsg) sdk.Result {
 	packet := msg.IBCPacket
 
 	seq := ibcm.GetIngressSequence(ctx, packet.SrcChain)
@@ -59,7 +49,7 @@ func handleIBCReceiveMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, ms
 		return ErrInvalidSequence().Result()
 	}
 
-	_, err := ck.AddCoins(ctx, packet.DestAddr, packet.Coins)
+	_, tags, err := ck.AddCoins(ctx, packet.DestAddr, packet.Coins)
 	if err != nil {
 		return err.Result()
 	}
@@ -67,15 +57,6 @@ func handleIBCReceiveMsg(ctx sdk.Context, ibcm IBCMapper, ck bank.CoinKeeper, ms
 	ibcm.SetIngressSequence(ctx, packet.SrcChain, seq+1)
 
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(packet.SrcAddr.String()),
-			},
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(packet.DestAddr.String()),
-			},
-		},
+		Tags: tags,
 	}
 }

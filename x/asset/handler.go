@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tmlibs/common"
 )
 
 // NewHandler ...
@@ -36,74 +35,44 @@ func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result 
 		Company:  msg.Company,
 		Email:    msg.Email,
 	}
-	if err := k.RegisterAsset(ctx, asset); err != nil {
+
+	_, tags, err := k.RegisterAsset(ctx, asset)
+
+	if err != nil {
 		return err.Result()
 	}
 
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(msg.Issuer.String()),
-			},
-			common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(asset.ID),
-			},
-		},
+		Tags: tags,
 	}
 }
 
 func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
-	if err := k.UpdateAttribute(ctx, msg); err != nil {
+	tags, err := k.UpdateAttribute(ctx, msg)
+	if err != nil {
 		return err.Result()
 	}
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(msg.ID),
-			},
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(msg.Issuer.String()),
-			},
-		},
+		Tags: tags,
 	}
 }
 
 func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result {
-	if err := k.AddQuantity(ctx, msg); err != nil {
+	_, tags, err := k.AddQuantity(ctx, msg)
+	if err != nil {
 		return err.Result()
 	}
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(msg.ID),
-			},
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(msg.Issuer.String()),
-			},
-		},
+		Tags: tags,
 	}
 }
 
 func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) sdk.Result {
-	if err := k.SubtractQuantity(ctx, msg); err != nil {
+	_, tags, err := k.SubtractQuantity(ctx, msg)
+	if err != nil {
 		return err.Result()
 	}
 	return sdk.Result{
-		Tags: []common.KVPair{
-			common.KVPair{
-				Key:   []byte("asset_id"),
-				Value: []byte(msg.ID),
-			},
-			common.KVPair{
-				Key:   []byte("owner"),
-				Value: []byte(msg.Issuer.String()),
-			},
-		},
+		Tags: tags,
 	}
 }

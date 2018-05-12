@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	types "github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/bank"
 )
 
@@ -12,11 +13,11 @@ import (
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
-	bank     bank.CoinKeeper
+	bank     bank.Keeper
 }
 
 // NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.CoinKeeper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc:      cdc,
@@ -25,23 +26,26 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.CoinKeeper) Keeper {
 }
 
 // Register register new asset
-func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) sdk.Error {
+func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, types.Tags, sdk.Error) {
 	if asset.ID == "icc" {
-		return InvalidTransaction("Asset already exists")
+		return nil, nil, InvalidTransaction("Asset already exists")
 	}
 
 	if k.Has(ctx, asset.ID) {
-		return InvalidTransaction("Asset already exists")
+		return nil, nil, InvalidTransaction("Asset already exists")
 	}
 	// update asset info
 	k.setAsset(ctx, asset)
 
 	// add coin ...
-	_, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
 	})
-
-	return err
+	if err != nil {
+		return nil, nil, err
+	}
+	tags.AppendTag("asset_id", []byte(asset.ID))
+	return coins, tags, nil
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
@@ -78,60 +82,68 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
 }
 
 // UpdateAttribute ...
-func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) sdk.Error {
+func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags, sdk.Error) {
+	allTags := types.EmptyTags()
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
-		return ErrUnknownAsset("Asset not found")
+		return nil, ErrUnknownAsset("Asset not found")
 	}
 	if !asset.IsOwner(msg.Issuer) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
 	asset.Attributes[msg.Name] = msg.Value
 	k.setAsset(ctx, *asset)
-	return nil
+	allTags.AppendTag("owner", msg.Issuer.Bytes())
+	allTags.AppendTag("asset_id", []byte(msg.ID))
+	return allTags, nil
 }
 
 // AddQuantity ...
-func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) sdk.Error {
+func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, types.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
-		return ErrUnknownAsset("Asset not found")
+		return nil, nil, ErrUnknownAsset("Asset not found")
 	}
 	if !asset.IsOwner(msg.Issuer) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		return nil, nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
 	// add coin ...
-	_, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
-	return err
+	if err != nil {
+		return nil, nil, err
+	}
+	tags.AppendTag("asset_id", []byte(asset.ID))
+	return coins, tags, nil
 }
 
 // SubtractQuantity ...
-func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) sdk.Error {
+func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Coins, types.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
-		return ErrUnknownAsset("Asset not found")
+		return nil, nil, ErrUnknownAsset("Asset not found")
 	}
 	if !asset.IsOwner(msg.Issuer) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		return nil, nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
 	// add coin ...
-	_, err := k.bank.SubtractCoins(ctx, asset.Issuer, sdk.Coins{
+	coins, tags, err := k.bank.SubtractCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
 
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
+	tags.AppendTag("asset_id", []byte(asset.ID))
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
-	return err
+	return coins, tags, err
 }
 
 // ------------------------------------------
