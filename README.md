@@ -59,7 +59,7 @@ Build the source with make.
 $ make
 ```
 
-After building the source code susscefully. You should see two executable programs:
+After building the source code successfully. You should see two executable programs:
 
 - `ichaind`: The node command line program for node control 
 - `ichaincli`: Chương trình dòng lệnh khách hàng thực thi giao dịch 
@@ -86,11 +86,12 @@ melody tunnel slice calm basket round retreat cry impulse tail tunnel awkward mo
 
 ### Implements
 
-Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
+Run `ichaincli --help` for details
 
-### Trao đổi tài sản
+### Ichain transfer sample
 ```
 ./ichaincli transfer --name testaccount --amount 100tomato --to 283873F09FEBC7EC95BCFBD43B37CF0678B8232A
 ```
-### Đóng góp
-Mọi thông tin đóng góp về dự án xin vui lòng gửi email đến đia chỉ (dev@icheck.vn)
+### Contribute
+
+If you want to contribute please send email  (dev@icheck.vn)
