@@ -38,7 +38,7 @@ func (k Keeper) Create(ctx sdk.Context, claim Claim) (types.Tags, sdk.Error) {
 	if err != nil {
 		return allTags, err
 	}
-	err = k.addClaimsOwner(ctx, claim.Metadata.Issuer, claim.ID)
+	err = k.addClaimsAccount(ctx, claim.Metadata.Issuer, claim.ID)
 	if err != nil {
 		return allTags, err
 	}
@@ -129,41 +129,5 @@ func (k Keeper) addClaimsAccount(ctx sdk.Context, addr sdk.Address, id string) s
 	}
 	claimIDS = append(claimIDS, id)
 	k.setClaimsAccount(ctx, addr, claimIDS)
-	return nil
-}
-
-func (k Keeper) getClaimsOwner(ctx sdk.Context, addr sdk.Address) ([]string, sdk.Error) {
-	store := ctx.KVStore(k.storeKey)
-	key := GetClaimsOwnerKey(addr)
-	claimIDS := []string{}
-	b := store.Get(key)
-	if len(b) == 0 {
-		return nil, nil
-	}
-	// marshal the claim and add to the state
-	if err := k.cdc.UnmarshalBinary(b, &claimIDS); err != nil {
-		return nil, sdk.ErrInternal(err.Error())
-	}
-	return claimIDS, nil
-}
-
-func (k Keeper) setClaimsOwner(ctx sdk.Context, addr sdk.Address, ids []string) {
-	store := ctx.KVStore(k.storeKey)
-	key := GetClaimsOwnerKey(addr)
-
-	bz, err := k.cdc.MarshalBinary(ids)
-	if err != nil {
-		panic(err)
-	}
-	store.Set(key, bz)
-}
-
-func (k Keeper) addClaimsOwner(ctx sdk.Context, addr sdk.Address, id string) sdk.Error {
-	claimIDS, err := k.getClaimsOwner(ctx, addr)
-	if err != nil {
-		return err
-	}
-	claimIDS = append(claimIDS, id)
-	k.setClaimsOwner(ctx, addr, claimIDS)
 	return nil
 }

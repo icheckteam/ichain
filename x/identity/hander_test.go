@@ -31,10 +31,9 @@ func TestHandle(t *testing.T) {
 	claim, _ := keeper.GetClaim(ctx, msg.ID)
 	require.True(t, claim != nil)
 
-	claimIDS, _ := keeper.getClaimsOwner(ctx, addr)
+	claimIDS, _ := keeper.getClaimsAccount(ctx, addr1)
 	require.True(t, claimIDS[0] == claim.ID)
-
-	claimIDS, _ = keeper.getClaimsAccount(ctx, addr1)
+	claimIDS, _ = keeper.getClaimsAccount(ctx, addr)
 	require.True(t, claimIDS[0] == claim.ID)
 
 	got = handleRevokeMsg(ctx, keeper, RevokeMsg{

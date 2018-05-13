@@ -11,4 +11,5 @@ func RegisterRoutes(r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName s
 	r.HandleFunc("/claims", CreateClaimHandlerFn(cdc, kb)).Methods("POST")
 	r.HandleFunc("/claims/{id}/revoke", RevokeHandlerFn(cdc, kb)).Methods("POST")
 	r.HandleFunc("/claims/{id}", QueryClaimRequestHandlerFn(storeName, cdc)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/claims", QueryClaimRequestHandlerFn(storeName, cdc)).Methods("GET")
 }
