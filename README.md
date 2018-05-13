@@ -14,7 +14,7 @@ Ichain is a blockchain based on tendermint. Ichain makes deploying, multiple net
 
 NOTE: The code is alpha version, but is in the process of rapid development. The master code may be unstable, stable version can be downloaded in the release page.
 
-If you have any questions you can send email to (dev@icheck.vn)n)
+If you have any questions you can send email to (dev@icheck.vn)
 
 
 #### Features
