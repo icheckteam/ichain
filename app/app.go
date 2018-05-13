@@ -71,7 +71,7 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	// add handlers
 	coinKeeper := bank.NewKeeper(app.accountMapper)
 	assetKeeper := asset.NewKeeper(app.capKeyAssetStore, cdc, coinKeeper)
-	identityKeeper := identity.NewKeeper(app.capKeyIdentityStore, cdc, app.accountMapper)
+	identityKeeper := identity.NewKeeper(app.capKeyIdentityStore, cdc)
 	ibcMapper := ibc.NewIBCMapper(cdc, app.capKeyIBCStore)
 	app.Router().
 		AddRoute("bank", bank.NewHandler(coinKeeper)).

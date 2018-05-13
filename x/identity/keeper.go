@@ -10,52 +10,56 @@ import (
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
-	am       sdk.AccountMapper
 }
 
 // NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, am sdk.AccountMapper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc:      cdc,
-		am:       am,
 	}
 }
 
 // ClaimIssue ...
-func (k Keeper) Create(ctx sdk.Context, msg CreateMsg) (types.Tags, sdk.Error) {
+func (k Keeper) Create(ctx sdk.Context, claim Claim) (types.Tags, sdk.Error) {
 	allTags := types.EmptyTags()
-	claim, err := k.GetClaim(ctx, msg.ID)
+	oldClaim, err := k.GetClaim(ctx, claim.ID)
 	if err != nil {
 		return allTags, err
 	}
 
-	if claim == nil || !claim.IsOwner(msg.Metadata.Issuer) {
+	if oldClaim != nil && !oldClaim.IsOwner(claim.Metadata.Issuer) {
 		return allTags, sdk.ErrUnauthorized("")
 	}
 
-	key := GetClaimRecordKey(msg.ID)
-	store := ctx.KVStore(k.storeKey)
-	var b []byte
-	// marshal the claim and add to the state
-	if err := k.cdc.UnmarshalBinary(b, &msg); err != nil {
-		return allTags, sdk.ErrInternal(err.Error())
+	k.setClaim(ctx, claim)
+
+	err = k.addClaimsAccount(ctx, claim.Metadata.Recipient, claim.ID)
+	if err != nil {
+		return allTags, err
+	}
+	err = k.addClaimsOwner(ctx, claim.Metadata.Issuer, claim.ID)
+	if err != nil {
+		return allTags, err
 	}
 
-	store.Set(key, b)
 	// append tags
-	allTags.AppendTag("owner", msg.Metadata.Issuer)
-	allTags.AppendTag("owner", msg.Metadata.Recipient)
-
-	err = k.addClaimsAccount(ctx, msg.Metadata.Recipient, msg.ID)
-	if err != nil {
-		return allTags, err
-	}
-	err = k.addClaimsOwner(ctx, msg.Metadata.Issuer, msg.ID)
-	if err != nil {
-		return allTags, err
-	}
+	allTags.AppendTag("owner", claim.Metadata.Issuer)
+	allTags.AppendTag("owner", claim.Metadata.Recipient)
 	return allTags, nil
+}
+
+func (k Keeper) setClaim(ctx sdk.Context, claim Claim) {
+	store := ctx.KVStore(k.storeKey)
+	key := GetClaimRecordKey(claim.ID)
+
+	// marshal the record and add to the state
+	bz, err := k.cdc.MarshalBinary(claim)
+	if err != nil {
+		panic(err)
+	}
+
+	store.Set(key, bz)
 }
 
 // GetClaim ...
@@ -77,21 +81,16 @@ func (k Keeper) GetClaim(ctx sdk.Context, claimID string) (*Claim, sdk.Error) {
 }
 
 // Revoke ...
-func (k Keeper) Revoke(ctx sdk.Context, claimID, revocation string) (types.Tags, sdk.Error) {
+func (k Keeper) Revoke(ctx sdk.Context, addr sdk.Address, claimID, revocation string) (types.Tags, sdk.Error) {
 	allTags := types.EmptyTags()
-	store := ctx.KVStore(k.storeKey)
-	key := GetClaimRecordKey(claimID)
 	claim, err := k.GetClaim(ctx, claimID)
 	if err != nil {
 		return nil, err
 	}
-	var b []byte
-	// marshal the claim and add to the state
-	if err := k.cdc.UnmarshalBinary(b, &claim); err != nil {
-		return nil, sdk.ErrUnauthorized(err.Error())
+	if claim == nil || !claim.IsOwner(addr) {
+		return allTags, sdk.ErrUnauthorized("")
 	}
-
-	store.Set(key, b)
+	k.setClaim(ctx, *claim)
 	allTags.AppendTag("owner", claim.Metadata.Issuer)
 	allTags.AppendTag("owner", claim.Metadata.Recipient)
 	return allTags, nil

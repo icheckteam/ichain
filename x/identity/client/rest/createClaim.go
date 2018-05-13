@@ -58,7 +58,7 @@ func CreateClaimHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 		}
 
 		// build message
-		msg := buildCreateClaimMsg(info.PubKey.Address(), m)
+		msg, err := buildCreateClaimMsg(info.PubKey.Address(), m)
 		if err != nil { // XXX rechecking same error ?
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -93,11 +93,15 @@ func CreateClaimHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWr
 	}
 }
 
-func buildCreateClaimMsg(creator sdk.Address, body createClaimBody) sdk.Msg {
+func buildCreateClaimMsg(creator sdk.Address, body createClaimBody) (sdk.Msg, error) {
+	b, err := json.Marshal(body.Content)
+	if err != nil {
+		return nil, err
+	}
 	return identity.CreateMsg{
 		ID:       body.ClaimID,
 		Context:  body.Context,
-		Content:  body.Content,
+		Content:  identity.Content(b),
 		Metadata: body.Metadata,
-	}
+	}, nil
 }

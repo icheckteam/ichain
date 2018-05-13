@@ -23,7 +23,12 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleCreate(ctx sdk.Context, k Keeper, msg CreateMsg) sdk.Result {
-	tags, err := k.Create(ctx, msg)
+	tags, err := k.Create(ctx, Claim{
+		ID:       msg.ID,
+		Context:  msg.Context,
+		Content:  msg.Content,
+		Metadata: msg.Metadata,
+	})
 	if err != nil {
 		return err.Result()
 	}
@@ -31,7 +36,7 @@ func handleCreate(ctx sdk.Context, k Keeper, msg CreateMsg) sdk.Result {
 }
 
 func handleRevokeMsg(ctx sdk.Context, k Keeper, msg RevokeMsg) sdk.Result {
-	tags, err := k.Revoke(ctx, msg.ClaimID, msg.Revocation)
+	tags, err := k.Revoke(ctx, msg.Owner, msg.ID, msg.Revocation)
 	if err != nil {
 		return err.Result()
 	}

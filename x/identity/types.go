@@ -9,10 +9,10 @@ import (
 
 // Claim struct
 type Claim struct {
-	ID       string                 `json:"id"`
-	Context  string                 `json:"context"`
-	Content  map[string]interface{} `json:"content"`
-	Metadata ClaimMetadata          `json:"metadata"`
+	ID       string        `json:"id"`
+	Context  string        `json:"context"`
+	Content  Content       `json:"content"`
+	Metadata ClaimMetadata `json:"metadata"`
 }
 
 // ClaimMetadata the claim metadata
@@ -27,3 +27,5 @@ type ClaimMetadata struct {
 func (c Claim) IsOwner(addr sdk.Address) bool {
 	return hex.EncodeToString(c.Metadata.Issuer) == hex.EncodeToString(addr)
 }
+
+type Content []byte

@@ -85,8 +85,8 @@ func RevokeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter,
 
 func buildRevokeMsg(creator sdk.Address, claimID string, revocation string) sdk.Msg {
 	return identity.RevokeMsg{
-		Sender:     creator,
-		ClaimID:    claimID,
+		Owner:      creator,
+		ID:         claimID,
 		Revocation: revocation,
 	}
 }
