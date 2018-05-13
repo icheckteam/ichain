@@ -8,9 +8,9 @@ master    | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.s
 
 English | [Vietnamese](README_VN.md)
 
-Wellcome to Ichain source code library!
+Welcome to Ichain source code library!
 
-Ichain is a blockchain based on tendermint. Ichain makes deploying, multiple networks connection and run sypply chain application easier.
+Ichain is a blockchain based on tendermint. Ichain makes deploying, multiple networks connection and run supply chain application easier.
 
 NOTE: The code is alpha version, but is in the process of rapid development. The master code may be unstable, stable version can be downloaded in the release page.
 
