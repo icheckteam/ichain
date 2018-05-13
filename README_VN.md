@@ -6,7 +6,7 @@ Branch    | Tests | Coverage
 develop   | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/develop.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/develop) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/develop/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 master    | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/master) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/master/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 
-Vietnameses | [English](README.md)
+Vietnamese | [English](README.md)
 
 Chào mừng bạn đến với thư viện mã nguồn Ichain
 
@@ -18,13 +18,15 @@ Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng d�
 
 
 #### Các tính năng
-- Tốc độ xử  lý giao dịch ngay lập tức.
+- Hỗ trợ hàng ngàn giao dịch mỗi giây.
 - Thời gian tạo khối nhanh.
 - Truy xuất nguồn gốc chuỗi cung ứng.
 - Triển khai và quản lý dòng chảy của sản phẩm.
 - Có thể mở rộng hợp đồng thông minh.
 - Trao đổi tài sản nhanh chóng.
 - Nhận dạng danh tính kỹ thuật số.
+- Kết nối đa mạng lưới
+- 
 
 ## Các module
 
