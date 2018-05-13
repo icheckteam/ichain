@@ -14,11 +14,11 @@ import (
 )
 
 type updateAttributeBody struct {
-	LocalAccountName string          `json:"account_name"`
-	Password         string          `json:"password"`
-	Attribute        asset.Attribute `json:"attribute"`
-	ChainID          string          `json:"chain_id"`
-	Sequence         int64           `json:"sequence"`
+	LocalAccountName string            `json:"account_name"`
+	Password         string            `json:"password"`
+	Attributes       []asset.Attribute `json:"attributes"`
+	ChainID          string            `json:"chain_id"`
+	Sequence         int64             `json:"sequence"`
 }
 
 func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -92,8 +92,8 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 
 func buildUpdateAttributeMsg(creator sdk.Address, assetID string, body updateAttributeBody) sdk.Msg {
 	return asset.UpdateAttrMsg{
-		Issuer:    creator,
-		ID:        assetID,
-		Attribute: body.Attribute,
+		Issuer:     creator,
+		ID:         assetID,
+		Attributes: body.Attributes,
 	}
 }

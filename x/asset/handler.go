@@ -19,6 +19,12 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleAddQuantity(ctx, k, msg)
 		case UpdateAttrMsg:
 			return handleUpdateAttr(ctx, k, msg)
+		case CreateProposalMsg:
+			return handleCreateProposal(ctx, k, msg)
+		case AnswerProposalMsg:
+			return handleAnswerProposal(ctx, k, msg)
+		case RevokeProposalMsg:
+			return handleRevokeProposal(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -75,4 +81,16 @@ func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) 
 	return sdk.Result{
 		Tags: tags,
 	}
+}
+
+func handleCreateProposal(ctx sdk.Context, k Keeper, msg CreateProposalMsg) sdk.Result {
+	return sdk.Result{}
+}
+
+func handleRevokeProposal(ctx sdk.Context, k Keeper, msg RevokeProposalMsg) sdk.Result {
+	return sdk.Result{}
+}
+
+func handleAnswerProposal(ctx sdk.Context, k Keeper, msg AnswerProposalMsg) sdk.Result {
+	return sdk.Result{}
 }

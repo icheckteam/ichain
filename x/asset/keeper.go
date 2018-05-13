@@ -87,7 +87,9 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags,
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
-	setAttribute(asset, msg.Attribute)
+	for _, attr := range msg.Attributes {
+		setAttribute(asset, attr)
+	}
 
 	k.setAsset(ctx, *asset)
 	allTags.AppendTag("owner", msg.Issuer.Bytes())

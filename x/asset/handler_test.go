@@ -80,10 +80,8 @@ func TestHandleRegister(t *testing.T) {
 	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
 		ID:     msg.ID,
 		Issuer: addr,
-		Attribute: Attribute{
-			Name:        "weight",
-			Type:        3,
-			NumberValue: 100,
+		Attributes: []Attribute{
+			attr,
 		},
 	})
 	require.True(t, got.IsOK(), "expected no error on handleUpdateAttr")
@@ -94,13 +92,8 @@ func TestHandleRegister(t *testing.T) {
 	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
 		ID:     msg.ID,
 		Issuer: addr,
-		Attribute: Attribute{
-			Name: "location",
-			Type: 7,
-			Location: Location{
-				Latitude:  1,
-				Longitude: 1,
-			},
+		Attributes: []Attribute{
+			attr,
 		},
 	})
 	require.True(t, got.IsOK(), "expected no error on handleUpdateAttr")
@@ -111,10 +104,8 @@ func TestHandleRegister(t *testing.T) {
 	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
 		ID:     msg.ID,
 		Issuer: addrs[1],
-		Attribute: Attribute{
-			Name:        "weight",
-			Type:        3,
-			NumberValue: 100,
+		Attributes: []Attribute{
+			attr,
 		},
 	})
 	require.False(t, got.IsOK(), "expected no error on handleUpdateAttr")

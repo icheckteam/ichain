@@ -10,9 +10,10 @@ type Asset struct {
 	Name       string      `json:"name"`
 	Issuer     sdk.Address `json:"issuer"`
 	Quantity   int64       `json:"quantity"`
-	Attributes []Attribute `json:"attributes"`
 	Company    string      `json:"company"`
 	Email      string      `json:"email"`
+	Attributes []Attribute `json:"attributes"`
+	Proposals  Proposals   `json:"proposals"`
 }
 
 // IsOwner ....
@@ -36,3 +37,13 @@ type Location struct {
 	Latitude  float64 `json:"latitude" amino:"unsafe"`
 	Longitude float64 `json:"longitude" amino:"unsafe"`
 }
+
+type Proposal struct {
+	Role       int64
+	Status     int64
+	Properties []string
+	Issuer     sdk.Address
+	Recipient  sdk.Address
+}
+
+type Proposals []Proposal
