@@ -1,5 +1,6 @@
 <h1>Ichain </h1>
-<h4>Version 0.0.1 </h4>
+
+[![version](https://img.shields.io/github/tag/icheckteam/ichain.svg)](https://github.com/icheckteam/ichain/releases/latest)
 
 Branch    | Tests | Coverage
 ----------|-------|---------
