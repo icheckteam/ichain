@@ -90,6 +90,7 @@ func (k Keeper) Revoke(ctx sdk.Context, addr sdk.Address, claimID, revocation st
 	if claim == nil || !claim.IsOwner(addr) {
 		return allTags, sdk.ErrUnauthorized("")
 	}
+	claim.Metadata.Revocation = revocation
 	k.setClaim(ctx, *claim)
 	allTags.AppendTag("owner", claim.Metadata.Issuer)
 	allTags.AppendTag("owner", claim.Metadata.Recipient)

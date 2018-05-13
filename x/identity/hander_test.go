@@ -49,4 +49,6 @@ func TestHandle(t *testing.T) {
 		Revocation: "1212",
 	})
 	require.True(t, got.IsOK(), "expected no error on handleRevokeMsg")
+	claim, _ = keeper.GetClaim(ctx, msg.ID)
+	require.True(t, claim.Metadata.Revocation == "1212")
 }

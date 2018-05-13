@@ -88,17 +88,16 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 // UpdateAttrMsg ...
 // ---------------------------------------------------------------
 type UpdateAttrMsg struct {
-	Issuer sdk.Address `json:"issuer"`
-	ID     string      `json:"id"`
-	Name   string      `json:"name"`
-	Value  interface{} `json:"value"`
+	Issuer    sdk.Address `json:"issuer"`
+	ID        string      `json:"id"`
+	Attribute Attribute   `json:"attribute"`
 }
 
 func (msg UpdateAttrMsg) Type() string                            { return msgType }
 func (msg UpdateAttrMsg) Get(key interface{}) (value interface{}) { return nil }
 func (msg UpdateAttrMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg UpdateAttrMsg) String() string {
-	return fmt.Sprintf("UpdateAttrMsg{%s: %s -> %v }", msg.ID, msg.Name, msg.Value)
+	return fmt.Sprintf("UpdateAttrMsg{%s->%s}", msg.ID, msg.Attribute.Name)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
@@ -109,11 +108,8 @@ func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
 	if len(msg.ID) == 0 {
 		return ErrMissingField("id")
 	}
-	if len(msg.Name) == 0 {
+	if len(msg.Attribute.Name) == 0 {
 		return ErrMissingField("name")
-	}
-	if msg.Value == 0 {
-		return ErrMissingField("value")
 	}
 	return nil
 }

@@ -14,12 +14,11 @@ import (
 )
 
 type updateAttributeBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	AttributeName    string `json:"attribute_name"`
-	AttributeValue   string `json:"attribute_value"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
+	LocalAccountName string          `json:"account_name"`
+	Password         string          `json:"password"`
+	Attribute        asset.Attribute `json:"attribute"`
+	ChainID          string          `json:"chain_id"`
+	Sequence         int64           `json:"sequence"`
 }
 
 func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -48,15 +47,9 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 			return
 		}
 
-		if len(m.AttributeName) == 0 {
+		if len(m.Attribute.Name) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("AttributeName is required"))
-			return
-		}
-
-		if len(m.AttributeValue) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("AttributeValue is required"))
+			w.Write([]byte("attribute.name is required"))
 			return
 		}
 
@@ -99,9 +92,8 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 
 func buildUpdateAttributeMsg(creator sdk.Address, assetID string, body updateAttributeBody) sdk.Msg {
 	return asset.UpdateAttrMsg{
-		Issuer: creator,
-		ID:     assetID,
-		Name:   body.AttributeName,
-		Value:  body.AttributeValue,
+		Issuer:    creator,
+		ID:        assetID,
+		Attribute: body.Attribute,
 	}
 }

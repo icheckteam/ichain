@@ -87,7 +87,8 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags,
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
-	asset.Attributes[msg.Name] = msg.Value
+	setAttribute(asset, msg.Attribute)
+
 	k.setAsset(ctx, *asset)
 	allTags.AppendTag("owner", msg.Issuer.Bytes())
 	allTags.AppendTag("asset_id", []byte(msg.ID))
@@ -133,4 +134,14 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
 	return coins, tags, err
+}
+
+func setAttribute(a *Asset, attr Attribute) {
+	for _, oldAttr := range a.Attributes {
+		if oldAttr.Name == attr.Name {
+			oldAttr = attr
+			return
+		}
+	}
+	a.Attributes = append(a.Attributes, attr)
 }

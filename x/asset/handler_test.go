@@ -77,4 +77,45 @@ func TestHandleRegister(t *testing.T) {
 	})
 	require.False(t, got.IsOK(), "expected no error on handleSubtractQuantity")
 
+	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
+		ID:     msg.ID,
+		Issuer: addr,
+		Attribute: Attribute{
+			Name:        "weight",
+			Type:        3,
+			NumberValue: 100,
+		},
+	})
+	require.True(t, got.IsOK(), "expected no error on handleUpdateAttr")
+	asset = keeper.GetAsset(ctx, msg.ID)
+	require.True(t, asset.Attributes[0].Name == "weight")
+	require.True(t, asset.Attributes[0].NumberValue == 100)
+
+	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
+		ID:     msg.ID,
+		Issuer: addr,
+		Attribute: Attribute{
+			Name: "location",
+			Type: 7,
+			Location: Location{
+				Latitude:  1,
+				Longitude: 1,
+			},
+		},
+	})
+	require.True(t, got.IsOK(), "expected no error on handleUpdateAttr")
+	asset = keeper.GetAsset(ctx, msg.ID)
+	require.True(t, asset.Attributes[1].Name == "location")
+	require.True(t, asset.Attributes[1].Location.Latitude == 1)
+
+	got = handleUpdateAttr(ctx, keeper, UpdateAttrMsg{
+		ID:     msg.ID,
+		Issuer: addrs[1],
+		Attribute: Attribute{
+			Name:        "weight",
+			Type:        3,
+			NumberValue: 100,
+		},
+	})
+	require.False(t, got.IsOK(), "expected no error on handleUpdateAttr")
 }
