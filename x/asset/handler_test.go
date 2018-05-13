@@ -93,7 +93,14 @@ func TestHandleRegister(t *testing.T) {
 		ID:     msg.ID,
 		Issuer: addr,
 		Attributes: []Attribute{
-			attr,
+			Attribute{
+				Name: "location",
+				Type: 3,
+				Location: Location{
+					Latitude:  1,
+					Longitude: 1,
+				},
+			},
 		},
 	})
 	require.True(t, got.IsOK(), "expected no error on handleUpdateAttr")

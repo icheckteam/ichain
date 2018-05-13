@@ -47,7 +47,7 @@ func UpdateAttributeHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.Respon
 			return
 		}
 
-		if len(m.Attribute.Name) == 0 {
+		if len(m.Attributes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("attribute.name is required"))
 			return
