@@ -44,13 +44,13 @@ To download pre-built binaries, see our [Release page](https://github.com/icheck
 Clone the ichain repository into the appropriable $GOPATH/src/github.com/icheckteam
 
 ```
-$ git clone github.com/icheckteam/ichaind.git
+$ git clone github.com/icheckteam/ichain.git
 ```
 
 or 
 
 ```
-$ go get github.com/icheckteam/ichaind.git
+$ go get github.com/icheckteam/ichain.git
 ```
 
 Build the source with make.
