@@ -64,7 +64,7 @@ After building the source code successfully. You should see two executable progr
 - `ichaind`: The node command line program for node control 
 - `ichaincli`: Chương trình dòng lệnh khách hàng thực thi giao dịch 
 
-# Public test network and sync node deployment
+### Public test network and sync node deployment
 
 1. Create account 
 - Through command line program, create an account
