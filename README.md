@@ -6,47 +6,68 @@ Branch    | Tests | Coverage
 develop   | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/develop.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/develop) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/develop/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 master    | [![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/master) | [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/master/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 
-Vietnameses | [English](README.md)
+English | [Vietnameses](README_VN.md)
 
-Chào mừng bạn đến với thư viện mã nguồn Ichain
+Wellcome to Ichain source code library!
 
-Ichain là một blockchain được phát triển dựa trên tendermint giúp triển khai, kết nối đa mạng lưới và chạy ứng dụng truy xuất chuỗi cung ứng dễ dàng hơn.  
+Ichain is a blockchain based on tendermint. Ichain makes deploying, multiple networks connection and run sypply chain application easier.
 
-Mã nguồn hiện đang ở giai đoạn thử nghiệm, đang trong quá trình phát triển nhanh chóng. Mã chính hiện tại không ổn định, các phiên bản ổn định sẽ được liệt kê trên trang phát hành.
+NOTE: The code is alpha version, but is in the process of rapid development. The master code may be unstable, stable version can be downloaded in the release page.
 
-Bất kỳ câu hỏi liên quan đến việc hợp tác triển khai ứng dụng xin vui lòng gửi đến email (dev@icheck.vn)
+If you have any questions you can send email to (dev@icheck.vn)n)
 
 
-#### Các tính năng
-- Tốc độ xử  lý giao dịch ngay lập tức.
-- Thời gian tạo khối nhanh.
-- Truy xuất nguồn gốc chuỗi cung ứng.
-- Triển khai và quản lý dòng chảy của sản phẩm.
-- Có thể mở rộng hợp đồng thông minh.
-- Trao đổi tài sản nhanh chóng.
-- Nhận dạng danh tính kỹ thuật số.
+#### Features
+- Supports thousands of transactions per second
+- Quick block generation time
+- Supply chain traceability
+- Deploying and management product
+- Scalable smart contract 
+- Multiple networks connection
+- Identification of digital identity.
 
-## Các module
+### Modules
 
-1. [Identity](https://github.com/icheckteam/documentation/blob/master/Identity.md) là một module quản lý và nhận dạng danh tính kỹ thuật số.
-2. [Asset](https://github.com/icheckteam/documentation/blob/master/Asset.md) là một module quản lý, và trao đổi tài sản ký thuật số.
+1. [Identity](https://github.com/icheckteam/documentation/blob/master/Identity.md)
+2. [Asset](https://github.com/icheckteam/documentation/blob/master/Asset.md)
 
-#### Bắt đầu
+### Minimum requirements
+
+Requirement|Notes
+---|---
+Go version | Go1.9 or higher
+
+### Install 
+
+To download pre-built binaries, see our [Release page](https://github.com/icheckteam/ichain/releases)
+
+Clone the ichain repository into the appropriable $GOPATH/src/github.com/icheckteam
+
+```
+$ git clone github.com/icheckteam/ichaind.git
+```
+
+or 
+
+```
+$ go get github.com/icheckteam/ichaind.git
+```
+
+Build the source with make.
 
 ```
 $ make
-````
+```
 
-Sau khi xây dựng mã nguồn thành công, bạn sẽ thấy 2 chương trình thực thị trong thư mục ./build
+After building the source code susscefully. You should see two executable programs:
 
-- `ichaind`: Chương trình dòng lệnh để triển khai nút
+- `ichaind`: The node command line program for node control 
 - `ichaincli`: Chương trình dòng lệnh khách hàng thực thi giao dịch 
 
+# Public test network and sync node deployment
 
-# Triển khai nút thử nghiệm nút công cộng
-
-1. Tạo tài khoản
-- Thông qua chương trình dòng lệnh, khởi tạo một tài khoản
+1. Create account 
+- Through command line program, create an account
 ```
 ./ichaincli keys add testaccount
 Enter a passphrase for your key:
@@ -57,13 +78,13 @@ It is the only way to recover your account if you ever forget your password.
 
 melody tunnel slice calm basket round retreat cry impulse tail tunnel awkward morning wash apple abandon
 ```
-2. Bắt đầu ichain
-- Thông qua chương trình dòng lệnh, bắt đầu nút công cộng:
+2. Start ichain 
+- Through command line program, start node
 ```
 ./ichaind start
 ```
 
-### Thực thi
+### Implements
 
 Chạy `ichaincli --help` để  để xem hướng dẫn chi tiết
 
