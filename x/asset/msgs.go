@@ -271,6 +271,9 @@ func (msg AnswerProposalMsg) String() string {
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg AnswerProposalMsg) ValidateBasic() sdk.Error {
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
+	}
 	if len(msg.Recipient) == 0 {
 		return ErrMissingField("recipient")
 	}
