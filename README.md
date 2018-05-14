@@ -65,7 +65,7 @@ $ make
 After building the source code successfully. You should see two executable programs:
 
 - `ichaind`: The node command line program for node control 
-- `ichaincli`: Chương trình dòng lệnh khách hàng thực thi giao dịch 
+- `ichaincli`: The command line program for client control
 
 ### Public test network and sync node deployment
 
