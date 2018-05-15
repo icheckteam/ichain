@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/x/bank"
 	"github.com/icheckteam/ichain/x/ibc"
+	"github.com/icheckteam/ichain/x/stake"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
@@ -35,10 +36,17 @@ type IchainApp struct {
 	keyAccount  *sdk.KVStoreKey
 	keyIBC      *sdk.KVStoreKey
 	keyIdentity *sdk.KVStoreKey
+	keyStake    *sdk.KVStoreKey
 	keyAsset    *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountMapper sdk.AccountMapper
+	// Manage getting and setting accounts
+	accountMapper  sdk.AccountMapper
+	coinKeeper     bank.Keeper
+	ibcMapper      ibc.Mapper
+	stakeKeeper    stake.Keeper
+	assetKeeper    asset.Keeper
+	identityKeeper identity.Keeper
 
 	// Handle fees
 	feeHandler sdk.FeeHandler
@@ -67,15 +75,17 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	)
 
 	// add handlers
-	coinKeeper := bank.NewKeeper(app.accountMapper)
-	assetKeeper := asset.NewKeeper(app.keyAsset, cdc, coinKeeper)
-	identityKeeper := identity.NewKeeper(app.keyIdentity, cdc)
-	ibcMapper := ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
+	app.coinKeeper = bank.NewKeeper(app.accountMapper)
+	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc, app.coinKeeper)
+	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc)
+	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
+	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.coinKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.Router().
-		AddRoute("bank", bank.NewHandler(coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(ibcMapper, coinKeeper)).
-		AddRoute("asset", asset.NewHandler(assetKeeper)).
-		AddRoute("identity", identity.NewHandler(identityKeeper))
+		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
+		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
+		AddRoute("asset", asset.NewHandler(app.assetKeeper)).
+		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
+		AddRoute("stake", stake.NewHandler(app.stakeKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler

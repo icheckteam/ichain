@@ -24,6 +24,7 @@ import (
 	bank "github.com/icheckteam/ichain/x/bank/client/rest"
 	ibc "github.com/icheckteam/ichain/x/ibc/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
+	stake "github.com/icheckteam/ichain/x/stake/client/rest"
 )
 
 const (
@@ -87,5 +88,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	ibc.RegisterRoutes(ctx, r, cdc, kb)
 	asset.RegisterRoutes(r, cdc, kb, "asset")
 	identity.RegisterRoutes(r, cdc, kb, "identity")
+	stake.RegisterRoutes(ctx, r, cdc, kb)
 	return r
 }

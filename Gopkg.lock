@@ -21,8 +21,6 @@
     "client/context",
     "client/keys",
     "client/rpc",
-    "examples/basecoin/app",
-    "examples/basecoin/types",
     "server",
     "store",
     "tests",
@@ -484,6 +482,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "862238c57101aa83b9d15c273533e8766323054eb56741b4c5b1a2475cc53ab8"
+  inputs-digest = "d53ff06908554f801887b79c97692aafe48a0f9647703b1017985ab8a3b5221e"
   solver-name = "gps-cdcl"
   solver-version = 1

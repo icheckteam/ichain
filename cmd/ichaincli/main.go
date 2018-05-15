@@ -17,9 +17,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	assetcmd "github.com/icheckteam/ichain/x/asset/client/cli"
 	bankcmd "github.com/icheckteam/ichain/x/bank/client/cli"
 	ibccmd "github.com/icheckteam/ichain/x/ibc/client/cli"
+	stakecmd "github.com/icheckteam/ichain/x/stake/client/cli"
 )
 
 // rootCmd is the entry point for this binary
@@ -52,14 +52,16 @@ func main() {
 		client.GetCommands(
 			authcmd.GetAccountCmd("main", cdc, types.GetAccountDecoder(cdc)),
 		)...)
+
 	rootCmd.AddCommand(
 		client.PostCommands(
 			bankcmd.SendTxCmd(cdc),
-			assetcmd.CreateAssetCmd(cdc),
-		)...)
-	rootCmd.AddCommand(
-		client.PostCommands(
 			ibccmd.IBCTransferCmd(cdc),
+			ibccmd.IBCRelayCmd(cdc),
+			stakecmd.GetCmdDeclareCandidacy(cdc),
+			stakecmd.GetCmdEditCandidacy(cdc),
+			stakecmd.GetCmdDelegate(cdc),
+			stakecmd.GetCmdUnbond(cdc),
 		)...)
 
 	// add proxy, version and key info
