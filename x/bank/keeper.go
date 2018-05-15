@@ -7,8 +7,6 @@ import (
 	types "github.com/icheckteam/ichain/types"
 )
 
-const moduleName = "bank"
-
 // Keeper manages transfers between accounts
 type Keeper struct {
 	am sdk.AccountMapper
@@ -35,23 +33,77 @@ func (keeper Keeper) HasCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) 
 }
 
 // SubtractCoins subtracts amt from the coins at the addr.
-func (ck Keeper) SubtractCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) (sdk.Coins, types.Tags, sdk.Error) {
-	return subtractCoins(ctx, ck.am, addr, amt)
+func (keeper Keeper) SubtractCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) (sdk.Coins, types.Tags, sdk.Error) {
+	return subtractCoins(ctx, keeper.am, addr, amt)
 }
 
 // AddCoins adds amt to the coins at the addr.
-func (ck Keeper) AddCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) (sdk.Coins, types.Tags, sdk.Error) {
-	return addCoins(ctx, ck.am, addr, amt)
+func (keeper Keeper) AddCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) (sdk.Coins, types.Tags, sdk.Error) {
+	return addCoins(ctx, keeper.am, addr, amt)
 }
 
 // SendCoins moves coins from one account to another
-func (ck Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.Address, toAddr sdk.Address, amt sdk.Coins) (types.Tags, sdk.Error) {
-	return sendCoins(ctx, ck.am, fromAddr, toAddr, amt)
+func (keeper Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.Address, toAddr sdk.Address, amt sdk.Coins) (types.Tags, sdk.Error) {
+	return sendCoins(ctx, keeper.am, fromAddr, toAddr, amt)
 }
 
 // InputOutputCoins handles a list of inputs and outputs
-func (ck Keeper) InputOutputCoins(ctx sdk.Context, inputs []Input, outputs []Output) (types.Tags, sdk.Error) {
-	return inputOutputCoins(ctx, ck.am, inputs, outputs)
+func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []Input, outputs []Output) (types.Tags, sdk.Error) {
+	return inputOutputCoins(ctx, keeper.am, inputs, outputs)
+}
+
+//______________________________________________________________________________________________
+
+// SendKeeper only allows transfers between accounts, without the possibility of creating coins
+type SendKeeper struct {
+	am sdk.AccountMapper
+}
+
+// NewSendKeeper returns a new Keeper
+func NewSendKeeper(am sdk.AccountMapper) SendKeeper {
+	return SendKeeper{am: am}
+}
+
+// GetCoins returns the coins at the addr.
+func (keeper SendKeeper) GetCoins(ctx sdk.Context, addr sdk.Address) sdk.Coins {
+	return getCoins(ctx, keeper.am, addr)
+}
+
+// HasCoins returns whether or not an account has at least amt coins.
+func (keeper SendKeeper) HasCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) bool {
+	return hasCoins(ctx, keeper.am, addr, amt)
+}
+
+// SendCoins moves coins from one account to another
+func (keeper SendKeeper) SendCoins(ctx sdk.Context, fromAddr sdk.Address, toAddr sdk.Address, amt sdk.Coins) (types.Tags, sdk.Error) {
+	return sendCoins(ctx, keeper.am, fromAddr, toAddr, amt)
+}
+
+// InputOutputCoins handles a list of inputs and outputs
+func (keeper SendKeeper) InputOutputCoins(ctx sdk.Context, inputs []Input, outputs []Output) (types.Tags, sdk.Error) {
+	return inputOutputCoins(ctx, keeper.am, inputs, outputs)
+}
+
+//______________________________________________________________________________________________
+
+// ViewKeeper only allows reading of balances
+type ViewKeeper struct {
+	am sdk.AccountMapper
+}
+
+// NewViewKeeper returns a new Keeper
+func NewViewKeeper(am sdk.AccountMapper) ViewKeeper {
+	return ViewKeeper{am: am}
+}
+
+// GetCoins returns the coins at the addr.
+func (keeper ViewKeeper) GetCoins(ctx sdk.Context, addr sdk.Address) sdk.Coins {
+	return getCoins(ctx, keeper.am, addr)
+}
+
+// HasCoins returns whether or not an account has at least amt coins.
+func (keeper ViewKeeper) HasCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coins) bool {
+	return hasCoins(ctx, keeper.am, addr, amt)
 }
 
 //______________________________________________________________________________________________
@@ -119,8 +171,11 @@ func sendCoins(ctx sdk.Context, am sdk.AccountMapper, fromAddr sdk.Address, toAd
 	return subTags.AppendTags(addTags), nil
 }
 
+// InputOutputCoins handles a list of inputs and outputs
+// NOTE: Make sure to revert state changes from tx on error
 func inputOutputCoins(ctx sdk.Context, am sdk.AccountMapper, inputs []Input, outputs []Output) (types.Tags, sdk.Error) {
 	allTags := types.EmptyTags()
+
 	for _, in := range inputs {
 		_, tags, err := subtractCoins(ctx, am, in.Address, in.Coins)
 		if err != nil {

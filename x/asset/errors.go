@@ -15,44 +15,46 @@ const (
 	CodeInvalidOutput      sdk.CodeType = 503
 	CodeInvalidAssets      sdk.CodeType = 504
 	CodeMissingField       sdk.CodeType = 505
+
+	DefaultCodespace sdk.CodespaceType = 10
 )
 
 // ErrUnknownAsset ...
 func ErrUnknownAsset(msg string) sdk.Error {
-	return newError(CodeUnknownAsset, msg)
+	return newError(DefaultCodespace, CodeUnknownAsset, msg)
 }
 
 // ErrMissingField ...
 func ErrMissingField(field string) sdk.Error {
-	return newError(CodeMissingField, fmt.Sprintf("missing %s", field))
+	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("missing %s", field))
 }
 
 // InvalidTransaction ...
 func InvalidTransaction(msg string) sdk.Error {
-	return newError(CodeInvalidTransaction, msg)
+	return newError(DefaultCodespace, CodeInvalidTransaction, msg)
 }
 
 //----------------------------------------
 // Error constructors
 
 func ErrInvalidInput(msg string) sdk.Error {
-	return newError(CodeInvalidInput, msg)
+	return newError(DefaultCodespace, CodeInvalidInput, msg)
 }
 
 func ErrInvalidAssets(msg string) sdk.Error {
-	return newError(CodeInvalidAssets, msg)
+	return newError(DefaultCodespace, CodeInvalidAssets, msg)
 }
 
 func ErrNoInputs() sdk.Error {
-	return newError(CodeInvalidInput, "")
+	return newError(DefaultCodespace, CodeInvalidInput, "")
 }
 
 func ErrInvalidOutput(msg string) sdk.Error {
-	return newError(CodeInvalidOutput, msg)
+	return newError(DefaultCodespace, CodeInvalidOutput, msg)
 }
 
 func ErrNoOutputs() sdk.Error {
-	return newError(CodeInvalidOutput, "")
+	return newError(DefaultCodespace, CodeInvalidOutput, "")
 }
 
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.
@@ -69,10 +71,10 @@ func CodeToDefaultMsg(code sdk.CodeType) string {
 	}
 }
 
-func newError(code sdk.CodeType, msg string) sdk.Error {
+func newError(codespace sdk.CodespaceType, code sdk.CodeType, msg string) sdk.Error {
 	// TODO capture stacktrace if ENV is set.
 	if msg == "" {
 		msg = CodeToDefaultMsg(code)
 	}
-	return sdk.NewError(code, msg)
+	return sdk.NewError(codespace, code, msg)
 }

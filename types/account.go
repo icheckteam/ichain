@@ -8,24 +8,21 @@ import (
 
 var _ sdk.Account = (*AppAccount)(nil)
 
-// AppAccount Custom extensions for this application.  This is just an example of
+// Custom extensions for this application.  This is just an example of
 // extending auth.BaseAccount with custom fields.
 //
 // This is compatible with the stock auth.AccountStore, since
-// auth.AccountStore uses the flexible go-wire library.
+// auth.AccountStore uses the flexible go-amino library.
 type AppAccount struct {
 	auth.BaseAccount
-	Name       string `json:"name"`
-	Identities Identities
+	Name string `json:"name"`
 }
 
 // nolint
-func (acc AppAccount) GetName() string                      { return acc.Name }
-func (acc *AppAccount) SetName(name string)                 { acc.Name = name }
-func (acc AppAccount) GetIdentities() Identities            { return acc.Identities }
-func (acc *AppAccount) SetIdentities(identities Identities) { acc.Identities = identities }
+func (acc AppAccount) GetName() string      { return acc.Name }
+func (acc *AppAccount) SetName(name string) { acc.Name = name }
 
-// GetAccountDecoder Get the AccountDecoder function for the custom AppAccount
+// Get the AccountDecoder function for the custom AppAccount
 func GetAccountDecoder(cdc *wire.Codec) sdk.AccountDecoder {
 	return func(accBytes []byte) (res sdk.Account, err error) {
 		if len(accBytes) == 0 {
@@ -42,7 +39,7 @@ func GetAccountDecoder(cdc *wire.Codec) sdk.AccountDecoder {
 
 //___________________________________________________________________________________
 
-// GenesisState State to Unmarshal
+// State to Unmarshal
 type GenesisState struct {
 	Accounts []*GenesisAccount `json:"accounts"`
 }
@@ -54,20 +51,19 @@ type GenesisAccount struct {
 	Coins   sdk.Coins   `json:"coins"`
 }
 
-// NewGenesisAccount new genesis account
 func NewGenesisAccount(aa *AppAccount) *GenesisAccount {
 	return &GenesisAccount{
 		Name:    aa.Name,
 		Address: aa.Address,
-		Coins:   aa.Coins,
+		Coins:   aa.Coins.Sort(),
 	}
 }
 
-// ToAppAccount convert GenesisAccount to AppAccount
+// convert GenesisAccount to AppAccount
 func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount, err error) {
 	baseAcc := auth.BaseAccount{
 		Address: ga.Address,
-		Coins:   ga.Coins,
+		Coins:   ga.Coins.Sort(),
 	}
 	return &AppAccount{
 		BaseAccount: baseAcc,

@@ -12,8 +12,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/icheckteam/ichain/x/bank/commands"
+	"github.com/icheckteam/ichain/x/bank/client"
 )
+
+// RegisterRoutes - Central function to define routes that get registered by the main application
+func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase) {
+	r.HandleFunc("/accounts/{address}/send", SendRequestHandlerFn(cdc, kb, ctx)).Methods("POST")
+}
 
 type sendBody struct {
 	// fees is not used currently
@@ -25,10 +30,8 @@ type sendBody struct {
 	Sequence         int64     `json:"sequence"`
 }
 
-// SendRequestHandler - http request handler to send coins to a address
-func SendRequestHandler(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	c := commands.Commander{cdc}
-	ctx := context.NewCoreContextFromViper()
+// SendRequestHandlerFn - http request handler to send coins to a address
+func SendRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, ctx context.CoreContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// collect data
 		vars := mux.Vars(r)
@@ -64,7 +67,7 @@ func SendRequestHandler(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWrit
 		to := sdk.Address(bz)
 
 		// build message
-		msg := commands.BuildMsg(info.PubKey.Address(), to, m.Amount)
+		msg := client.BuildMsg(info.PubKey.Address(), to, m.Amount)
 		if err != nil { // XXX rechecking same error ?
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -72,8 +75,8 @@ func SendRequestHandler(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWrit
 		}
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, c.Cdc)
+		ctx = ctx.WithSequence(m.Sequence)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

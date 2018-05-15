@@ -19,25 +19,25 @@
     "baseapp",
     "client",
     "client/context",
-    "client/core",
     "client/keys",
     "client/rpc",
-    "mock",
+    "examples/basecoin/app",
+    "examples/basecoin/types",
     "server",
     "store",
+    "tests",
     "types",
     "version",
     "wire",
     "x/auth",
-    "x/auth/commands",
-    "x/auth/rest",
+    "x/auth/client/cli",
+    "x/auth/client/rest",
     "x/bank",
-    "x/bank/commands",
     "x/ibc",
-    "x/ibc/commands"
+    "x/stake"
   ]
-  revision = "0fb189777c2d573a8504582343fb7d39c2cd26e3"
-  version = "v0.15.1"
+  revision = "249c5508ef61d3abb96e9e47da3a76f793deaac7"
+  version = "v0.16.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -484,6 +484,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dfff72bc8772be5d515990c8eca619e15c2bafb12bb356825fa62023cbc954f5"
+  inputs-digest = "862238c57101aa83b9d15c273533e8766323054eb56741b4c5b1a2475cc53ab8"
   solver-name = "gps-cdcl"
   solver-version = 1
