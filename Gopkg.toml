@@ -32,7 +32,11 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "~0.16.0"
+  version = "~0.17.0"
+  
+[[override]]
+  name = "github.com/tendermint/tmlibs"
+  version = "~0.8.3-rc0"
   
 [[constraint]]
   name = "github.com/stretchr/testify"

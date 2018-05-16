@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	types "github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/bank"
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/go-crypto"
@@ -32,7 +31,7 @@ func newAddress() crypto.Address {
 	return crypto.GenPrivKeyEd25519().PubKey().Address()
 }
 
-func getCoins(ck bank.Keeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, types.Tags, sdk.Error) {
+func getCoins(ck bank.Keeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, sdk.Tags, sdk.Error) {
 	zero := sdk.Coins(nil)
 	return ck.AddCoins(ctx, addr, zero)
 }

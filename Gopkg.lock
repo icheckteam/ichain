@@ -31,11 +31,10 @@
     "x/auth/client/cli",
     "x/auth/client/rest",
     "x/bank",
-    "x/ibc",
-    "x/stake"
+    "x/ibc"
   ]
-  revision = "249c5508ef61d3abb96e9e47da3a76f793deaac7"
-  version = "v0.16.0"
+  revision = "35d0e34b2674ad9edf0f074167dd967219dbbe1b"
+  version = "v0.17.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -365,8 +364,8 @@
     "types/priv_validator",
     "version"
   ]
-  revision = "64408a40419a5fa6f156dd96a2ab2fffa3c8ab96"
-  version = "v0.19.2"
+  revision = "aab98828fe4904965fb1c4eeed16dc6aae0e14b6"
+  version = "v0.19.3"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -383,8 +382,8 @@
     "pubsub",
     "pubsub/query"
   ]
-  revision = "d94e312673e16a11ea55d742cefb3e331228f898"
-  version = "v0.8.2"
+  revision = "cc5f287c4798ffe88c04d02df219ecb6932080fd"
+  version = "v0.8.3-rc0"
 
 [[projects]]
   branch = "master"
@@ -482,6 +481,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d53ff06908554f801887b79c97692aafe48a0f9647703b1017985ab8a3b5221e"
+  inputs-digest = "13deb6ee233d2ecd5305f4abaeedd12ab44826eac6f5141d15d7be133218997b"
   solver-name = "gps-cdcl"
   solver-version = 1
