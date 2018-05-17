@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/core"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
@@ -90,7 +89,7 @@ func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
 	}
 }
 
-func getClaimsByIDS(storeName string, ctx core.CoreContext, cdc *wire.Codec, ids []string) ([]identity.Claim, error) {
+func getClaimsByIDS(storeName string, ctx context.CoreContext, cdc *wire.Codec, ids []string) ([]identity.Claim, error) {
 	claims := []identity.Claim{}
 	for _, id := range ids {
 		claim := identity.Claim{}

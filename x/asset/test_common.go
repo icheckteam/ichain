@@ -6,6 +6,7 @@ import (
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tmlibs/log"
 
 	abci "github.com/tendermint/abci/types"
 	crypto "github.com/tendermint/go-crypto"
@@ -64,11 +65,8 @@ func makeTestCodec() *wire.Codec {
 
 	// Register Msgs
 	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(bank.SendMsg{}, "test/stake/Send", nil)
-	cdc.RegisterConcrete(bank.IssueMsg{}, "test/stake/Issue", nil)
-	cdc.RegisterConcrete(RegisterMsg{}, "test/asset/Register", nil)
-	cdc.RegisterConcrete(AddQuantityMsg{}, "test/asset/AddQuantity", nil)
-	cdc.RegisterConcrete(SubtractQuantityMsg{}, "test/asset/Subtract", nil)
+	bank.RegisterWire(cdc)
+	RegisterWire(cdc)
 
 	// Register AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
@@ -89,13 +87,13 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil)
+	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil, log.NewNopLogger())
 	cdc := makeTestCodec()
 	accountMapper := auth.NewAccountMapper(
 		cdc,                 // amino codec
 		keyMain,             // target store
 		&types.AppAccount{}, // prototype
-	).Seal()
+	)
 	coinKeeper := bank.NewKeeper(accountMapper)
 	assetKeeper := NewKeeper(keyStake, cdc, coinKeeper)
 	return ctx, accountMapper, assetKeeper

@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	types "github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/bank"
 )
 
@@ -25,8 +24,8 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 	}
 }
 
-// RegisterAsset register new asset
-func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, types.Tags, sdk.Error) {
+// Register register new asset
+func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags, sdk.Error) {
 	if asset.ID == "icc" {
 		return nil, nil, InvalidTransaction("Asset already exists")
 	}
@@ -77,8 +76,8 @@ func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
 }
 
 // UpdateAttribute ...
-func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags, sdk.Error) {
-	allTags := types.EmptyTags()
+func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, sdk.Error) {
+	allTags := sdk.EmptyTags()
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
@@ -99,7 +98,7 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags,
 }
 
 // AddQuantity ...
-func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, types.Tags, sdk.Error) {
+func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, nil, ErrUnknownAsset("Asset not found")
@@ -117,7 +116,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, typ
 }
 
 // SubtractQuantity ...
-func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Coins, types.Tags, sdk.Error) {
+func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Coins, sdk.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, nil, ErrUnknownAsset("Asset not found")
@@ -151,7 +150,7 @@ func setAttribute(a *Asset, attr Attribute) {
 
 // CreateProposal validates and adds a new proposal to the asset,
 // or update a propsal if there already exists one for the recipient
-func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (types.Tags, sdk.Error) {
+func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags, sdk.Error) {
 	switch msg.Role {
 	case RoleOwner, RoleReporter:
 		break
@@ -192,7 +191,7 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (types.Ta
 
 // RevokeProposal delete some properties from an existing proposal
 // and will delete the proposal if there is no property left
-func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (types.Tags, sdk.Error) {
+func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
@@ -223,7 +222,7 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (types.Ta
 }
 
 // AnswerProposal update the status of the proposal of the recipient if the answer is valid
-func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (types.Tags, sdk.Error) {
+func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags, sdk.Error) {
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")

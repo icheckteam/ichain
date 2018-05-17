@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -166,7 +165,6 @@ func TestKeeper(t *testing.T) {
 	attrs = []Attribute{Attribute{Name: "weight", NumberValue: 250}, Attribute{Name: "size", NumberValue: 3}}
 	_, err = keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr2, Attributes: attrs})
 	newAsset = keeper.GetAsset(ctx, asset.ID)
-	fmt.Println(newAsset.Attributes)
 	assert.True(t, err == nil)
 	assert.True(t, newAsset.Attributes[0].Name == "weight")
 	assert.True(t, newAsset.Attributes[0].NumberValue == 250)

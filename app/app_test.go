@@ -35,19 +35,20 @@ var (
 	addr3     = crypto.GenPrivKeyEd25519().PubKey().Address()
 	priv4     = crypto.GenPrivKeyEd25519()
 	addr4     = priv4.PubKey().Address()
-	coins     = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 10}}
-	halfCoins = sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 5}}
+	coins     = sdk.Coins{{"foocoin", 10}}
+	halfCoins = sdk.Coins{{"foocoin", 5}}
+	manyCoins = sdk.Coins{{"foocoin", 1}, {"barcoin", 1}}
 	fee       = sdk.StdFee{
-		Amount: sdk.Coins{sdk.Coin{Denom: "foocoin", Amount: 0}},
-		Gas:    0,
+		sdk.Coins{{"foocoin", 0}},
+		0,
 	}
 
-	sendMsg1 = bank.SendMsg{
+	sendMsg1 = bank.MsgSend{
 		Inputs:  []bank.Input{bank.NewInput(addr1, coins)},
 		Outputs: []bank.Output{bank.NewOutput(addr2, coins)},
 	}
 
-	sendMsg2 = bank.SendMsg{
+	sendMsg2 = bank.MsgSend{
 		Inputs: []bank.Input{bank.NewInput(addr1, coins)},
 		Outputs: []bank.Output{
 			bank.NewOutput(addr2, halfCoins),
@@ -55,7 +56,7 @@ var (
 		},
 	}
 
-	sendMsg3 = bank.SendMsg{
+	sendMsg3 = bank.MsgSend{
 		Inputs: []bank.Input{
 			bank.NewInput(addr1, coins),
 			bank.NewInput(addr4, coins),
@@ -66,12 +67,21 @@ var (
 		},
 	}
 
-	sendMsg4 = bank.SendMsg{
+	sendMsg4 = bank.MsgSend{
 		Inputs: []bank.Input{
 			bank.NewInput(addr2, coins),
 		},
 		Outputs: []bank.Output{
 			bank.NewOutput(addr1, coins),
+		},
+	}
+
+	sendMsg5 = bank.MsgSend{
+		Inputs: []bank.Input{
+			bank.NewInput(addr1, manyCoins),
+		},
+		Outputs: []bank.Output{
+			bank.NewOutput(addr2, manyCoins),
 		},
 	}
 
@@ -83,21 +93,15 @@ var (
 	}
 )
 
-func loggerAndDBs() (log.Logger, map[string]dbm.DB) {
+func loggerAndDB() (log.Logger, dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	dbs := map[string]dbm.DB{
-		"main":     dbm.NewMemDB(),
-		"acc":      dbm.NewMemDB(),
-		"ibc":      dbm.NewMemDB(),
-		"identity": dbm.NewMemDB(),
-		"asset":    dbm.NewMemDB(),
-	}
-	return logger, dbs
+	db := dbm.NewMemDB()
+	return logger, db
 }
 
 func newIchainApp() *IchainApp {
-	logger, dbs := loggerAndDBs()
-	return NewIchainApp(logger, dbs)
+	logger, db := loggerAndDB()
+	return NewIchainApp(logger, db)
 }
 
 func setGenesisAccounts(bapp *IchainApp, accs ...auth.BaseAccount) error {
@@ -117,7 +121,7 @@ func setGenesisAccounts(bapp *IchainApp, accs ...auth.BaseAccount) error {
 
 	// Initialize the chain
 	vals := []abci.Validator{}
-	bapp.InitChain(abci.RequestInitChain{Validators: vals, AppStateBytes: stateBytes})
+	bapp.InitChain(abci.RequestInitChain{vals, stateBytes})
 	bapp.Commit()
 
 	return nil
@@ -140,15 +144,52 @@ func TestMsgs(t *testing.T) {
 	}
 }
 
-func loggerAndDB() (log.Logger, dbm.DB) {
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")
-	db := dbm.NewMemDB()
-	return logger, db
+func TestSortGenesis(t *testing.T) {
+	logger, db := loggerAndDB()
+	bapp := NewIchainApp(logger, db)
+
+	// Note the order: the coins are unsorted!
+	coinDenom1, coinDenom2 := "foocoin", "barcoin"
+
+	genState := fmt.Sprintf(`{
+      "accounts": [{
+        "address": "%s",
+        "coins": [
+          {
+            "denom": "%s",
+            "amount": 10
+          },
+          {
+            "denom": "%s",
+            "amount": 20
+          }
+        ]
+      }]
+    }`, addr1.String(), coinDenom1, coinDenom2)
+
+	// Initialize the chain
+	vals := []abci.Validator{}
+	bapp.InitChain(abci.RequestInitChain{vals, []byte(genState)})
+	bapp.Commit()
+
+	// Unsorted coins means invalid
+	err := sendMsg5.ValidateBasic()
+	require.Equal(t, sdk.CodeInvalidCoins, err.Code(), err.ABCILog())
+
+	// Sort coins, should be valid
+	sendMsg5.Inputs[0].Coins.Sort()
+	sendMsg5.Outputs[0].Coins.Sort()
+	err = sendMsg5.ValidateBasic()
+	require.Nil(t, err)
+
+	// Ensure we can send
+	SignCheckDeliver(t, bapp, sendMsg5, []int64{0}, true, priv1)
 }
 
 func TestGenesis(t *testing.T) {
-	logger, dbs := loggerAndDBs()
-	bapp := NewIchainApp(logger, dbs)
+	logger, db := loggerAndDB()
+	bapp := NewIchainApp(logger, db)
+
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
 	pk := crypto.GenPrivKeyEd25519().PubKey()
 	addr := pk.Address()
@@ -169,13 +210,13 @@ func TestGenesis(t *testing.T) {
 	assert.Equal(t, acc, res1)
 
 	// reload app and ensure the account is still there
-	bapp = NewIchainApp(logger, dbs)
+	bapp = NewIchainApp(logger, db)
 	ctx = bapp.BaseApp.NewContext(true, abci.Header{})
 	res1 = bapp.accountMapper.GetAccount(ctx, baseAcc.Address)
 	assert.Equal(t, acc, res1)
 }
 
-func TestSendMsgWithAccounts(t *testing.T) {
+func TestMsgSendWithAccounts(t *testing.T) {
 	bapp := newIchainApp()
 
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
@@ -210,13 +251,13 @@ func TestSendMsgWithAccounts(t *testing.T) {
 	tx.Signatures[0].Sequence = 1
 	res := bapp.Deliver(tx)
 
-	assert.Equal(t, sdk.CodeUnauthorized, res.Code, res.Log)
+	assert.Equal(t, sdk.ToABCICode(sdk.CodespaceRoot, sdk.CodeUnauthorized), res.Code, res.Log)
 
 	// resigning the tx with the bumped sequence should work
 	SignCheckDeliver(t, bapp, sendMsg1, []int64{1}, true, priv1)
 }
 
-func TestSendMsgMultipleOut(t *testing.T) {
+func TestMsgSendMultipleOut(t *testing.T) {
 	bapp := newIchainApp()
 
 	genCoins, err := sdk.ParseCoins("42foocoin")
@@ -278,7 +319,7 @@ func TestSengMsgMultipleInOut(t *testing.T) {
 	CheckBalance(t, bapp, addr3, "10foocoin")
 }
 
-func TestSendMsgDependent(t *testing.T) {
+func TestMsgSendDependent(t *testing.T) {
 	bapp := newIchainApp()
 
 	genCoins, err := sdk.ParseCoins("42foocoin")
@@ -306,34 +347,14 @@ func TestSendMsgDependent(t *testing.T) {
 	CheckBalance(t, bapp, addr1, "42foocoin")
 }
 
-func TestRegisterAsset(t *testing.T) {
-	bapp := newIchainApp()
-
-	genCoins, err := sdk.ParseCoins("42foocoin")
-	require.Nil(t, err)
-
-	acc1 := auth.BaseAccount{
-		Address: addr1,
-		Coins:   genCoins,
-	}
-
-	err = setGenesisAccounts(bapp, acc1)
-	assert.Nil(t, err)
-
-	// CheckDeliver
-	SignCheckDeliver(t, bapp, registerAssetMsg, []int64{0}, true, priv1)
-
-	// Check balances
-	CheckBalance(t, bapp, addr1, "1assetid,42foocoin")
-}
-
-func TestQuizMsg(t *testing.T) {
+func TestMsgQuiz(t *testing.T) {
 	bapp := newIchainApp()
 
 	// Construct genesis state
 	// Construct some genesis bytes to reflect basecoin/types/AppAccount
 	baseAcc := auth.BaseAccount{
 		Address: addr1,
+		Coins:   nil,
 	}
 	acc1 := &types.AppAccount{BaseAccount: baseAcc, Name: "foobart"}
 
@@ -348,7 +369,7 @@ func TestQuizMsg(t *testing.T) {
 
 	// Initialize the chain (nil)
 	vals := []abci.Validator{}
-	bapp.InitChain(abci.RequestInitChain{Validators: vals, AppStateBytes: stateBytes})
+	bapp.InitChain(abci.RequestInitChain{vals, stateBytes})
 	bapp.Commit()
 
 	// A checkTx context (true)
@@ -424,18 +445,18 @@ func SignCheckDeliver(t *testing.T, bapp *IchainApp, msg sdk.Msg, seq []int64, e
 	// Run a Check
 	res := bapp.Check(tx)
 	if expPass {
-		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
+		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
 	} else {
-		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
+		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
 	}
 
 	// Simulate a Block
 	bapp.BeginBlock(abci.RequestBeginBlock{})
 	res = bapp.Deliver(tx)
 	if expPass {
-		require.Equal(t, sdk.CodeOK, res.Code, res.Log)
+		require.Equal(t, sdk.ABCICodeOK, res.Code, res.Log)
 	} else {
-		require.NotEqual(t, sdk.CodeOK, res.Code, res.Log)
+		require.NotEqual(t, sdk.ABCICodeOK, res.Code, res.Log)
 	}
 	bapp.EndBlock(abci.RequestEndBlock{})
 	//bapp.Commit()
@@ -445,4 +466,25 @@ func CheckBalance(t *testing.T, bapp *IchainApp, addr sdk.Address, balExpected s
 	ctxDeliver := bapp.BaseApp.NewContext(false, abci.Header{})
 	res2 := bapp.accountMapper.GetAccount(ctxDeliver, addr)
 	assert.Equal(t, balExpected, fmt.Sprintf("%v", res2.GetCoins()))
+}
+
+func TestRegisterAsset(t *testing.T) {
+	bapp := newIchainApp()
+
+	genCoins, err := sdk.ParseCoins("42foocoin")
+	require.Nil(t, err)
+
+	acc1 := auth.BaseAccount{
+		Address: addr1,
+		Coins:   genCoins,
+	}
+
+	err = setGenesisAccounts(bapp, acc1)
+	assert.Nil(t, err)
+
+	// CheckDeliver
+	SignCheckDeliver(t, bapp, registerAssetMsg, []int64{0}, true, priv1)
+
+	// Check balances
+	CheckBalance(t, bapp, addr1, "1assetid,42foocoin")
 }

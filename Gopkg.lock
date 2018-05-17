@@ -19,25 +19,22 @@
     "baseapp",
     "client",
     "client/context",
-    "client/core",
     "client/keys",
     "client/rpc",
-    "mock",
     "server",
     "store",
+    "tests",
     "types",
     "version",
     "wire",
     "x/auth",
-    "x/auth/commands",
-    "x/auth/rest",
+    "x/auth/client/cli",
+    "x/auth/client/rest",
     "x/bank",
-    "x/bank/commands",
-    "x/ibc",
-    "x/ibc/commands"
+    "x/ibc"
   ]
-  revision = "0fb189777c2d573a8504582343fb7d39c2cd26e3"
-  version = "v0.15.1"
+  revision = "35d0e34b2674ad9edf0f074167dd967219dbbe1b"
+  version = "v0.17.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -319,16 +316,13 @@
   version = "v0.6.2"
 
 [[projects]]
-  name = "github.com/tendermint/go-wire"
-  packages = ["."]
-  revision = "fa721242b042ecd4c6ed1a934ee740db4f74e45c"
-  version = "v0.7.3"
-
-[[projects]]
+  branch = "develop"
   name = "github.com/tendermint/iavl"
-  packages = ["."]
-  revision = "fd37a0fa3a7454423233bc3d5ea828f38e0af787"
-  version = "v0.7.0"
+  packages = [
+    ".",
+    "sha256truncated"
+  ]
+  revision = "9b6f9c3f49d599cfcf43f1a56c3c22882d1f9f21"
 
 [[projects]]
   name = "github.com/tendermint/tendermint"
@@ -367,8 +361,8 @@
     "types/priv_validator",
     "version"
   ]
-  revision = "64408a40419a5fa6f156dd96a2ab2fffa3c8ab96"
-  version = "v0.19.2"
+  revision = "aab98828fe4904965fb1c4eeed16dc6aae0e14b6"
+  version = "v0.19.3"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -385,8 +379,8 @@
     "pubsub",
     "pubsub/query"
   ]
-  revision = "d94e312673e16a11ea55d742cefb3e331228f898"
-  version = "v0.8.2"
+  revision = "cc5f287c4798ffe88c04d02df219ecb6932080fd"
+  version = "v0.8.3-rc0"
 
 [[projects]]
   branch = "master"
@@ -484,6 +478,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fe9502c5c0e8456ff4fc6f9cd253963edb2c98d9a64f36dbc155f601a03ae3d1"
+  inputs-digest = "96d9c76d3d2fb368ff696f1383c1417542906d9c53552e3e28e315bf12899cf8"
   solver-name = "gps-cdcl"
   solver-version = 1

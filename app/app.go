@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/x/bank"
 	"github.com/icheckteam/ichain/x/ibc"
+	"github.com/icheckteam/ichain/x/stake"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
@@ -31,53 +32,60 @@ type IchainApp struct {
 	cdc *wire.Codec
 
 	// keys to access the substores
-	capKeyMainStore     *sdk.KVStoreKey
-	capKeyAccountStore  *sdk.KVStoreKey
-	capKeyIBCStore      *sdk.KVStoreKey
-	capKeyStakingStore  *sdk.KVStoreKey
-	capKeyIdentityStore *sdk.KVStoreKey
-	capKeyAssetStore    *sdk.KVStoreKey
+	keyMain     *sdk.KVStoreKey
+	keyAccount  *sdk.KVStoreKey
+	keyIBC      *sdk.KVStoreKey
+	keyIdentity *sdk.KVStoreKey
+	keyStake    *sdk.KVStoreKey
+	keyAsset    *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountMapper sdk.AccountMapper
+	// Manage getting and setting accounts
+	accountMapper  sdk.AccountMapper
+	coinKeeper     bank.Keeper
+	ibcMapper      ibc.Mapper
+	stakeKeeper    stake.Keeper
+	assetKeeper    asset.Keeper
+	identityKeeper identity.Keeper
 
 	// Handle fees
 	feeHandler sdk.FeeHandler
 }
 
 // NewIchainApp  new ichain application
-func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
+func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	// Create app-level codec for txs and accounts.
 	var cdc = MakeCodec()
 	// create your application object
 	var app = &IchainApp{
-		BaseApp:             bam.NewBaseApp(appName, logger, dbs["main"]),
-		cdc:                 cdc,
-		capKeyMainStore:     sdk.NewKVStoreKey("main"),
-		capKeyAccountStore:  sdk.NewKVStoreKey("acc"),
-		capKeyIBCStore:      sdk.NewKVStoreKey("ibc"),
-		capKeyStakingStore:  sdk.NewKVStoreKey("stake"),
-		capKeyIdentityStore: sdk.NewKVStoreKey("identity"),
-		capKeyAssetStore:    sdk.NewKVStoreKey("asset"),
+		BaseApp:     bam.NewBaseApp(appName, cdc, logger, db),
+		cdc:         cdc,
+		keyMain:     sdk.NewKVStoreKey("main"),
+		keyAccount:  sdk.NewKVStoreKey("acc"),
+		keyIBC:      sdk.NewKVStoreKey("ibc"),
+		keyIdentity: sdk.NewKVStoreKey("identity"),
+		keyAsset:    sdk.NewKVStoreKey("asset"),
 	}
 
 	// define the accountMapper
 	app.accountMapper = auth.NewAccountMapper(
 		cdc,
-		app.capKeyMainStore, // target store
+		app.keyMain,         // target store
 		&types.AppAccount{}, // prototype
-	).Seal()
+	)
 
 	// add handlers
-	coinKeeper := bank.NewKeeper(app.accountMapper)
-	assetKeeper := asset.NewKeeper(app.capKeyAssetStore, cdc, coinKeeper)
-	identityKeeper := identity.NewKeeper(app.capKeyIdentityStore, cdc)
-	ibcMapper := ibc.NewIBCMapper(cdc, app.capKeyIBCStore)
+	app.coinKeeper = bank.NewKeeper(app.accountMapper)
+	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc, app.coinKeeper)
+	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc)
+	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
+	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.coinKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.Router().
-		AddRoute("bank", bank.NewHandler(coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(ibcMapper, coinKeeper)).
-		AddRoute("asset", asset.NewHandler(assetKeeper)).
-		AddRoute("identity", identity.NewHandler(identityKeeper))
+		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
+		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
+		AddRoute("asset", asset.NewHandler(app.assetKeeper)).
+		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
+		AddRoute("stake", stake.NewHandler(app.stakeKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler
@@ -85,17 +93,10 @@ func NewIchainApp(logger log.Logger, dbs map[string]dbm.DB) *IchainApp {
 	// initialize BaseApp
 	app.SetTxDecoder(app.txDecoder)
 	app.SetInitChainer(app.initChainer)
-	app.MountStoreWithDB(app.capKeyMainStore, sdk.StoreTypeIAVL, dbs["main"])
-	app.MountStoreWithDB(app.capKeyAccountStore, sdk.StoreTypeIAVL, dbs["acc"])
-	app.MountStoreWithDB(app.capKeyIBCStore, sdk.StoreTypeIAVL, dbs["ibc"])
-	app.MountStoreWithDB(app.capKeyStakingStore, sdk.StoreTypeIAVL, dbs["staking"])
-	app.MountStoreWithDB(app.capKeyIdentityStore, sdk.StoreTypeIAVL, dbs["identity"])
-	app.MountStoreWithDB(app.capKeyAssetStore, sdk.StoreTypeIAVL, dbs["asset"])
 
-	// NOTE: Broken until #532 lands
-	//app.MountStoresIAVL(app.capKeyMainStore, app.capKeyIBCStore, app.capKeyStakingStore)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeHandler))
-	err := app.LoadLatestVersion(app.capKeyMainStore)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keyAsset, app.keyIdentity)
+	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
 	}
@@ -108,26 +109,16 @@ func MakeCodec() *wire.Codec {
 	var cdc = wire.NewCodec()
 
 	// Register Msgs
-	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(bank.SendMsg{}, "ichain/Send", nil)
-	cdc.RegisterConcrete(bank.IssueMsg{}, "ichain/Issue", nil)
-	cdc.RegisterConcrete(ibc.IBCTransferMsg{}, "ichain/IBCTransferMsg", nil)
-	cdc.RegisterConcrete(ibc.IBCReceiveMsg{}, "ichain/IBCReceiveMsg", nil)
+	wire.RegisterCrypto(cdc) // Register crypto.
+	sdk.RegisterWire(cdc)    // Register Msgs
+	bank.RegisterWire(cdc)
+	ibc.RegisterWire(cdc)
+	asset.RegisterWire(cdc)
 
-	cdc.RegisterConcrete(asset.RegisterMsg{}, "ichain/RegisterMsg", nil)
-	cdc.RegisterConcrete(asset.AddQuantityMsg{}, "ichain/AddQuantityMsg", nil)
-	cdc.RegisterConcrete(asset.SubtractQuantityMsg{}, "ichain/SubtractQuantityMsg", nil)
-	cdc.RegisterConcrete(asset.UpdateAttrMsg{}, "ichain/UpdateAttrMsg", nil)
-
-	cdc.RegisterConcrete(identity.CreateMsg{}, "ichain/ClaimIssueMsg", nil)
-	cdc.RegisterConcrete(identity.RevokeMsg{}, "ichain/RevokeMsg", nil)
-
-	// Register AppAccount
+	// register custom AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
-
-	// Register crypto.
-	wire.RegisterCrypto(cdc)
+	return cdc
 
 	return cdc
 }
@@ -144,7 +135,7 @@ func (app *IchainApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
 	// are registered by MakeTxCodec in bank.RegisterAmino.
 	err := app.cdc.UnmarshalBinary(txBytes, &tx)
 	if err != nil {
-		return nil, sdk.ErrTxDecode("").TraceCause(err, "")
+		return nil, sdk.ErrTxDecode("").Trace(err.Error())
 	}
 	return tx, nil
 }
@@ -154,7 +145,7 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	stateJSON := req.AppStateBytes
 
 	genesisState := new(types.GenesisState)
-	err := json.Unmarshal(stateJSON, genesisState)
+	err := app.cdc.UnmarshalJSON(stateJSON, genesisState)
 	if err != nil {
 		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
 		// return sdk.ErrGenesisParse("").TraceCause(err, "")
@@ -169,4 +160,26 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		app.accountMapper.SetAccount(ctx, acc)
 	}
 	return abci.ResponseInitChain{}
+}
+
+// Custom logic for state export
+func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, err error) {
+	ctx := app.NewContext(true, abci.Header{})
+
+	// iterate to get the accounts
+	accounts := []*types.GenesisAccount{}
+	appendAccount := func(acc sdk.Account) (stop bool) {
+		account := &types.GenesisAccount{
+			Address: acc.GetAddress(),
+			Coins:   acc.GetCoins(),
+		}
+		accounts = append(accounts, account)
+		return false
+	}
+	app.accountMapper.IterateAccounts(ctx, appendAccount)
+
+	genState := types.GenesisState{
+		Accounts: accounts,
+	}
+	return wire.MarshalJSONIndent(app.cdc, genState)
 }

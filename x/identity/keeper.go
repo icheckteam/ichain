@@ -3,7 +3,6 @@ package identity
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	types "github.com/icheckteam/ichain/types"
 )
 
 // Keeper ...
@@ -21,8 +20,8 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 }
 
 // ClaimIssue ...
-func (k Keeper) Create(ctx sdk.Context, claim Claim) (types.Tags, sdk.Error) {
-	allTags := types.EmptyTags()
+func (k Keeper) Create(ctx sdk.Context, claim Claim) (sdk.Tags, sdk.Error) {
+	allTags := sdk.EmptyTags()
 	oldClaim, err := k.GetClaim(ctx, claim.ID)
 	if err != nil {
 		return allTags, err
@@ -81,8 +80,8 @@ func (k Keeper) GetClaim(ctx sdk.Context, claimID string) (*Claim, sdk.Error) {
 }
 
 // Revoke ...
-func (k Keeper) Revoke(ctx sdk.Context, addr sdk.Address, claimID, revocation string) (types.Tags, sdk.Error) {
-	allTags := types.EmptyTags()
+func (k Keeper) Revoke(ctx sdk.Context, addr sdk.Address, claimID, revocation string) (sdk.Tags, sdk.Error) {
+	allTags := sdk.EmptyTags()
 	claim, err := k.GetClaim(ctx, claimID)
 	if err != nil {
 		return nil, err

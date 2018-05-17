@@ -6,6 +6,6 @@ import (
 
 // Register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
-	//cdc.RegisterConcrete(IBCTransferMsg{}, "github.com/icheckteam/ichain/x/ibc/IBCTransferMsg", nil)
-	//cdc.RegisterConcrete(IBCReceiveMsg{}, "github.com/icheckteam/ichain/x/ibc/IBCReceiveMsg", nil)
+	cdc.RegisterConcrete(IBCTransferMsg{}, "cosmos-sdk/IBCTransferMsg", nil)
+	cdc.RegisterConcrete(IBCReceiveMsg{}, "cosmos-sdk/IBCReceiveMsg", nil)
 }
