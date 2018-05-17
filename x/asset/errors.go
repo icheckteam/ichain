@@ -9,12 +9,14 @@ import (
 // ABCI Response Codes
 // Base SDK reserves 500 - 599.
 const (
-	CodeUnknownAsset       sdk.CodeType = 500
-	CodeInvalidTransaction sdk.CodeType = 501
-	CodeInvalidInput       sdk.CodeType = 502
-	CodeInvalidOutput      sdk.CodeType = 503
-	CodeInvalidAssets      sdk.CodeType = 504
-	CodeMissingField       sdk.CodeType = 505
+	CodeUnknownAsset           sdk.CodeType = 500
+	CodeInvalidTransaction     sdk.CodeType = 501
+	CodeInvalidInput           sdk.CodeType = 502
+	CodeInvalidOutput          sdk.CodeType = 503
+	CodeInvalidAssets          sdk.CodeType = 504
+	CodeMissingField           sdk.CodeType = 505
+	CodeInvalidField           sdk.CodeType = 506
+	CodeInvalidRevokeRecipient sdk.CodeType = 507
 )
 
 // ErrUnknownAsset ...
@@ -25,6 +27,17 @@ func ErrUnknownAsset(msg string) sdk.Error {
 // ErrMissingField ...
 func ErrMissingField(field string) sdk.Error {
 	return newError(CodeMissingField, fmt.Sprintf("missing %s", field))
+}
+
+// ErrInvalidField ...
+func ErrInvalidField(field string) sdk.Error {
+	return newError(CodeMissingField, fmt.Sprintf("field %s has invalid value", field))
+}
+
+// ErrInvalidRevokeRecipient is used when the recipient of
+// a revoke proposal message is not in the asset's proposal list
+func ErrInvalidRevokeRecipient(addr sdk.Address) sdk.Error {
+	return newError(CodeInvalidRevokeRecipient, fmt.Sprintf("address %s is an invalid target for revoking proposal", addr.String()))
 }
 
 // InvalidTransaction ...

@@ -84,13 +84,25 @@ func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) 
 }
 
 func handleCreateProposal(ctx sdk.Context, k Keeper, msg CreateProposalMsg) sdk.Result {
+	_, err := k.CreateProposal(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 
 func handleRevokeProposal(ctx sdk.Context, k Keeper, msg RevokeProposalMsg) sdk.Result {
+	_, err := k.RevokeProposal(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }
 
 func handleAnswerProposal(ctx sdk.Context, k Keeper, msg AnswerProposalMsg) sdk.Result {
+	_, err := k.AnswerProposal(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
 	return sdk.Result{}
 }

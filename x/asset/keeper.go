@@ -25,7 +25,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 	}
 }
 
-// Register register new asset
+// RegisterAsset register new asset
 func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, types.Tags, sdk.Error) {
 	if asset.ID == "icc" {
 		return nil, nil, InvalidTransaction("Asset already exists")
@@ -83,11 +83,12 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (types.Tags,
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
 	}
-	if !asset.IsOwner(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
-	}
 
 	for _, attr := range msg.Attributes {
+		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
+		if !authorized {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		}
 		setAttribute(asset, attr)
 	}
 
@@ -146,4 +147,88 @@ func setAttribute(a *Asset, attr Attribute) {
 		}
 	}
 	a.Attributes = append(a.Attributes, attr)
+}
+
+// CreateProposal validates and adds a new proposal to the asset,
+// or update a propsal if there already exists one for the recipient
+func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (types.Tags, sdk.Error) {
+	asset := k.GetAsset(ctx, msg.AssetID)
+	if asset == nil {
+		return nil, ErrUnknownAsset("Asset not found")
+	}
+
+	proposal, proposalIndex, authorized := asset.ValidatePropossal(msg.Issuer, msg.Recipient)
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
+	}
+
+	if proposal != nil {
+		// Update proposal
+		proposal.Role = msg.Role
+		proposal.AddProperties(msg.Propertipes)
+		asset.Proposals[proposalIndex] = *proposal
+	} else {
+		// Add new proposal
+		proposal = &Proposal{
+			Role:       msg.Role,
+			Status:     StatusPending,
+			Properties: msg.Propertipes,
+			Issuer:     msg.Issuer,
+			Recipient:  msg.Recipient,
+		}
+		asset.Proposals = append(asset.Proposals, *proposal)
+	}
+
+	k.setAsset(ctx, *asset)
+	return nil, nil
+}
+
+// RevokeProposal delete some properties from an existing proposal
+// and will delete the proposal if there is no property left
+func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (types.Tags, sdk.Error) {
+	asset := k.GetAsset(ctx, msg.AssetID)
+	if asset == nil {
+		return nil, ErrUnknownAsset("Asset not found")
+	}
+
+	proposal, proposalIndex, authorized := asset.ValidatePropossal(msg.Issuer, msg.Recipient)
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to revoke", msg.Issuer))
+	}
+
+	if proposal == nil {
+		return nil, ErrInvalidRevokeRecipient(msg.Recipient)
+	}
+
+	proposal.RemoveProperties(msg.Propertipes)
+	if len(proposal.Properties) > 0 {
+		// Update proposal
+		asset.Proposals[proposalIndex] = *proposal
+	} else {
+		// Remove proposal
+		i := proposalIndex
+		asset.Proposals = append(asset.Proposals[:i], asset.Proposals[i+1:]...)
+	}
+
+	k.setAsset(ctx, *asset)
+	return nil, nil
+}
+
+// AnswerProposal update the status of the proposal of the recipient if the answer is valid
+func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (types.Tags, sdk.Error) {
+	asset := k.GetAsset(ctx, msg.AssetID)
+	if asset == nil {
+		return nil, ErrUnknownAsset("Asset not found")
+	}
+
+	proposal, proposalIndex, authorized := asset.ValidateProposalAnswer(msg.Recipient, ProposalStatus(msg.Response))
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to answer", msg.Recipient))
+	}
+
+	proposal.Status = ProposalStatus(msg.Response)
+	asset.Proposals[proposalIndex] = *proposal
+
+	k.setAsset(ctx, *asset)
+	return nil, nil
 }

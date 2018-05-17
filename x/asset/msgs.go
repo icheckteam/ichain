@@ -206,10 +206,11 @@ func (msg SubtractQuantityMsg) GetSignBytes() []byte {
 
 // CreateProposalMsg ...
 type CreateProposalMsg struct {
-	AssetID     string      `json:"asset_id"`
-	Issuer      sdk.Address `json:"issuer"`
-	Recipient   sdk.Address `json:"recipient"`
-	Propertipes []string    `json:"propertipes"`
+	AssetID     string       `json:"asset_id"`
+	Issuer      sdk.Address  `json:"issuer"`
+	Recipient   sdk.Address  `json:"recipient"`
+	Propertipes []string     `json:"propertipes"`
+	Role        ProposalRole `json:"role"`
 }
 
 func (msg CreateProposalMsg) Type() string                            { return msgType }
@@ -236,6 +237,12 @@ func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Propertipes) == 0 {
 		return ErrMissingField("propertipes")
+	}
+	switch msg.Role {
+	case 0, 1:
+		break
+	default:
+		return ErrInvalidField("role")
 	}
 	return nil
 }
