@@ -64,6 +64,7 @@ func (a Asset) ValidatePropossal(issuer sdk.Address, recipient sdk.Address) (*Pr
 		// Check if recipient already exists in the proposals list
 		if p.Recipient.String() == recipient.String() {
 			proposalIndex = index
+			p := p
 			proposal = &p
 		}
 
@@ -108,6 +109,7 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 				authorized = true
 				proposalIndex = i
 				proposal = &p
+				return
 			default:
 				break
 			}
@@ -175,7 +177,6 @@ OuterLoop:
 		}
 		properties = append(properties, currentProperty)
 	}
-
 	p.Properties = properties
 }
 

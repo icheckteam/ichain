@@ -152,6 +152,13 @@ func setAttribute(a *Asset, attr Attribute) {
 // CreateProposal validates and adds a new proposal to the asset,
 // or update a propsal if there already exists one for the recipient
 func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (types.Tags, sdk.Error) {
+	switch msg.Role {
+	case RoleOwner, RoleReporter:
+		break
+	default:
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
+	}
+
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
@@ -201,6 +208,7 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (types.Ta
 	}
 
 	proposal.RemoveProperties(msg.Propertipes)
+
 	if len(proposal.Properties) > 0 {
 		// Update proposal
 		asset.Proposals[proposalIndex] = *proposal
@@ -222,6 +230,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (types.Ta
 	}
 
 	proposal, proposalIndex, authorized := asset.ValidateProposalAnswer(msg.Recipient, ProposalStatus(msg.Response))
+
 	if !authorized {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to answer", msg.Recipient))
 	}

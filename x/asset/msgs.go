@@ -258,9 +258,9 @@ func (msg CreateProposalMsg) GetSignBytes() []byte {
 
 // AnswerProposalMsg ...
 type AnswerProposalMsg struct {
-	AssetID   string      `json:"asset_id"`
-	Recipient sdk.Address `json:"recipient"`
-	Response  int         `json:"response"`
+	AssetID   string         `json:"asset_id"`
+	Recipient sdk.Address    `json:"recipient"`
+	Response  ProposalStatus `json:"response"`
 }
 
 func (msg AnswerProposalMsg) Type() string                            { return msgType }

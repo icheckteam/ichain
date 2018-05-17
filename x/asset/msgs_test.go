@@ -353,7 +353,7 @@ func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6160","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6161","propertipes":["location"]}`)
+	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6160","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6161","propertipes":["location"],"role":0}`)
 }
 
 // AnswerProposal  Tests
