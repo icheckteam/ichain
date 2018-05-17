@@ -138,9 +138,9 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 }
 
 func setAttribute(a *Asset, attr Attribute) {
-	for _, oldAttr := range a.Attributes {
+	for index, oldAttr := range a.Attributes {
 		if oldAttr.Name == attr.Name {
-			oldAttr = attr
+			a.Attributes[index] = attr
 			return
 		}
 	}

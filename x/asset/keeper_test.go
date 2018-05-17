@@ -40,4 +40,10 @@ func TestKeeper(t *testing.T) {
 	newAsset := keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, newAsset.Attributes[0].Name == "weight")
 	assert.True(t, newAsset.Attributes[0].NumberValue == 100)
+
+	attrs = []Attribute{Attribute{Name: "weight", NumberValue: 101}}
+	keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr, Attributes: attrs})
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Attributes[0].Name == "weight")
+	assert.True(t, newAsset.Attributes[0].NumberValue == 101)
 }
