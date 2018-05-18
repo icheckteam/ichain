@@ -78,27 +78,27 @@ func (msg CreateOrderMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// ------------------------------------ Receive Order
+// ------------------------------------ Confirm Order
 
 // ReceiveOrderMsg is sent by the carrier to confirm
 // that the carrier has received the asset from the issuer
-type ReceiveOrderMsg struct {
+type ConfirmOrderMsg struct {
 	OrderID string      `json:"order_id"`   // ID of the order received
 	Carrier sdk.Address `json:"carrier_id"` // the carrier, who confirms the order
 }
 
 // enforce the Msg type at compile time
-var _ sdk.Msg = ReceiveOrderMsg{}
+var _ sdk.Msg = ConfirmOrderMsg{}
 
 // nolint ...
-func (msg ReceiveOrderMsg) Type() string                            { return msgType }
-func (msg ReceiveOrderMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg ReceiveOrderMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Carrier} }
-func (msg ReceiveOrderMsg) String() string {
+func (msg ConfirmOrderMsg) Type() string                            { return msgType }
+func (msg ConfirmOrderMsg) Get(key interface{}) (value interface{}) { return nil }
+func (msg ConfirmOrderMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Carrier} }
+func (msg ConfirmOrderMsg) String() string {
 	return fmt.Sprintf(`
-		ReceiveOrderMsg{
+		ConfirmOrderMsg{
 			OrderID: %s, 
-			Carrier %s,
+			Carrier: %s,
 		}	
 	`,
 		msg.OrderID, msg.Carrier,
@@ -106,7 +106,7 @@ func (msg ReceiveOrderMsg) String() string {
 }
 
 // GetSignBytes ...
-func (msg ReceiveOrderMsg) GetSignBytes() []byte {
+func (msg ConfirmOrderMsg) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -115,7 +115,7 @@ func (msg ReceiveOrderMsg) GetSignBytes() []byte {
 }
 
 // ValidateBasic ...
-func (msg ReceiveOrderMsg) ValidateBasic() sdk.Error {
+func (msg ConfirmOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Carrier) == 0 {
 		return sdk.ErrUnknownAddress(msg.Carrier.String()).Trace("")
 	}
@@ -147,7 +147,7 @@ func (msg CompleteOrderMsg) String() string {
 	return fmt.Sprintf(`
 		ReceiveOrderMsg{
 			OrderID: %s, 
-			Receiver %s,
+			Receiver: %s,
 		}	
 	`,
 		msg.OrderID, msg.Receiver,
@@ -167,6 +167,55 @@ func (msg CompleteOrderMsg) GetSignBytes() []byte {
 func (msg CompleteOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Receiver) == 0 {
 		return sdk.ErrUnknownAddress(msg.Receiver.String()).Trace("")
+	}
+
+	if len(msg.OrderID) == 0 {
+		return types.ErrMissingField("order_id")
+	}
+
+	return nil
+}
+
+// ------------------------------------ Cancel Order
+
+// CompleteOrderMsg is sent by the receiver to confirm
+// that the receiver has received the asset from the carrier
+type CancelOrderMsg struct {
+	OrderID string      `json:"order_id"`    // ID of the order to be cancelled
+	Issuer  sdk.Address `json:"receiver_id"` // the issuer
+}
+
+// enforce the Msg type at compile time
+var _ sdk.Msg = CancelOrderMsg{}
+
+// nolint ...
+func (msg CancelOrderMsg) Type() string                            { return msgType }
+func (msg CancelOrderMsg) Get(key interface{}) (value interface{}) { return nil }
+func (msg CancelOrderMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg CancelOrderMsg) String() string {
+	return fmt.Sprintf(`
+		CancelOrderMsg{
+			OrderID: %s, 
+			Issuer: %s,
+		}	
+	`,
+		msg.OrderID, msg.Issuer,
+	)
+}
+
+// GetSignBytes ...
+func (msg CancelOrderMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// ValidateBasic ...
+func (msg CancelOrderMsg) ValidateBasic() sdk.Error {
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
 
 	if len(msg.OrderID) == 0 {

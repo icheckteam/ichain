@@ -20,7 +20,7 @@ type OrderStatus int
 // Valid status of an order
 const (
 	OrderStatusPending   OrderStatus = iota // Order has been created
-	OrderStatusReceived                     // The carrier received the asset from the issuer
+	OrderStatusConfirmed                    // The carrier received the asset from the issuer
 	OrderStatusCompleted                    // The receiver received the asset from the carrier
 	OrderStatusCancelled                    // Order is cancelled
 )

@@ -1,0 +1,43 @@
+package shipping
+
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+// ABCI Response Codes
+// Base SDK reserves 500 - 599.
+const (
+	CodeDuplicateOrderID sdk.CodeType = iota + 600
+	CodeUnknownOrder
+
+	DefaultCodespace sdk.CodespaceType = 10
+)
+
+// ErrDuplicateOrder ...
+func ErrDuplicateOrder(orderID string) sdk.Error {
+	return newError(DefaultCodespace, CodeDuplicateOrderID, fmt.Sprintf("duplicate order id %s", orderID))
+}
+
+// ErrUnknownOrder ...
+func ErrUnknownOrder(orderID string) sdk.Error {
+	return newError(DefaultCodespace, CodeUnknownOrder, fmt.Sprintf("order id %s not found", orderID))
+}
+
+// CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.
+func CodeToDefaultMsg(code sdk.CodeType) string {
+	switch code {
+
+	default:
+		return fmt.Sprintf("Unknown code %d", code)
+	}
+}
+
+func newError(codespace sdk.CodespaceType, code sdk.CodeType, msg string) sdk.Error {
+	// TODO capture stacktrace if ENV is set.
+	if msg == "" {
+		msg = CodeToDefaultMsg(code)
+	}
+	return sdk.NewError(codespace, code, msg)
+}
