@@ -19,7 +19,7 @@ func QueryAssetRequestHandlerFn(storeName string, cdc *wire.Codec) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		assetID := vars["id"]
-		key := asset.GetAssetKey([]byte(assetID))
+		key := asset.GetAssetKey(assetID)
 		res, err := ctx.Query(key, storeName)
 		var asset asset.Asset
 		err = cdc.UnmarshalBinary(res, &asset)

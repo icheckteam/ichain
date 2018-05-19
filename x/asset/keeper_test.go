@@ -23,28 +23,46 @@ func TestKeeper(t *testing.T) {
 
 	// Test register asset
 	keeper.RegisterAsset(ctx, asset)
+	newAsset := keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
-	keeper.RegisterAsset(ctx, asset)
-	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
+	assert.True(t, newAsset.ID == asset.ID)
+	assert.True(t, newAsset.Issuer.String() == asset.Issuer.String())
+	assert.True(t, newAsset.Name == asset.Name)
+	assert.True(t, newAsset.Quantity == asset.Quantity)
+
+	// asset already exists
+	_, _, err := keeper.RegisterAsset(ctx, asset)
+	assert.True(t, err != nil)
 
 	// Test add quantity
 	keeper.AddQuantity(ctx, AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50})
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Quantity == 150)
 	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 150}}))
 
 	// Test subtract quantity
 	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50})
 	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
-	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 102})
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Quantity == 100)
+
+	// Test subtract quantity error
+	_, _, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 102})
+	assert.True(t, err != nil)
 	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
 
 	// Test update attributes
 	attrs := []Attribute{Attribute{Name: "weight", NumberValue: 100}, Attribute{Name: "size", NumberValue: 2}}
 	keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr, Attributes: attrs})
-	newAsset := keeper.GetAsset(ctx, asset.ID)
+	newAsset = keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, newAsset.Attributes[0].Name == "weight")
 	assert.True(t, newAsset.Attributes[0].NumberValue == 100)
 	assert.True(t, newAsset.Attributes[1].Name == "size")
 	assert.True(t, newAsset.Attributes[1].NumberValue == 2)
+
+	// Invalid attribute type
+	attrs = []Attribute{Attribute{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr, Attributes: attrs})
 
 	//-------------- Test create proposal
 	createProposalMsg := CreateProposalMsg{asset.ID, addr, addr2, []string{"weight"}, RoleReporter}
@@ -70,7 +88,7 @@ func TestKeeper(t *testing.T) {
 
 	// Invalid role
 	createProposalMsg = CreateProposalMsg{asset.ID, addr, addr3, []string{"size", "weight"}, 123}
-	_, err := keeper.CreateProposal(ctx, createProposalMsg)
+	_, err = keeper.CreateProposal(ctx, createProposalMsg)
 	assert.True(t, err != nil)
 
 	//-------------- Test update properties
