@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,26 +11,19 @@ import (
 	"github.com/tendermint/go-crypto/keys"
 )
 
-type createContractBody struct {
-	AccountName string       `json:"name"`
-	Password    string       `json:"password"`
-	Contract    contractBody `json:"contract"`
-	ChainID     string       `json:"chain_id"`
-	Sequence    int64        `json:"sequence"`
+type processClaimBody struct {
+	AccountName string               `json:"name"`
+	Password    string               `json:"password"`
+	ChainID     string               `json:"chain_id"`
+	Sequence    int64                `json:"sequence"`
+	ContractID  string               `json:"contract_id"`
+	Status      warranty.ClaimStatus `json:"status"`
 }
 
-type contractBody struct {
-	ID        string      `json:"id"`
-	AssetID   string      `json:"asset_id"`
-	Expires   time.Time   `json:"expires"`
-	Serial    string      `json:"serial"`
-	Recipient sdk.Address `json:"recipient"`
-}
-
-// CreateContractHandlerFn
-func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+// ProcessClaimHandlerFn
+func ProcessClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		b := createContractBody{}
+		b := processClaimBody{}
 
 		if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -51,27 +43,15 @@ func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if b.Contract.ID == "" {
+		if b.Status == warranty.ClaimStatusPending {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("contract.id is required"))
+			w.Write([]byte("status is required"))
 			return
 		}
 
-		if b.Contract.Expires.IsZero() {
+		if b.ContractID == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("contract.expires is required"))
-			return
-		}
-
-		if b.Contract.Recipient.String() == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("contract.recipient is required"))
-			return
-		}
-
-		if b.Contract.Serial == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("contract.serial is required"))
+			w.Write([]byte("contract_id is required"))
 			return
 		}
 
@@ -83,12 +63,10 @@ func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		// build message
-		msg := buildMsgCreateContract(
+		msg := buildMsgProcessClaim(
 			info.PubKey.Address(),
-			b.Contract.Recipient,
-			b.Contract.AssetID,
-			b.Contract.Serial,
-			b.Contract.Expires,
+			b.ContractID,
+			b.Status,
 		)
 
 		// sign
@@ -118,12 +96,6 @@ func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	}
 }
 
-func buildMsgCreateContract(issuer sdk.Address, recipient sdk.Address, assetID, serial string, expires time.Time) warranty.MsgCreateContract {
-	return warranty.MsgCreateContract{
-		ID:        assetID,
-		Issuer:    issuer,
-		Recipient: recipient,
-		Serial:    serial,
-		Expires:   expires,
-	}
+func buildMsgProcessClaim(issuer sdk.Address, contractID string, status warranty.ClaimStatus) warranty.MsgProcessClaim {
+	return warranty.MsgProcessClaim{ContractID: contractID, Issuer: issuer, Status: status}
 }

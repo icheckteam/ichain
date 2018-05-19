@@ -72,6 +72,14 @@ type MsgCreateClaim struct {
 	Recipient  sdk.Address `json:"recipient"`
 }
 
+func NewMsgCreateClaim(issuer, recipient sdk.Address, contractID string) MsgCreateClaim {
+	return MsgCreateClaim{
+		ContractID: contractID,
+		Issuer:     issuer,
+		Recipient:  recipient,
+	}
+}
+
 // nolint ...
 func (msg MsgCreateClaim) Type() string                            { return msgType }
 func (msg MsgCreateClaim) Get(key interface{}) (value interface{}) { return nil }
