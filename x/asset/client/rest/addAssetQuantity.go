@@ -22,8 +22,7 @@ type addAssetQuantityBody struct {
 	Sequence         int64  `json:"sequence"`
 }
 
-func AddAssetQuantityHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var m addAssetQuantityBody

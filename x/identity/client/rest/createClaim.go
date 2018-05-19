@@ -25,8 +25,7 @@ type createClaimBody struct {
 	Sequence int64  `json:"sequence"`
 }
 
-func CreateClaimHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m createClaimBody
 		body, err := ioutil.ReadAll(r.Body)

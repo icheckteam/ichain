@@ -14,8 +14,7 @@ import (
 // REST
 
 // get key REST handler
-func QueryAssetRequestHandlerFn(storeName string, cdc *wire.Codec) http.HandlerFunc {
-	ctx := context.NewCoreContextFromViper()
+func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		assetID := vars["id"]
