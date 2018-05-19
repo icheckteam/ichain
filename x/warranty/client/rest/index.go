@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/tendermint/go-crypto/keys"
 )

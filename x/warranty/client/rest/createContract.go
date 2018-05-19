@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto/keys"
 )
 
