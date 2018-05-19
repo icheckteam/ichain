@@ -139,7 +139,11 @@ func (msg MsgProcessClaim) ValidateBasic() sdk.Error {
 		return types.ErrMissingField("issuer")
 	}
 	switch msg.Status {
-	case ClaimStatusPending, ClaimStatusRejected, ClaimStatusClaimRepair:
+	case ClaimStatusPending,
+		ClaimStatusRejected,
+		ClaimStatusReimbursement,
+		ClaimStatusTheftConfirmed,
+		ClaimStatusClaimRepair:
 		break
 	default:
 		return types.ErrInvalidField("status")

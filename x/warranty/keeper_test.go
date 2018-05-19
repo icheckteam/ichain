@@ -79,4 +79,19 @@ func TestKeeper(t *testing.T) {
 	newContract = keeper.GetContract(ctx, msg.ID)
 	assert.True(t, newContract.Claim.Status == ClaimStatusRejected)
 
+	msgCreateClaim = MsgCreateClaim{ContractID: newContract.ID, Issuer: addrs[1], Recipient: addrs[3]}
+	keeper.CreateClaim(ctx, msgCreateClaim)
+	newContract = keeper.GetContract(ctx, msg.ID)
+	assert.True(t, newContract.Claim.Status == ClaimStatusPending)
+	assert.True(t, newContract.Claim.Recipient.String() == addrs[3].String())
+
+	msgProcessClaim = MsgProcessClaim{ContractID: msg.ID, Issuer: addrs[3], Status: ClaimStatusTheftConfirmed}
+	keeper.ProcessClaim(ctx, msgProcessClaim)
+	newContract = keeper.GetContract(ctx, msg.ID)
+	assert.True(t, newContract.Claim.Status == ClaimStatusTheftConfirmed)
+
+	msgCreateClaim = MsgCreateClaim{ContractID: newContract.ID, Issuer: addrs[1], Recipient: addrs[3]}
+	err = keeper.CreateClaim(ctx, msgCreateClaim)
+	assert.True(t, err != nil)
+
 }
