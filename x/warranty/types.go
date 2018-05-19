@@ -21,18 +21,18 @@ type Contract struct {
 func (c Contract) ValidateCreateClaim(addr sdk.Address) (valid bool) {
 	valid = false
 
-	if c.Claim != nil && c.Claim.Status == ClaimStatusPending {
-		return
+	if c.Claim != nil {
+		switch c.Claim.Status {
+		case ClaimStatusPending, ClaimStatusTheftConfirmed:
+			return
+		default:
+		}
 	}
 
-	addrsAccepted := map[string]bool{
-		c.Issuer.String():    true,
-		c.Recipient.String(): true,
-	}
-	if addrsAccepted[addr.String()] {
-		valid = true
+	if addr.String() != c.Recipient.String() {
 		return
 	}
+	valid = true
 	return
 }
 
@@ -43,12 +43,7 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 		return
 	}
 
-	addrsAccepted := map[string]bool{
-		c.Issuer.String():          true,
-		c.Claim.Recipient.String(): true,
-	}
-
-	if addrsAccepted[addr.String()] == false {
+	if addr.String() != c.Claim.Recipient.String() {
 		return
 	}
 
@@ -57,10 +52,10 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 	}
 
 	switch status {
-	case ClaimStatusClaimRepair, ClaimStatusRejected:
-		valid = true
+	case ClaimStatusPending:
 		return
 	default:
+		valid = true
 		return
 	}
 }
@@ -68,7 +63,7 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 // Claim the claim of the contract
 type Claim struct {
 	Status    ClaimStatus
-	Recipient sdk.Address
+	Recipient sdk.Address // warranty address
 }
 
 // ClaimStatus status of a claim
@@ -79,6 +74,10 @@ const (
 	ClaimStatusPending ClaimStatus = iota
 	// The claim has been rejected
 	ClaimStatusRejected
-	// The item is up for repair
+	// The item is up for repair or had been repaired
 	ClaimStatusClaimRepair
+	// The customer should be reimbursed
+	ClaimStatusReimbursement
+	// The theft of the item has been confirmed by authorities
+	ClaimStatusTheftConfirmed
 )
