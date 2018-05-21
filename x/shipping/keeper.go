@@ -15,6 +15,11 @@ type Keeper struct {
 	coinKeeper coin.Keeper
 }
 
+// NewKeeper constructs a new keeper
+func NewKeeper(storeKey sdk.StoreKey, cdc *wire.Codec, coinKeeper coin.Keeper) Keeper {
+	return Keeper{storeKey, cdc, coinKeeper}
+}
+
 // HasOrder checks if an order with the provided ID exists
 func (k Keeper) hasOrder(ctx sdk.Context, uid string) bool {
 	store := ctx.KVStore(k.storeKey)
@@ -51,14 +56,19 @@ func (k Keeper) setOrder(ctx sdk.Context, order Order) {
 
 // CreateOrder validates and creates a new order
 func (k Keeper) CreateOrder(ctx sdk.Context, msg CreateOrderMsg) (sdk.Tags, sdk.Error) {
+	if k.hasOrder(ctx, msg.ID) {
+		return nil, ErrDuplicateOrder(msg.ID)
+	}
+
 	var coins sdk.Coins
 	for _, asset := range msg.TransportedAssets {
 		coin := sdk.Coin{Denom: asset.ID, Amount: asset.Quantity}
 		coins = append(coins, coin)
 	}
 
-	if k.hasOrder(ctx, msg.ID) {
-		return nil, ErrDuplicateOrder(msg.ID)
+	coins = coins.Sort()
+	if len(coins) == 0 || !coins.IsValid() {
+		return nil, ErrInavlidAssetAmount()
 	}
 
 	// The check for insufficient amount is built-in the subtract coins function
@@ -146,7 +156,7 @@ func (k Keeper) CancelOrder(ctx sdk.Context, msg CancelOrderMsg) (sdk.Tags, sdk.
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to cancel the order", msg.Issuer))
 	}
 
-	if order.Status == OrderStatusCancelled {
+	if order.Status == OrderStatusCancelled || order.Status == OrderStatusCompleted {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("order id %s cannot be cancelled", msg.OrderID))
 	}
 

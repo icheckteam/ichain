@@ -67,6 +67,10 @@ func (msg CreateOrderMsg) ValidateBasic() sdk.Error {
 		return sdk.ErrUnknownAddress(msg.Receiver.String()).Trace("")
 	}
 
+	if msg.Issuer.String() == msg.Carrier.String() || msg.Carrier.String() == msg.Receiver.String() || msg.Receiver.String() == msg.Issuer.String() {
+		return ErrDuplicateAddress()
+	}
+
 	if len(msg.ID) == 0 {
 		return types.ErrMissingField("id")
 	}
@@ -181,8 +185,8 @@ func (msg CompleteOrderMsg) ValidateBasic() sdk.Error {
 // CompleteOrderMsg is sent by the receiver to confirm
 // that the receiver has received the asset from the carrier
 type CancelOrderMsg struct {
-	OrderID string      `json:"order_id"`    // ID of the order to be cancelled
-	Issuer  sdk.Address `json:"receiver_id"` // the issuer
+	OrderID string      `json:"order_id"`  // ID of the order to be cancelled
+	Issuer  sdk.Address `json:"issuer_id"` // the issuer
 }
 
 // enforce the Msg type at compile time
