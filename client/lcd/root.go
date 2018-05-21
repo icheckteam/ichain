@@ -19,13 +19,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	tx "github.com/icheckteam/ichain/client/tx"
+	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	bank "github.com/icheckteam/ichain/x/bank/client/rest"
 	ibc "github.com/icheckteam/ichain/x/ibc/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
 	stake "github.com/icheckteam/ichain/x/stake/client/rest"
 	warranty "github.com/icheckteam/ichain/x/warranty/client/rest"
-	version "github.com/ichecktean/ichain/version"
 )
 
 const (
