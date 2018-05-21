@@ -99,8 +99,17 @@ func TestKeeper(t *testing.T) {
 		Receiver: addr3,
 	}
 	_, err = keeper.CreateOrder(ctx, createOrderMsg)
+	order := keeper.getOrder(ctx, "1")
 	assert.Nil(t, err)
 	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 100}, {Denom: "tomato", Amount: 50}}))
+	assert.True(t, order.ID == "1")
+	assert.True(t, order.TransportedAssets[0].ID == "tomato")
+	assert.True(t, order.TransportedAssets[0].Quantity == 50)
+	assert.True(t, order.TransportedAssets[1].ID == "eggs")
+	assert.True(t, order.TransportedAssets[1].Quantity == 100)
+	assert.True(t, order.Issuer.String() == addr.String())
+	assert.True(t, order.Carrier.String() == addr2.String())
+	assert.True(t, order.Receiver.String() == addr3.String())
 
 	// Invalid amount
 	createOrderMsg = CreateOrderMsg{
@@ -268,14 +277,18 @@ func TestKeeper(t *testing.T) {
 		Carrier: addr2,
 	}
 	_, err = keeper.ConfirmOrder(ctx, confirmOrderMsg)
+	order = keeper.getOrder(ctx, "1")
 	assert.Nil(t, err)
+	assert.True(t, order.Status == OrderStatusConfirmed)
 
 	confirmOrderMsg = ConfirmOrderMsg{
 		OrderID: "2",
 		Carrier: addr2,
 	}
 	_, err = keeper.ConfirmOrder(ctx, confirmOrderMsg)
+	order = keeper.getOrder(ctx, "2")
 	assert.Nil(t, err)
+	assert.True(t, order.Status == OrderStatusConfirmed)
 
 	// Confirmed order cannot be confirmed again
 	confirmOrderMsg = ConfirmOrderMsg{
@@ -332,7 +345,9 @@ func TestKeeper(t *testing.T) {
 		Receiver: addr3,
 	}
 	_, err = keeper.CompleteOrder(ctx, completeOrderMsg)
+	order = keeper.getOrder(ctx, "1")
 	assert.Nil(t, err)
+	assert.True(t, order.Status == OrderStatusCompleted)
 
 	// Cannot complete a completed order
 	completeOrderMsg = CompleteOrderMsg{
@@ -367,7 +382,10 @@ func TestKeeper(t *testing.T) {
 		Issuer:  addr,
 	}
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
+	order = keeper.getOrder(ctx, "2")
 	assert.Nil(t, err)
+	assert.True(t, order.Status == OrderStatusCancelled)
+	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 50}, {Denom: "tomato", Amount: 25}}))
 
 	// Can cancel a pending order
 	cancelOrderMsg = CancelOrderMsg{
@@ -375,7 +393,10 @@ func TestKeeper(t *testing.T) {
 		Issuer:  addr,
 	}
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
+	order = keeper.getOrder(ctx, "3")
 	assert.Nil(t, err)
+	assert.True(t, order.Status == OrderStatusCancelled)
+	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 100}, {Denom: "tomato", Amount: 50}}))
 
 	// Cannot cancel a completed order
 	cancelOrderMsg = CancelOrderMsg{
@@ -383,7 +404,9 @@ func TestKeeper(t *testing.T) {
 		Issuer:  addr,
 	}
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
+	order = keeper.getOrder(ctx, "1")
 	assert.NotNil(t, err)
+	assert.True(t, order.Status == OrderStatusCompleted)
 
 	// Cannot cancel a cancelled order
 	cancelOrderMsg = CancelOrderMsg{
@@ -391,12 +414,16 @@ func TestKeeper(t *testing.T) {
 		Issuer:  addr,
 	}
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
+	order = keeper.getOrder(ctx, "2")
 	assert.NotNil(t, err)
+	assert.True(t, order.Status == OrderStatusCancelled)
 
 	cancelOrderMsg = CancelOrderMsg{
 		OrderID: "3",
 		Issuer:  addr,
 	}
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
+	order = keeper.getOrder(ctx, "3")
 	assert.NotNil(t, err)
+	assert.True(t, order.Status == OrderStatusCancelled)
 }
