@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/icheckteam/ichain/x/shipping"
 	"github.com/icheckteam/ichain/x/warranty"
 
 	"github.com/icheckteam/ichain/x/identity"
@@ -41,6 +42,7 @@ type IchainApp struct {
 	keyStake    *sdk.KVStoreKey
 	keyAsset    *sdk.KVStoreKey
 	keyWarranty *sdk.KVStoreKey
+	keyShipping *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	// Manage getting and setting accounts
@@ -51,6 +53,7 @@ type IchainApp struct {
 	assetKeeper    asset.Keeper
 	identityKeeper identity.Keeper
 	warrantyKeeper warranty.Keeper
+	shippingKeeper shipping.Keeper
 
 	// Handle fees
 	feeHandler sdk.FeeHandler
@@ -70,6 +73,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyIdentity: sdk.NewKVStoreKey("identity"),
 		keyAsset:    sdk.NewKVStoreKey("asset"),
 		keyWarranty: sdk.NewKVStoreKey("warranty"),
+		keyShipping: sdk.NewKVStoreKey("shipping"),
 	}
 
 	// define the accountMapper
@@ -86,13 +90,15 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.warrantyKeeper = warranty.NewKeeper(app.keyWarranty, cdc, app.bankKeeper)
+	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.bankKeeper)
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
 		AddRoute("asset", asset.NewHandler(app.assetKeeper)).
 		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
-		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper))
+		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper)).
+		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler
@@ -122,7 +128,7 @@ func MakeCodec() *wire.Codec {
 	ibc.RegisterWire(cdc)
 	asset.RegisterWire(cdc)
 	warranty.RegisterWire(cdc)
-
+	shipping.RegisterWire(cdc)
 	// register custom AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
