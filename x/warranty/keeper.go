@@ -105,7 +105,6 @@ func (k Keeper) GetContract(ctx sdk.Context, contractID string) *Contract {
 	b := store.Get(GetContractKey(contractID))
 	c := &Contract{}
 
-	// marshal the record and add to the state
 	if err := k.cdc.UnmarshalBinary(b, c); err != nil {
 		return nil
 	}
