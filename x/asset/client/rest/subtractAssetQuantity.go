@@ -21,8 +21,7 @@ type subtractAssetQuantityBody struct {
 	Sequence         int64  `json:"sequence"`
 }
 
-func SubtractQuantityBodyHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var m addAssetQuantityBody

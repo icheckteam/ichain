@@ -9,6 +9,6 @@ var (
 )
 
 // GetAssetKey get the key for the record with address
-func GetAssetKey(uid []byte) []byte {
-	return append(AssetKey, uid...)
+func GetAssetKey(assetID string) []byte {
+	return append(AssetKey, []byte(assetID)...)
 }

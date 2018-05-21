@@ -30,8 +30,7 @@ type assetBody struct {
 }
 
 // Create asset REST handler
-func CreateAssetHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m createAssetBody
 		body, err := ioutil.ReadAll(r.Body)

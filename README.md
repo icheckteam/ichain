@@ -33,6 +33,9 @@ If you have any questions you can send email to (dev@icheck.vn)
 
 1. [Identity](https://github.com/icheckteam/documentation/blob/master/Identity.md)
 2. [Asset](https://github.com/icheckteam/documentation/blob/master/Asset.md)
+3. Shipping
+4. Warranty
+5. Invoice
 
 ### Minimum requirements
 

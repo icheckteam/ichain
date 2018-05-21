@@ -44,7 +44,7 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
-	assetKey := GetAssetKey([]byte(asset.ID))
+	assetKey := GetAssetKey(asset.ID)
 
 	// marshal the record and add to the state
 	bz, err := k.cdc.MarshalBinary(asset)
@@ -56,16 +56,16 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 }
 
 // Has asset
-func (k Keeper) Has(ctx sdk.Context, id string) bool {
+func (k Keeper) Has(ctx sdk.Context, assetID string) bool {
 	store := ctx.KVStore(k.storeKey)
-	assetKey := GetAssetKey([]byte(id))
+	assetKey := GetAssetKey(assetID)
 	return store.Has(assetKey)
 }
 
 // GetAsset get asset by IDS
-func (k Keeper) GetAsset(ctx sdk.Context, uid string) *Asset {
+func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetAssetKey([]byte(uid)))
+	b := store.Get(GetAssetKey(assetID))
 	asset := &Asset{}
 
 	// marshal the record and add to the state

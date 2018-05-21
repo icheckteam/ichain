@@ -7,28 +7,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
-	"github.com/icheckteam/ichain/x/asset"
+	"github.com/icheckteam/ichain/x/warranty"
 )
 
-///////////////////////////
-// REST
-
-// get key REST handler
-func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
+func QueryContractHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assetID := vars["id"]
-		key := asset.GetAssetKey(assetID)
+		key := warranty.GetContractKey(vars["id"])
 		res, err := ctx.Query(key, storeName)
-		var asset asset.Asset
-		err = cdc.UnmarshalBinary(res, &asset)
+		var c warranty.Contract
+		err = cdc.UnmarshalBinary(res, &c)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf("Couldn't decode contract. Error: %s", err.Error())))
 			return
 		}
 
-		output, err := cdc.MarshalJSON(asset)
+		output, err := cdc.MarshalJSON(c)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

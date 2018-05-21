@@ -120,14 +120,14 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 
 // Attribute ...
 type Attribute struct {
-	Name         string   `json:"name"`
-	Type         int      `json:"type"`
-	BytesValue   []byte   `json:"bytes_value"`
-	StringValue  string   `json:"string_value"`
-	BooleanValue bool     `json:"boolean_value"`
-	NumberValue  int64    `json:"number_value"`
-	EnumValue    []string `json:"enum_value"`
-	Location     Location `json:"location_value"`
+	Name         string        `json:"name"`
+	Type         AttributeType `json:"type"`
+	BytesValue   []byte        `json:"bytes_value"`
+	StringValue  string        `json:"string_value"`
+	BooleanValue bool          `json:"boolean_value"`
+	NumberValue  int64         `json:"number_value"`
+	EnumValue    []string      `json:"enum_value"`
+	Location     Location      `json:"location_value"`
 }
 
 type Location struct {
@@ -204,4 +204,17 @@ const (
 	StatusPending  ProposalStatus = iota // The recipient has not answered
 	StatusAccepted                       // The recipient accepted the proposal
 	StatusRefused                        // The recipient refused the proposal
+)
+
+// AttributeType define the type ò the attribute
+type AttributeType int
+
+// All avaliable type ò the attribute
+const (
+	AttributeTypeBytes AttributeType = iota
+	AttributeTypeString
+	AttributeTypeBoolean
+	AttributeTypeNumber
+	AttributeTypeEnum
+	AttributeTypeLocation
 )

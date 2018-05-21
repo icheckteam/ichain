@@ -37,7 +37,7 @@ func SearchTxCmd(cmdr commander) *cobra.Command {
 	return cmd
 }
 
-func (c commander) searchTx(tags []string) ([]txInfo, error) {
+func (c commander) searchTx(tags []string, page, perPage int) ([]txInfo, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("Must declare at least one tag to search")
 	}
@@ -51,11 +51,11 @@ func (c commander) searchTx(tags []string) ([]txInfo, error) {
 	}
 
 	prove := !viper.GetBool(client.FlagTrustNode)
-	res, err := node.TxSearch(query, prove)
+	res, err := node.TxSearch(query, prove, page, perPage)
 	if err != nil {
 		return nil, err
 	}
-	return formatTxResults(c.cdc, res)
+	return formatTxResults(c.cdc, res.Txs)
 }
 
 func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) {
@@ -74,7 +74,9 @@ func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) 
 
 func (c commander) searchAndPrintTx(cmd *cobra.Command, args []string) error {
 	tags := viper.GetStringSlice(flagTags)
-	output, err := c.searchTx(tags)
+	page := 0
+	perPage := 100
+	output, err := c.searchTx(tags, page, perPage)
 	if err != nil {
 		return err
 	}
@@ -107,7 +109,11 @@ func SearchTxRequestHandler(cdc *wire.Codec) func(http.ResponseWriter, *http.Req
 		if owner != "" {
 			tags = append(tags, fmt.Sprintf("owner='%s'", owner))
 		}
-		output, err := c.searchTx(tags)
+
+		page := 0
+		perPage := 100
+
+		output, err := c.searchTx(tags, page, perPage)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))

@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/icheckteam/ichain/x/warranty"
+
 	"github.com/icheckteam/ichain/x/identity"
 
 	abci "github.com/tendermint/abci/types"
@@ -38,15 +40,17 @@ type IchainApp struct {
 	keyIdentity *sdk.KVStoreKey
 	keyStake    *sdk.KVStoreKey
 	keyAsset    *sdk.KVStoreKey
+	keyWarranty *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	// Manage getting and setting accounts
 	accountMapper  sdk.AccountMapper
-	coinKeeper     bank.Keeper
+	bankKeeper     bank.Keeper
 	ibcMapper      ibc.Mapper
 	stakeKeeper    stake.Keeper
 	assetKeeper    asset.Keeper
 	identityKeeper identity.Keeper
+	warrantyKeeper warranty.Keeper
 
 	// Handle fees
 	feeHandler sdk.FeeHandler
@@ -65,6 +69,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyIBC:      sdk.NewKVStoreKey("ibc"),
 		keyIdentity: sdk.NewKVStoreKey("identity"),
 		keyAsset:    sdk.NewKVStoreKey("asset"),
+		keyWarranty: sdk.NewKVStoreKey("warranty"),
 	}
 
 	// define the accountMapper
@@ -75,17 +80,19 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	)
 
 	// add handlers
-	app.coinKeeper = bank.NewKeeper(app.accountMapper)
-	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc, app.coinKeeper)
+	app.bankKeeper = bank.NewKeeper(app.accountMapper)
+	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc, app.bankKeeper)
 	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc)
 	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
-	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.coinKeeper, app.RegisterCodespace(stake.DefaultCodespace))
+	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
+	app.warrantyKeeper = warranty.NewKeeper(app.keyWarranty, cdc, app.bankKeeper)
 	app.Router().
-		AddRoute("bank", bank.NewHandler(app.coinKeeper)).
-		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.coinKeeper)).
+		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
+		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
 		AddRoute("asset", asset.NewHandler(app.assetKeeper)).
 		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
-		AddRoute("stake", stake.NewHandler(app.stakeKeeper))
+		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
+		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler
@@ -114,12 +121,11 @@ func MakeCodec() *wire.Codec {
 	bank.RegisterWire(cdc)
 	ibc.RegisterWire(cdc)
 	asset.RegisterWire(cdc)
+	warranty.RegisterWire(cdc)
 
 	// register custom AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
-	return cdc
-
 	return cdc
 }
 

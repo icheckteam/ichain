@@ -112,8 +112,16 @@ func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
 		return ErrMissingField("name")
 	}
 	for _, attr := range msg.Attributes {
-		if attr.Type > 5 {
-			return ErrMissingField("attributes")
+		switch attr.Type {
+		case AttributeTypeBoolean,
+			AttributeTypeBytes,
+			AttributeTypeEnum,
+			AttributeTypeLocation,
+			AttributeTypeNumber,
+			AttributeTypeString:
+			break
+		default:
+			return ErrInvalidField("attributes")
 		}
 	}
 	return nil

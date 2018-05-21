@@ -16,15 +16,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	keys "github.com/cosmos/cosmos-sdk/client/keys"
 	rpc "github.com/cosmos/cosmos-sdk/client/rpc"
-	version "github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	tx "github.com/icheckteam/ichain/client/tx"
+	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	bank "github.com/icheckteam/ichain/x/bank/client/rest"
 	ibc "github.com/icheckteam/ichain/x/ibc/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
 	stake "github.com/icheckteam/ichain/x/stake/client/rest"
+	warranty "github.com/icheckteam/ichain/x/warranty/client/rest"
 )
 
 const (
@@ -86,8 +87,9 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	auth.RegisterRoutes(ctx, r, cdc, "acc")
 	bank.RegisterRoutes(ctx, r, cdc, kb)
 	ibc.RegisterRoutes(ctx, r, cdc, kb)
-	asset.RegisterRoutes(r, cdc, kb, "asset")
-	identity.RegisterRoutes(r, cdc, kb, "identity")
+	asset.RegisterRoutes(ctx, r, cdc, kb, "asset")
+	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
 	stake.RegisterRoutes(ctx, r, cdc, kb)
+	warranty.RegisterRoutes(ctx, r, cdc, kb, "warranty")
 	return r
 }
