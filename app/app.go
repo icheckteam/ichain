@@ -108,7 +108,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.SetInitChainer(app.initChainer)
 
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeHandler))
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keyAsset, app.keyIdentity)
+	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keyAsset, app.keyIdentity, app.keyShipping, app.keyWarranty)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
