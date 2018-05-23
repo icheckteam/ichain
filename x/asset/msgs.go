@@ -139,9 +139,10 @@ func (msg UpdateAttrMsg) GetSignBytes() []byte {
 // AddQuantityMsg ...
 // ---------------------------------------------------------------
 type AddQuantityMsg struct {
-	Issuer   sdk.Address `json:"issuer"`
-	ID       string      `json:"id"`
-	Quantity int64       `json:"quantity"`
+	Issuer    sdk.Address `json:"issuer"`
+	ID        string      `json:"id"`
+	Quantity  int64       `json:"quantity"`
+	Materials Materials   `json:"materials"`
 }
 
 func (msg AddQuantityMsg) Type() string                            { return msgType }
@@ -345,6 +346,52 @@ func (msg RevokeProposalMsg) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg RevokeProposalMsg) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// MsgAddMaterials ...
+type MsgAddMaterials struct {
+	AssetID   string      `json:"asset_id"`
+	Issuer    sdk.Address `json:"issuer"`
+	Materials Materials   `json:"materials"`
+}
+
+func (msg MsgAddMaterials) Type() string                            { return msgType }
+func (msg MsgAddMaterials) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgAddMaterials) String() string {
+	return fmt.Sprintf(`MsgAddMaterials{%v->%s->%v}`, msg.Issuer, msg.AssetID, msg.Materials)
+}
+
+// ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
+func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
+	if len(msg.Issuer) == 0 {
+		return ErrMissingField("issuer")
+	}
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
+	}
+	if len(msg.Materials) == 0 {
+		return ErrMissingField("asset_id")
+	}
+	for i, material := range msg.Materials {
+		if len(material.AssetID) == 0 {
+			return ErrMissingField(fmt.Sprintf("materials[%d].asset_id is required", i))
+		}
+		if material.Quantity == 0 {
+			return ErrMissingField(fmt.Sprintf("materials[%d].quantity is required", i))
+		}
+	}
+
+	return nil
+}
+
+// GetSignBytes Get the bytes for the message signer to sign on
+func (msg MsgAddMaterials) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)

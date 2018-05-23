@@ -80,7 +80,7 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 	allTags := sdk.EmptyTags()
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
-		return nil, ErrUnknownAsset("Asset not found")
+		return nil, ErrAssetNotFound(msg.ID)
 	}
 
 	for _, attr := range msg.Attributes {
@@ -106,7 +106,17 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk
 	if !asset.IsOwner(msg.Issuer) {
 		return nil, nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
-
+	if len(msg.Materials) > 0 {
+		coins := sdk.Coins{}
+		for _, material := range msg.Materials {
+			coins = append(coins, sdk.Coin{Denom: material.AssetID, Amount: material.Quantity})
+		}
+		_, _, err := k.bank.SubtractCoins(ctx, asset.Issuer, coins)
+		if err != nil {
+			return nil, nil, err
+		}
+		asset.Materials = asset.Materials.Plus(msg.Materials.Sort()).Sort()
+	}
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
 	// add coin ...

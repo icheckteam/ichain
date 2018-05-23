@@ -25,6 +25,10 @@ func ErrUnknownAsset(msg string) sdk.Error {
 	return newError(DefaultCodespace, CodeUnknownAsset, msg)
 }
 
+func ErrAssetNotFound(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset id %s not found", assetID))
+}
+
 // ErrMissingField ...
 func ErrMissingField(field string) sdk.Error {
 	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("missing %s", field))

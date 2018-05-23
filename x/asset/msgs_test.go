@@ -220,13 +220,14 @@ func TestAddQuantityMsgValidation(t *testing.T) {
 func TestAddQuantityMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = AddQuantityMsg{
-		Issuer:   addr1,
-		ID:       "1",
-		Quantity: 1,
+		Issuer:    addr1,
+		ID:        "1",
+		Quantity:  1,
+		Materials: Materials{Material{Quantity: 1, AssetID: "1"}},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"issuer":"696E707574","id":"1","quantity":1}`)
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"id\":\"1\",\"quantity\":1,\"materials\":[{\"asset_id\":\"1\",\"quantity\":1}]}")
 }
 
 func TestAddQuantityGetGetSigners(t *testing.T) {

@@ -15,11 +15,12 @@ import (
 )
 
 type addAssetQuantityBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	Quantity         int64  `json:"quantity"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
+	LocalAccountName string          `json:"account_name"`
+	Password         string          `json:"password"`
+	Quantity         int64           `json:"quantity"`
+	Materials        asset.Materials `json:"materials"`
+	ChainID          string          `json:"chain_id"`
+	Sequence         int64           `json:"sequence"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -52,6 +53,13 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			w.Write([]byte("Quantity is required"))
 			return
 		}
+
+		if m.Quantity == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Quantity is required"))
+			return
+		}
+
 		info, err := kb.Get(m.LocalAccountName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -91,8 +99,9 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 
 func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, body addAssetQuantityBody) sdk.Msg {
 	return asset.AddQuantityMsg{
-		Issuer:   creator,
-		ID:       assetID,
-		Quantity: body.Quantity,
+		Issuer:    creator,
+		ID:        assetID,
+		Quantity:  body.Quantity,
+		Materials: body.Materials,
 	}
 }

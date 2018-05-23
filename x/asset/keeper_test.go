@@ -21,6 +21,20 @@ func TestKeeper(t *testing.T) {
 		Quantity: 100,
 	}
 
+	asset2 := Asset{
+		ID:       "asset2",
+		Issuer:   addr,
+		Name:     "asset 2",
+		Quantity: 100,
+	}
+
+	asset3 := Asset{
+		ID:       "asset3",
+		Issuer:   addr,
+		Name:     "asset 3",
+		Quantity: 100,
+	}
+
 	// Test register asset
 	keeper.RegisterAsset(ctx, asset)
 	newAsset := keeper.GetAsset(ctx, asset.ID)
@@ -50,6 +64,41 @@ func TestKeeper(t *testing.T) {
 	_, _, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 102})
 	assert.True(t, err != nil)
 	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
+
+	keeper.RegisterAsset(ctx, asset2)
+	keeper.RegisterAsset(ctx, asset3)
+
+	// test add materials
+	addQuantityMsg := AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
+		Material{AssetID: asset2.ID, Quantity: 1},
+	}}
+	keeper.AddQuantity(ctx, addQuantityMsg)
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Materials[0].AssetID == asset2.ID)
+	assert.True(t, newAsset.Materials[0].Quantity == 1)
+
+	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
+		Material{AssetID: asset2.ID, Quantity: 1},
+	}}
+	keeper.AddQuantity(ctx, addQuantityMsg)
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Materials[0].AssetID == asset2.ID)
+	assert.True(t, newAsset.Materials[0].Quantity == 2)
+
+	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
+		Material{AssetID: asset3.ID, Quantity: 1},
+	}}
+	keeper.AddQuantity(ctx, addQuantityMsg)
+	newAsset = keeper.GetAsset(ctx, asset.ID)
+	assert.True(t, newAsset.Materials[1].AssetID == asset3.ID)
+	assert.True(t, newAsset.Materials[1].Quantity == 1)
+
+	// invalid material quantity
+	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
+		Material{AssetID: asset3.ID, Quantity: 1111},
+	}}
+	_, _, err = keeper.AddQuantity(ctx, addQuantityMsg)
+	assert.True(t, err != nil)
 
 	// Test update attributes
 	attrs := []Attribute{Attribute{Name: "weight", NumberValue: 100}, Attribute{Name: "size", NumberValue: 2}}
