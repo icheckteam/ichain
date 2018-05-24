@@ -24,6 +24,7 @@ import (
 	bank "github.com/icheckteam/ichain/x/bank/client/rest"
 	ibc "github.com/icheckteam/ichain/x/ibc/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
+	invoice "github.com/icheckteam/ichain/x/invoice/client/rest"
 	shipping "github.com/icheckteam/ichain/x/shipping/client/rest"
 	stake "github.com/icheckteam/ichain/x/stake/client/rest"
 	warranty "github.com/icheckteam/ichain/x/warranty/client/rest"
@@ -93,5 +94,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	stake.RegisterRoutes(ctx, r, cdc, kb)
 	warranty.RegisterRoutes(ctx, r, cdc, kb, "warranty")
 	shipping.RegisterRoutes(r, cdc, kb, "shipping")
+	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
 	return r
 }

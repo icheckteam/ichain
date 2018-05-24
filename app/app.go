@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/icheckteam/ichain/x/invoice"
 	"github.com/icheckteam/ichain/x/shipping"
 	"github.com/icheckteam/ichain/x/warranty"
 
@@ -43,6 +44,7 @@ type IchainApp struct {
 	keyAsset    *sdk.KVStoreKey
 	keyWarranty *sdk.KVStoreKey
 	keyShipping *sdk.KVStoreKey
+	keyInvoice  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	// Manage getting and setting accounts
@@ -54,6 +56,7 @@ type IchainApp struct {
 	identityKeeper identity.Keeper
 	warrantyKeeper warranty.Keeper
 	shippingKeeper shipping.Keeper
+	invoiceKeeper  invoice.InvoiceKeeper
 
 	// Handle fees
 	feeHandler sdk.FeeHandler
@@ -74,6 +77,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyAsset:    sdk.NewKVStoreKey("asset"),
 		keyWarranty: sdk.NewKVStoreKey("warranty"),
 		keyShipping: sdk.NewKVStoreKey("shipping"),
+		keyInvoice:  sdk.NewKVStoreKey("invoice"),
 	}
 
 	// define the accountMapper
@@ -91,6 +95,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.warrantyKeeper = warranty.NewKeeper(app.keyWarranty, cdc, app.bankKeeper)
 	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.bankKeeper)
+	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.bankKeeper)
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
@@ -98,7 +103,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper)).
-		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper))
+		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper)).
+		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper))
 
 	// Define the feeHandler.
 	app.feeHandler = auth.BurnFeeHandler
@@ -108,7 +114,14 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.SetInitChainer(app.initChainer)
 
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeHandler))
-	app.MountStoresIAVL(app.keyMain, app.keyAccount, app.keyIBC, app.keyAsset, app.keyIdentity, app.keyShipping, app.keyWarranty)
+	app.MountStoresIAVL(
+		app.keyMain,
+		app.keyAccount,
+		app.keyIBC, app.keyAsset,
+		app.keyIdentity, app.keyShipping,
+		app.keyWarranty,
+		app.keyInvoice,
+	)
 	err := app.LoadLatestVersion(app.keyMain)
 	if err != nil {
 		cmn.Exit(err.Error())
@@ -129,6 +142,7 @@ func MakeCodec() *wire.Codec {
 	asset.RegisterWire(cdc)
 	warranty.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
+	invoice.RegisterWire(cdc)
 	// register custom AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
