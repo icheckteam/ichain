@@ -25,8 +25,7 @@ type createOrderBody struct {
 }
 
 // CreateOrderHandlerFn ...
-func CreateOrderHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m createOrderBody
 		body, err := ioutil.ReadAll(r.Body)

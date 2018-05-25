@@ -14,8 +14,7 @@ import (
 // REST
 
 // QueryOrderRequestHandlerFn gets key REST handler
-func QueryOrderRequestHandlerFn(storeName string, cdc *wire.Codec) http.HandlerFunc {
-	ctx := context.NewCoreContextFromViper()
+func QueryOrderRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		orderID := vars["id"]
