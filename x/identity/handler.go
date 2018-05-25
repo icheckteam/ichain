@@ -11,9 +11,9 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case CreateMsg:
+		case MsgCreateClaim:
 			return handleCreate(ctx, k, msg)
-		case RevokeMsg:
+		case MsgRevokeClaim:
 			return handleRevokeMsg(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
@@ -22,21 +22,16 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleCreate(ctx sdk.Context, k Keeper, msg CreateMsg) sdk.Result {
-	tags, err := k.Create(ctx, Claim{
-		ID:       msg.ID,
-		Context:  msg.Context,
-		Content:  msg.Content,
-		Metadata: msg.Metadata,
-	})
+func handleCreate(ctx sdk.Context, k Keeper, msg MsgCreateClaim) sdk.Result {
+	tags, err := k.CreateClaim(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
 	return sdk.Result{Tags: tags}
 }
 
-func handleRevokeMsg(ctx sdk.Context, k Keeper, msg RevokeMsg) sdk.Result {
-	tags, err := k.Revoke(ctx, msg.Owner, msg.ID, msg.Revocation)
+func handleRevokeMsg(ctx sdk.Context, k Keeper, msg MsgRevokeClaim) sdk.Result {
+	tags, err := k.RevokeClaim(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

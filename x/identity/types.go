@@ -16,11 +16,11 @@ type Claim struct {
 
 // ClaimMetadata the claim metadata
 type ClaimMetadata struct {
-	CreateTime     time.Time   `json:"create_time"`
-	Issuer         sdk.Address `json:"issuer"`
-	Recipient      sdk.Address `json:"recipient"`
-	ExpirationTime time.Time   `json:"expiration_time"`
-	Revocation     string      `json:"revocation"`
+	CreateTime time.Time   `json:"create_time"`
+	Issuer     sdk.Address `json:"issuer"`
+	Recipient  sdk.Address `json:"recipient"`
+	Expires    time.Time   `json:"expires"`
+	Revocation string      `json:"revocation"`
 }
 
 func (c Claim) IsOwner(addr sdk.Address) bool {

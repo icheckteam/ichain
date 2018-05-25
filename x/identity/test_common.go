@@ -19,8 +19,7 @@ func makeTestCodec() *wire.Codec {
 
 	// Register Msgs
 	cdc.RegisterInterface((*sdk.Msg)(nil), nil)
-	cdc.RegisterConcrete(CreateMsg{}, "test/asset/CreateMsg", nil)
-	cdc.RegisterConcrete(RevokeMsg{}, "test/asset/RevokeMsg", nil)
+	RegisterWire(cdc)
 	wire.RegisterCrypto(cdc)
 
 	return cdc

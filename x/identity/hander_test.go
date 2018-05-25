@@ -14,15 +14,15 @@ func TestHandle(t *testing.T) {
 	ctx, keeper := createTestInput(t, false)
 	creatTime, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 	expiration, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
-	var msg = CreateMsg{
+	var msg = MsgCreateClaim{
 		ID:      "1212",
 		Context: "claim:identity",
 		Content: []byte(`{"demo": 1}`),
 		Metadata: ClaimMetadata{
-			CreateTime:     creatTime,
-			ExpirationTime: expiration,
-			Issuer:         addr,
-			Recipient:      addr1,
+			CreateTime: creatTime,
+			Expires:    expiration,
+			Issuer:     addr,
+			Recipient:  addr1,
 		},
 	}
 
@@ -31,20 +31,15 @@ func TestHandle(t *testing.T) {
 	claim, _ := keeper.GetClaim(ctx, msg.ID)
 	require.True(t, claim != nil)
 
-	claimIDS, _ := keeper.getClaimsAccount(ctx, addr1)
-	require.True(t, claimIDS[0] == claim.ID)
-	claimIDS, _ = keeper.getClaimsAccount(ctx, addr)
-	require.True(t, claimIDS[0] == claim.ID)
-
-	got = handleRevokeMsg(ctx, keeper, RevokeMsg{
-		ID:         claim.ID,
+	got = handleRevokeMsg(ctx, keeper, MsgRevokeClaim{
+		ClaimID:    claim.ID,
 		Owner:      addr1,
 		Revocation: "1212",
 	})
 	require.False(t, got.IsOK(), "expected no error on handleRevokeMsg")
 
-	got = handleRevokeMsg(ctx, keeper, RevokeMsg{
-		ID:         claim.ID,
+	got = handleRevokeMsg(ctx, keeper, MsgRevokeClaim{
+		ClaimID:    claim.ID,
 		Owner:      addr,
 		Revocation: "1212",
 	})

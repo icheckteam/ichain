@@ -9,8 +9,8 @@ import (
 
 const msgType = "identity"
 
-// ClaimIssueMsg ...
-type CreateMsg struct {
+// MsgCreateClaim ...
+type MsgCreateClaim struct {
 	ID       string        `json:"id"`
 	Context  string        `json:"context"`
 	Content  Content       `json:"content"`
@@ -18,15 +18,15 @@ type CreateMsg struct {
 }
 
 // nolint ...
-func (msg CreateMsg) Type() string                            { return msgType }
-func (msg CreateMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg CreateMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Metadata.Issuer} }
-func (msg CreateMsg) String() string {
-	return fmt.Sprintf("CreateMsg{Issuer: %v, Recipient: %s, ExpirationTime: %s}", msg.Metadata.Issuer, msg.Metadata.Recipient, msg.Metadata.ExpirationTime)
+func (msg MsgCreateClaim) Type() string                            { return msgType }
+func (msg MsgCreateClaim) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgCreateClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Metadata.Issuer} }
+func (msg MsgCreateClaim) String() string {
+	return fmt.Sprintf("MsgCreateClaim{Issuer: %v, Recipient: %s, Expires: %s}", msg.Metadata.Issuer, msg.Metadata.Recipient, msg.Metadata.Expires)
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg CreateMsg) GetSignBytes() []byte {
+func (msg MsgCreateClaim) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -35,7 +35,7 @@ func (msg CreateMsg) GetSignBytes() []byte {
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg CreateMsg) ValidateBasic() sdk.Error {
+func (msg MsgCreateClaim) ValidateBasic() sdk.Error {
 	if len(msg.ID) == 0 {
 		return sdk.ErrTxDecode("id is requried")
 	}
@@ -53,8 +53,8 @@ func (msg CreateMsg) ValidateBasic() sdk.Error {
 		return sdk.ErrTxDecode("Metadata.CreateTime is requried")
 	}
 
-	if msg.Metadata.ExpirationTime.IsZero() {
-		return sdk.ErrTxDecode("Metadata.ExpirationTime is requried")
+	if msg.Metadata.Expires.IsZero() {
+		return sdk.ErrTxDecode("Metadata.expires is requried")
 	}
 
 	if len(msg.Metadata.Recipient) == 0 {
@@ -64,22 +64,22 @@ func (msg CreateMsg) ValidateBasic() sdk.Error {
 }
 
 // RevokeMsg ...
-type RevokeMsg struct {
-	ID         string      `json:"id"`
+type MsgRevokeClaim struct {
+	ClaimID    string      `json:"claim_id"`
 	Owner      sdk.Address `json:"owner"`
 	Revocation string      `json:"revocation"`
 }
 
 // nolint ...
-func (msg RevokeMsg) Type() string                            { return msgType }
-func (msg RevokeMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg RevokeMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Owner} }
-func (msg RevokeMsg) String() string {
-	return fmt.Sprintf("RevokeMsg{ID: %v, Sender: %s}", msg.ID, msg.Owner)
+func (msg MsgRevokeClaim) Type() string                            { return msgType }
+func (msg MsgRevokeClaim) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgRevokeClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Owner} }
+func (msg MsgRevokeClaim) String() string {
+	return fmt.Sprintf("MsgRevokeClaim{ID: %v, Sender: %s}", msg.ClaimID, msg.Owner)
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg RevokeMsg) GetSignBytes() []byte {
+func (msg MsgRevokeClaim) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -88,11 +88,11 @@ func (msg RevokeMsg) GetSignBytes() []byte {
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg RevokeMsg) ValidateBasic() sdk.Error {
+func (msg MsgRevokeClaim) ValidateBasic() sdk.Error {
 	if len(msg.Owner) == 0 {
 		return sdk.ErrUnknownAddress(msg.Owner.String()).Trace("")
 	}
-	if len(msg.ID) == 0 {
+	if len(msg.ClaimID) == 0 {
 		return sdk.ErrTxDecode("ClaimID is requried")
 	}
 	if len(msg.Revocation) == 0 {
