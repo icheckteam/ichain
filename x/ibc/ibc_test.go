@@ -5,15 +5,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	abci "github.com/tendermint/abci/types"
+	"github.com/tendermint/go-crypto"
+	dbm "github.com/tendermint/tmlibs/db"
+	"github.com/tendermint/tmlibs/log"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/x/bank"
-	abci "github.com/tendermint/abci/types"
-	"github.com/tendermint/go-crypto"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 )
 
 // AccountMapper(/Keeper) and IBCMapper should use different StoreKey later
@@ -31,9 +32,10 @@ func newAddress() crypto.Address {
 	return crypto.GenPrivKeyEd25519().PubKey().Address()
 }
 
-func getCoins(ck bank.Keeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, sdk.Tags, sdk.Error) {
+func getCoins(ck bank.Keeper, ctx sdk.Context, addr crypto.Address) (sdk.Coins, sdk.Error) {
 	zero := sdk.Coins(nil)
-	return ck.AddCoins(ctx, addr, zero)
+	coins, _, err := ck.AddCoins(ctx, addr, zero)
+	return coins, err
 }
 
 func makeCodec() *wire.Codec {
@@ -99,7 +101,7 @@ func TestIBC(t *testing.T) {
 	res = h(ctx, msg)
 	assert.True(t, res.IsOK())
 
-	coins, _, err = getCoins(ck, ctx, src)
+	coins, err = getCoins(ck, ctx, src)
 	assert.Nil(t, err)
 	assert.Equal(t, zero, coins)
 
@@ -117,7 +119,7 @@ func TestIBC(t *testing.T) {
 	res = h(ctx, msg)
 	assert.True(t, res.IsOK())
 
-	coins, _, err = getCoins(ck, ctx, dest)
+	coins, err = getCoins(ck, ctx, dest)
 	assert.Nil(t, err)
 	assert.Equal(t, mycoins, coins)
 
