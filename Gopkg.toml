@@ -32,9 +32,14 @@
 [[override]]
   name = "github.com/tendermint/tmlibs"
   version = "~0.8.3-rc0" 
-[[override]]
+[[constraint]]
   name = "github.com/tendermint/iavl"
-  branch = "develop"
+  version = "~0.7.0"
+
+[[override]]
+  name = "github.com/tendermint/go-wire"
+  version = "0.7.3"
+
 [[override]]
   name = "google.golang.org/genproto"
   revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
