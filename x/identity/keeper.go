@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// Keeper ...
+// Keeper manages identity claims
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
@@ -20,32 +20,25 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 }
 
 // ClaimIssue ...
-func (k Keeper) Create(ctx sdk.Context, claim Claim) (sdk.Tags, sdk.Error) {
-	allTags := sdk.EmptyTags()
-	oldClaim, err := k.GetClaim(ctx, claim.ID)
+func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) (sdk.Tags, sdk.Error) {
+	oldClaim, err := k.GetClaim(ctx, msg.ID)
 	if err != nil {
-		return allTags, err
+		return nil, err
 	}
 
-	if oldClaim != nil && !oldClaim.IsOwner(claim.Metadata.Issuer) {
-		return allTags, sdk.ErrUnauthorized("")
+	if oldClaim != nil && !oldClaim.IsOwner(msg.Metadata.Issuer) {
+		return nil, sdk.ErrUnauthorized("")
+	}
+
+	claim := Claim{
+		ID:       msg.ID,
+		Metadata: msg.Metadata,
+		Context:  msg.Context,
+		Content:  msg.Content,
 	}
 
 	k.setClaim(ctx, claim)
-
-	err = k.addClaimsAccount(ctx, claim.Metadata.Recipient, claim.ID)
-	if err != nil {
-		return allTags, err
-	}
-	err = k.addClaimsAccount(ctx, claim.Metadata.Issuer, claim.ID)
-	if err != nil {
-		return allTags, err
-	}
-
-	// append tags
-	allTags.AppendTag("owner", claim.Metadata.Issuer)
-	allTags.AppendTag("owner", claim.Metadata.Recipient)
-	return allTags, nil
+	return nil, nil
 }
 
 func (k Keeper) setClaim(ctx sdk.Context, claim Claim) {
@@ -80,54 +73,15 @@ func (k Keeper) GetClaim(ctx sdk.Context, claimID string) (*Claim, sdk.Error) {
 }
 
 // Revoke ...
-func (k Keeper) Revoke(ctx sdk.Context, addr sdk.Address, claimID, revocation string) (sdk.Tags, sdk.Error) {
-	allTags := sdk.EmptyTags()
-	claim, err := k.GetClaim(ctx, claimID)
+func (k Keeper) RevokeClaim(ctx sdk.Context, msg MsgRevokeClaim) (sdk.Tags, sdk.Error) {
+	claim, err := k.GetClaim(ctx, msg.ClaimID)
 	if err != nil {
 		return nil, err
 	}
-	if claim == nil || !claim.IsOwner(addr) {
-		return allTags, sdk.ErrUnauthorized("")
+	if claim == nil || !claim.IsOwner(msg.Owner) {
+		return nil, sdk.ErrUnauthorized("")
 	}
-	claim.Metadata.Revocation = revocation
+	claim.Metadata.Revocation = msg.Revocation
 	k.setClaim(ctx, *claim)
-	allTags.AppendTag("owner", claim.Metadata.Issuer)
-	allTags.AppendTag("owner", claim.Metadata.Recipient)
-	return allTags, nil
-}
-
-func (k Keeper) getClaimsAccount(ctx sdk.Context, addr sdk.Address) ([]string, sdk.Error) {
-	store := ctx.KVStore(k.storeKey)
-	key := GetClaimsAccountKey(addr)
-	claimIDS := []string{}
-	b := store.Get(key)
-	if len(b) == 0 {
-		return nil, nil
-	}
-	// marshal the claim and add to the state
-	if err := k.cdc.UnmarshalBinary(b, &claimIDS); err != nil {
-		return nil, sdk.ErrInternal(err.Error())
-	}
-	return claimIDS, nil
-}
-
-func (k Keeper) setClaimsAccount(ctx sdk.Context, addr sdk.Address, ids []string) {
-	store := ctx.KVStore(k.storeKey)
-	key := GetClaimsAccountKey(addr)
-
-	bz, err := k.cdc.MarshalBinary(ids)
-	if err != nil {
-		panic(err)
-	}
-	store.Set(key, bz)
-}
-
-func (k Keeper) addClaimsAccount(ctx sdk.Context, addr sdk.Address, id string) sdk.Error {
-	claimIDS, err := k.getClaimsAccount(ctx, addr)
-	if err != nil {
-		return err
-	}
-	claimIDS = append(claimIDS, id)
-	k.setClaimsAccount(ctx, addr, claimIDS)
-	return nil
+	return nil, nil
 }

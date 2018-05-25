@@ -83,9 +83,9 @@ func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 }
 
 func buildRevokeMsg(creator sdk.Address, claimID string, revocation string) sdk.Msg {
-	return identity.RevokeMsg{
+	return identity.MsgRevokeClaim{
 		Owner:      creator,
-		ID:         claimID,
+		ClaimID:    claimID,
 		Revocation: revocation,
 	}
 }

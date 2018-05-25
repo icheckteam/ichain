@@ -97,7 +97,7 @@ func buildCreateClaimMsg(creator sdk.Address, body createClaimBody) (sdk.Msg, er
 	if err != nil {
 		return nil, err
 	}
-	return identity.CreateMsg{
+	return identity.MsgCreateClaim{
 		ID:       body.ClaimID,
 		Context:  body.Context,
 		Content:  identity.Content(b),
