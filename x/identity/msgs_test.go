@@ -130,7 +130,7 @@ func TestCreateMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expiration_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"}}")
+	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expires\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"}}")
 }
 
 func TestMsgCreateClaimGetSigners(t *testing.T) {
