@@ -218,11 +218,9 @@ func TestCoinSend(t *testing.T) {
 }
 
 func TestIBCTransfer(t *testing.T) {
-
 }
 
 func TestTxs(t *testing.T) {
-
 }
 
 //__________________________________________________________
@@ -248,10 +246,10 @@ func startTMAndLCD() (*nm.Node, net.Listener, error) {
 
 	pubKey := info.PubKey
 	sendAddr = pubKey.Address().String() // XXX global
+
 	config := GetConfig()
 	config.Consensus.TimeoutCommit = 1000
 	config.Consensus.SkipTimeoutCommit = false
-	config.LogLevel = "state:info"
 
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	// logger = log.NewFilter(logger, log.AllowError())
@@ -267,7 +265,7 @@ func startTMAndLCD() (*nm.Node, net.Listener, error) {
 		return nil, nil, err
 	}
 
-	coins := sdk.Coins{{coinDenom, coinAmount}}
+	coins := sdk.Coins{sdk.Coin{Denom: coinDenom, Amount: coinAmount}}
 	appState := map[string]interface{}{
 		"accounts": []*btypes.GenesisAccount{
 			{
@@ -282,7 +280,6 @@ func startTMAndLCD() (*nm.Node, net.Listener, error) {
 		return nil, nil, err
 	}
 	genDoc.AppStateJSON = stateBytes
-
 	// LCD listen address
 	port = fmt.Sprintf("%d", 17377)                       // XXX
 	listenAddr := fmt.Sprintf("tcp://localhost:%s", port) // XXX

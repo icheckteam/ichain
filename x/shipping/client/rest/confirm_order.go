@@ -22,8 +22,7 @@ type confirmOrderBody struct {
 }
 
 // ConfirmOrderHandlerFn ...
-func ConfirmOrderHandlerFn(cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	ctx := context.NewCoreContextFromViper()
+func ConfirmOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var m confirmOrderBody

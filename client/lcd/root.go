@@ -93,7 +93,7 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
 	stake.RegisterRoutes(ctx, r, cdc, kb)
 	warranty.RegisterRoutes(ctx, r, cdc, kb, "warranty")
-	shipping.RegisterRoutes(r, cdc, kb, "shipping")
+	shipping.RegisterRoutes(ctx, r, cdc, kb, "shipping")
 	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
 	return r
 }

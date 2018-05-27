@@ -1,6 +1,7 @@
 <h1>Ichain </h1>
 
 [![version](https://img.shields.io/github/tag/icheckteam/ichain.svg)](https://github.com/icheckteam/ichain/releases/latest)
+[![docs](https://readthedocs.org/projects/ichain/badge/?version=latest)](https://ichain.readthedocs.io/en/latest/?badge=latest)
 [![license](https://img.shields.io/github/license/icheckteam/ichain.svg)](https://github.com/icheckteam/ichain/blob/master/LICENSE)
 [![](https://tokei.rs/b1/github/icheckteam/ichain?category=lines)](https://github.com/icheckteam/ichain)
 
