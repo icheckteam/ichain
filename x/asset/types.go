@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
@@ -22,7 +23,7 @@ type Asset struct {
 
 // IsOwner ....
 func (a Asset) IsOwner(addr sdk.Address) bool {
-	return a.Issuer.String() == addr.String()
+	return bytes.Equal(a.Issuer, addr)
 }
 
 // CheckUpdateAttributeAuthorization returns whether the address is authorized to update the attribute
@@ -36,7 +37,7 @@ func (a Asset) CheckUpdateAttributeAuthorization(address sdk.Address, attr Attri
 	// Check if the address exist in the asset's proposals
 	// then check if the proposal's properties includes the attribute name
 	for _, proposal := range a.Proposals {
-		if proposal.IsAccepted() && proposal.Recipient.String() == address.String() {
+		if proposal.IsAccepted() && bytes.Equal(proposal.Recipient, address) {
 			for _, property := range proposal.Properties {
 				if property == attributeName {
 					return true
@@ -56,7 +57,7 @@ func (a Asset) ValidatePropossal(issuer sdk.Address, recipient sdk.Address) (*Pr
 		authorized    = false
 	)
 
-	if issuer.String() == recipient.String() {
+	if bytes.Equal(issuer, recipient) {
 		return nil, -1, false
 	}
 
@@ -66,7 +67,7 @@ func (a Asset) ValidatePropossal(issuer sdk.Address, recipient sdk.Address) (*Pr
 
 	for index, p := range a.Proposals {
 		// Check if recipient already exists in the proposals list
-		if p.Recipient.String() == recipient.String() {
+		if bytes.Equal(p.Recipient, recipient) {
 			proposalIndex = index
 			p := p
 			proposal = &p
@@ -82,7 +83,7 @@ func (a Asset) ValidatePropossal(issuer sdk.Address, recipient sdk.Address) (*Pr
 		}
 
 		// Check if the issuer has the correct role
-		if p.Role == RoleOwner && p.IsAccepted() && p.Recipient.String() == issuer.String() {
+		if p.Role == RoleOwner && p.IsAccepted() && bytes.Equal(p.Recipient, issuer) {
 			authorized = true
 		}
 	}
@@ -105,7 +106,7 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 
 	for i, p := range a.Proposals {
 		// Check for proposal with the same recipient
-		if p.Recipient.String() == recipient.String() {
+		if bytes.Equal(recipient, p.Recipient) {
 
 			// Only proceed if the proposal's status is pending
 			switch p.Status {

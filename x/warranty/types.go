@@ -1,6 +1,7 @@
 package warranty
 
 import (
+	"bytes"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,7 +30,7 @@ func (c Contract) ValidateCreateClaim(addr sdk.Address) (valid bool) {
 		}
 	}
 
-	if addr.String() != c.Recipient.String() {
+	if !bytes.Equal(addr, c.Recipient) {
 		return
 	}
 	valid = true
@@ -43,7 +44,7 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 		return
 	}
 
-	if addr.String() != c.Claim.Recipient.String() {
+	if !bytes.Equal(addr, c.Claim.Recipient) {
 		return
 	}
 
