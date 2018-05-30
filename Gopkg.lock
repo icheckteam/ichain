@@ -33,8 +33,8 @@
     "x/bank",
     "x/ibc"
   ]
-  revision = "518fe871d749d62a4dbb6c36f335628d116b9cdf"
-  version = "v0.17.3-rc1"
+  revision = "a5a78eb51ce95e6738b45b87e3972f737ee9f45d"
+  version = "v0.17.3"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -336,9 +336,6 @@
     "consensus",
     "consensus/types",
     "evidence",
-    "libs/events",
-    "libs/pubsub",
-    "libs/pubsub/query",
     "lite",
     "lite/client",
     "lite/errors",
@@ -367,8 +364,8 @@
     "types/priv_validator",
     "version"
   ]
-  revision = "667fbaee2340cf85682f3f58366a4b12ea5f04af"
-  version = "v0.19.6-rc1"
+  revision = "846ca5ce56b0bb6cb2d4edc47dca1482aa251e58"
+  version = "v0.19.6"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -381,7 +378,9 @@
     "db",
     "flowrate",
     "log",
-    "merkle"
+    "merkle",
+    "pubsub",
+    "pubsub/query"
   ]
   revision = "cc5f287c4798ffe88c04d02df219ecb6932080fd"
   version = "v0.8.3-rc0"
@@ -481,6 +480,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1ee41c203b2aef987bdafb08145e187a44cfaed3a24416c023636a5088832f25"
+  inputs-digest = "102708b960ab6a2c2220faa10850463095cb3ff60a8aa4f55e7d700c4511f4e5"
   solver-name = "gps-cdcl"
   solver-version = 1
