@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"bytes"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,7 +25,7 @@ type ClaimMetadata struct {
 }
 
 func (c Claim) IsOwner(addr sdk.Address) bool {
-	return c.Metadata.Issuer.String() == addr.String()
+	return bytes.Equal(c.Metadata.Issuer, addr)
 }
 
 type Content []byte
