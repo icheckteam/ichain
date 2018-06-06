@@ -16,9 +16,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	keys "github.com/cosmos/cosmos-sdk/client/keys"
 	rpc "github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/wire"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	tx "github.com/icheckteam/ichain/client/tx"
 	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	bank "github.com/icheckteam/ichain/x/bank/client/rest"
@@ -85,7 +85,7 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	// TODO make more functional? aka r = keys.RegisterRoutes(r)
 	keys.RegisterRoutes(r)
 	rpc.RegisterRoutes(ctx, r)
-	tx.RegisterRoutes(r, cdc)
+	tx.RegisterRoutes(ctx, r, cdc)
 	auth.RegisterRoutes(ctx, r, cdc, "acc")
 	bank.RegisterRoutes(ctx, r, cdc, kb)
 	ibc.RegisterRoutes(ctx, r, cdc, kb)

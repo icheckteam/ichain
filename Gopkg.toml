@@ -28,10 +28,12 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "~0.17.4"
+  version = "~0.17.5"
+  
 [[override]]
   name = "github.com/tendermint/tmlibs"
-  version = "~0.8.3-rc0" 
+  version = "~0.8.4"
+
 [[constraint]]
   name = "github.com/tendermint/iavl"
   version = "~0.7.0"

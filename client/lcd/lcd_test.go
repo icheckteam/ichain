@@ -20,11 +20,11 @@ import (
 	tmcfg "github.com/tendermint/tendermint/config"
 	nm "github.com/tendermint/tendermint/node"
 	p2p "github.com/tendermint/tendermint/p2p"
+	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmrpc "github.com/tendermint/tendermint/rpc/lib/server"
 	tmtypes "github.com/tendermint/tendermint/types"
-	pvm "github.com/tendermint/tendermint/types/priv_validator"
 	"github.com/tendermint/tmlibs/cli"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
@@ -218,9 +218,11 @@ func TestCoinSend(t *testing.T) {
 }
 
 func TestIBCTransfer(t *testing.T) {
+
 }
 
 func TestTxs(t *testing.T) {
+
 }
 
 //__________________________________________________________
@@ -280,6 +282,7 @@ func startTMAndLCD() (*nm.Node, net.Listener, error) {
 		return nil, nil, err
 	}
 	genDoc.AppStateJSON = stateBytes
+
 	// LCD listen address
 	port = fmt.Sprintf("%d", 17377)                       // XXX
 	listenAddr := fmt.Sprintf("tcp://localhost:%s", port) // XXX
