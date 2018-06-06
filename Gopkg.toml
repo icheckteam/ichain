@@ -41,6 +41,9 @@
 [[override]]
   name = "github.com/tendermint/go-wire"
   version = "0.7.3"
+[[constraint]]
+  name = "github.com/tendermint/tendermint"
+  version = "0.19.9-rc0"
 
 [[override]]
   name = "google.golang.org/genproto"

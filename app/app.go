@@ -3,12 +3,6 @@ package app
 import (
 	"encoding/json"
 
-	"github.com/icheckteam/ichain/x/invoice"
-	"github.com/icheckteam/ichain/x/shipping"
-	"github.com/icheckteam/ichain/x/warranty"
-
-	"github.com/icheckteam/ichain/x/identity"
-
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
@@ -16,14 +10,19 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/icheckteam/ichain/x/bank"
-	"github.com/icheckteam/ichain/x/ibc"
-	"github.com/icheckteam/ichain/x/stake"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
+	"github.com/icheckteam/ichain/x/bank"
+	"github.com/icheckteam/ichain/x/ibc"
+	"github.com/icheckteam/ichain/x/identity"
+	"github.com/icheckteam/ichain/x/invoice"
+	"github.com/icheckteam/ichain/x/shipping"
+	"github.com/icheckteam/ichain/x/stake"
+	"github.com/icheckteam/ichain/x/warranty"
 )
 
 const (
@@ -47,7 +46,6 @@ type IchainApp struct {
 	keyInvoice  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	// Manage getting and setting accounts
 	accountMapper  sdk.AccountMapper
 	bankKeeper     bank.Keeper
 	ibcMapper      ibc.Mapper
@@ -57,9 +55,6 @@ type IchainApp struct {
 	warrantyKeeper warranty.Keeper
 	shippingKeeper shipping.Keeper
 	invoiceKeeper  invoice.InvoiceKeeper
-
-	// Handle fees
-	feeHandler sdk.FeeHandler
 }
 
 // NewIchainApp  new ichain application
@@ -80,10 +75,10 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyInvoice:  sdk.NewKVStoreKey("invoice"),
 	}
 
-	// define the accountMapper
+	// Define the accountMapper.
 	app.accountMapper = auth.NewAccountMapper(
 		cdc,
-		app.keyMain,         // target store
+		app.keyAccount,      // target store
 		&types.AppAccount{}, // prototype
 	)
 
@@ -106,14 +101,9 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper)).
 		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper))
 
-	// Define the feeHandler.
-	app.feeHandler = auth.BurnFeeHandler
-
-	// initialize BaseApp
-	app.SetTxDecoder(app.txDecoder)
+	// initialize Ichain App
 	app.SetInitChainer(app.initChainer)
-
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeHandler))
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, auth.BurnFeeHandler))
 	app.MountStoresIAVL(
 		app.keyMain,
 		app.keyAccount,
@@ -143,27 +133,11 @@ func MakeCodec() *wire.Codec {
 	warranty.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
+
 	// register custom AppAccount
 	cdc.RegisterInterface((*sdk.Account)(nil), nil)
-	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
+	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
 	return cdc
-}
-
-// custom logic for transaction decoding
-func (app *IchainApp) txDecoder(txBytes []byte) (sdk.Tx, sdk.Error) {
-	var tx = sdk.StdTx{}
-
-	if len(txBytes) == 0 {
-		return nil, sdk.ErrTxDecode("txBytes are empty")
-	}
-
-	// StdTx.Msg is an interface. The concrete types
-	// are registered by MakeTxCodec in bank.RegisterAmino.
-	err := app.cdc.UnmarshalBinary(txBytes, &tx)
-	if err != nil {
-		return nil, sdk.ErrTxDecode("").Trace(err.Error())
-	}
-	return tx, nil
 }
 
 // custom logic for basecoin initialization

@@ -215,14 +215,94 @@ func TestValidators(t *testing.T) {
 
 func TestCoinSend(t *testing.T) {
 
+	// query empty
+	res, body := request(t, port, "GET", "/accounts/8FA6AB57AD6870F6B5B2E57735F38F2F30E73CB6", nil)
+	require.Equal(t, http.StatusNoContent, res.StatusCode, body)
+
+	acc := getAccount(t, sendAddr)
+	initialBalance := acc.GetCoins()
+
+	// create TX
+	receiveAddr, resultTx := doSend(t, port, seed)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	// check if tx was commited
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	// query sender
+	acc = getAccount(t, sendAddr)
+	coins := acc.GetCoins()
+	mycoins := coins[0]
+	assert.Equal(t, coinDenom, mycoins.Denom)
+	assert.Equal(t, initialBalance[0].Amount-1, mycoins.Amount)
+
+	// query receiver
+	acc = getAccount(t, receiveAddr)
+	coins = acc.GetCoins()
+	mycoins = coins[0]
+	assert.Equal(t, coinDenom, mycoins.Denom)
+	assert.Equal(t, int64(1), mycoins.Amount)
 }
 
 func TestIBCTransfer(t *testing.T) {
 
+	acc := getAccount(t, sendAddr)
+	initialBalance := acc.GetCoins()
+
+	// create TX
+	resultTx := doIBCTransfer(t, port, seed)
+
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	// check if tx was commited
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	// query sender
+	acc = getAccount(t, sendAddr)
+	coins := acc.GetCoins()
+	mycoins := coins[0]
+	assert.Equal(t, coinDenom, mycoins.Denom)
+	assert.Equal(t, initialBalance[0].Amount-1, mycoins.Amount)
+
+	// TODO: query ibc egress packet state
 }
 
 func TestTxs(t *testing.T) {
 
+	// TODO: re-enable once we can get txs by tag
+
+	// query wrong
+	// res, body := request(t, port, "GET", "/txs", nil)
+	// require.Equal(t, http.StatusBadRequest, res.StatusCode, body)
+
+	// query empty
+	// res, body = request(t, port, "GET", fmt.Sprintf("/txs?tag=coin.sender='%s'", "8FA6AB57AD6870F6B5B2E57735F38F2F30E73CB6"), nil)
+	// require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	// assert.Equal(t, "[]", body)
+
+	// create TX
+	_, resultTx := doSend(t, port, seed)
+
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	// check if tx is findable
+	res, body := request(t, port, "GET", fmt.Sprintf("/txs/%s", resultTx.Hash), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	// // query sender
+	// res, body = request(t, port, "GET", fmt.Sprintf("/txs?tag=coin.sender='%s'", addr), nil)
+	// require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	// assert.NotEqual(t, "[]", body)
+
+	// // query receiver
+	// res, body = request(t, port, "GET", fmt.Sprintf("/txs?tag=coin.receiver='%s'", receiveAddr), nil)
+	// require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	// assert.NotEqual(t, "[]", body)
 }
 
 //__________________________________________________________
@@ -267,7 +347,7 @@ func startTMAndLCD() (*nm.Node, net.Listener, error) {
 		return nil, nil, err
 	}
 
-	coins := sdk.Coins{sdk.Coin{Denom: coinDenom, Amount: coinAmount}}
+	coins := sdk.Coins{{coinDenom, coinAmount}}
 	appState := map[string]interface{}{
 		"accounts": []*btypes.GenesisAccount{
 			{
