@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/icheckteam/ichain/client/lcd"
-	"github.com/icheckteam/ichain/client/tx"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/icheckteam/ichain/version"

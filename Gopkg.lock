@@ -21,6 +21,7 @@
     "client/context",
     "client/keys",
     "client/rpc",
+    "client/tx",
     "server",
     "store",
     "tests",
@@ -33,8 +34,8 @@
     "x/bank",
     "x/ibc"
   ]
-  revision = "a5a78eb51ce95e6738b45b87e3972f737ee9f45d"
-  version = "v0.17.3"
+  revision = "cf46be225b7f3853e36af0feac04e29188cd4c95"
+  version = "v0.17.5"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -336,6 +337,9 @@
     "consensus",
     "consensus/types",
     "evidence",
+    "libs/events",
+    "libs/pubsub",
+    "libs/pubsub/query",
     "lite",
     "lite/client",
     "lite/errors",
@@ -347,6 +351,7 @@
     "p2p/conn",
     "p2p/pex",
     "p2p/upnp",
+    "privval",
     "proxy",
     "rpc/client",
     "rpc/core",
@@ -361,11 +366,10 @@
     "state/txindex/kv",
     "state/txindex/null",
     "types",
-    "types/priv_validator",
     "version"
   ]
-  revision = "846ca5ce56b0bb6cb2d4edc47dca1482aa251e58"
-  version = "v0.19.6"
+  revision = "057e076ca914e25933a7517af64d7f86c8abdf97"
+  version = "v0.19.9"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -378,12 +382,10 @@
     "db",
     "flowrate",
     "log",
-    "merkle",
-    "pubsub",
-    "pubsub/query"
+    "merkle"
   ]
-  revision = "cc5f287c4798ffe88c04d02df219ecb6932080fd"
-  version = "v0.8.3-rc0"
+  revision = "692f1d86a6e2c0efa698fd1e4541b68c74ffaf38"
+  version = "v0.8.4"
 
 [[projects]]
   branch = "master"
@@ -480,6 +482,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "102708b960ab6a2c2220faa10850463095cb3ff60a8aa4f55e7d700c4511f4e5"
+  inputs-digest = "ba292b5aad5ca7c9c0877f2a56645cb10869dc999b6b76f73f7b3f3b4d0b2dcc"
   solver-name = "gps-cdcl"
   solver-version = 1
