@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/x/ibc"
 	"github.com/tendermint/go-crypto/keys"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/ibc"
 )
 
 // RegisterRoutes - Central function to define routes that get registered by the main application
