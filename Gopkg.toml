@@ -28,11 +28,11 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "~0.18.0-rc0"
+  version = "~0.18.0"
 
 [[constraint]]
   name = "github.com/tendermint/tendermint"
-  version = "=0.20.0-rc3"
+  version = "=0.20.0"
 
 [[constraint]]
   name = "github.com/tendermint/go-crypto"
@@ -40,7 +40,7 @@
 
 [[constraint]]
   name = "github.com/tendermint/abci"
-  version = "=0.11.0-rc4"
+  version = "=0.11.0"
 
 [[override]]
   name = "github.com/tendermint/tmlibs"

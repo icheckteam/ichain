@@ -7,19 +7,18 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type updateAttributesBody struct {
 	Msg        asset.UpdateAttrMsg `json:"update_attribute"`
-	Fee        sdk.StdFee          `json:"fee"`
-	Signatures []sdk.StdSignature  `json:"signatures"`
+	Fee        auth.StdFee         `json:"fee"`
+	Signatures []auth.StdSignature `json:"signatures"`
 }
 
-// Create asset REST handler
+// UpdateAttributesHandlerFn ...
 func UpdateAttributesHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m updateAttributesBody

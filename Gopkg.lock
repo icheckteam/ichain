@@ -30,7 +30,6 @@
     "client/tx",
     "server",
     "store",
-    "tests",
     "types",
     "version",
     "wire",
@@ -50,8 +49,8 @@
     "x/stake/client/cli",
     "x/stake/client/rest"
   ]
-  revision = "af15f89531600b89f807399420b5ede83833efe5"
-  version = "v0.18.0-rc0"
+  revision = "96451b55fff107511a65bf930b81fb12bed133a1"
+  version = "v0.18.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -301,8 +300,8 @@
     "server",
     "types"
   ]
-  revision = "9af8b7a7c87478869f8c280ed9539470b8f470b4"
-  version = "v0.11.0-rc4"
+  revision = "ebee2fe114020aa49c70bbbae50b7079fc7e7b90"
+  version = "v0.11.0"
 
 [[projects]]
   branch = "master"
@@ -364,6 +363,7 @@
     "p2p/conn",
     "p2p/pex",
     "p2p/upnp",
+    "privval",
     "proxy",
     "rpc/client",
     "rpc/core",
@@ -378,11 +378,10 @@
     "state/txindex/kv",
     "state/txindex/null",
     "types",
-    "types/priv_validator",
     "version"
   ]
-  revision = "b5baab0238c9ec26e3b2d229b0243f9ff9220bdb"
-  version = "v0.20.0-rc3"
+  revision = "27bd1deabe4ba6a2d9b463b8f3e3f1e31b993e61"
+  version = "v0.20.0"
 
 [[projects]]
   branch = "develop"
@@ -497,6 +496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5885e76c39d61e5e64913d3bf176205b8babbbb5d92c46fb8af144744b7287d"
+  inputs-digest = "1bfddf20d3228a3d5000037a23c8a37f285ef989b144d2e35950cb5a534b990a"
   solver-name = "gps-cdcl"
   solver-version = 1

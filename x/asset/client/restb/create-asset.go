@@ -6,20 +6,20 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type createAssetBody struct {
-	Msg        asset.RegisterMsg  `json:"asset"`
-	Fee        sdk.StdFee         `json:"fee"`
-	Signatures []sdk.StdSignature `json:"signatures"`
+	Msg        asset.RegisterMsg   `json:"asset"`
+	Fee        auth.StdFee         `json:"fee"`
+	Signatures []auth.StdSignature `json:"signatures"`
 }
 
-// Create asset REST handler
+// CreateAssetHandlerFn ...
 func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m createAssetBody
@@ -44,9 +44,10 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	}
 }
 
-func BuildAndBroadcastTx(ctx context.CoreContext, cdc *wire.Codec, msg sdk.Msg, fee sdk.StdFee, sigs []sdk.StdSignature) ([]byte, error) {
+// BuildAndBroadcastTx ...
+func BuildAndBroadcastTx(ctx context.CoreContext, cdc *wire.Codec, msg sdk.Msg, fee auth.StdFee, sigs []auth.StdSignature) ([]byte, error) {
 	// marshal bytes
-	tx := sdk.NewStdTx(msg, fee, sigs)
+	tx := auth.NewStdTx(msg, fee, sigs)
 
 	b, err := cdc.MarshalBinary(tx)
 
