@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/icheckteam/ichain/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // dummy addresses used for testing
@@ -71,7 +71,7 @@ func makeTestCodec() *wire.Codec {
 	RegisterWire(cdc)
 
 	// Register AppAccount
-	cdc.RegisterInterface((*sdk.Account)(nil), nil)
+	cdc.RegisterInterface((*auth.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "test/asset/Account", nil)
 	wire.RegisterCrypto(cdc)
 
@@ -114,7 +114,7 @@ func newPubKey(pk string) (res crypto.PubKey) {
 
 // for incode address generation
 func testAddr(addr string) sdk.Address {
-	res, err := sdk.GetAddress(addr)
+	res, err := sdk.GetValAddressHex(addr)
 	if err != nil {
 		panic(err)
 	}

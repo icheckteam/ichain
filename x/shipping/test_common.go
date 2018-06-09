@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/icheckteam/ichain/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // dummy addresses used for testing
@@ -69,7 +69,7 @@ func makeTestCodec() *wire.Codec {
 	RegisterWire(cdc)
 
 	// Register AppAccount
-	cdc.RegisterInterface((*sdk.Account)(nil), nil)
+	cdc.RegisterInterface((*auth.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "test/asset/Account", nil)
 	wire.RegisterCrypto(cdc)
 
@@ -77,7 +77,7 @@ func makeTestCodec() *wire.Codec {
 }
 
 // hogpodge of all sorts of input required for testing
-func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, sdk.AccountMapper, Keeper) {
+func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, auth.AccountMapper, Keeper) {
 	db := dbm.NewMemDB()
 	keyStake := sdk.NewKVStoreKey("shipping")
 	keyMain := keyStake //sdk.NewKVStoreKey("main") //TODO fix multistore
@@ -112,7 +112,7 @@ func newPubKey(pk string) (res crypto.PubKey) {
 
 // for incode address generation
 func testAddr(addr string) sdk.Address {
-	res, err := sdk.GetAddress(addr)
+	res, err := sdk.GetAccAddressHex(addr)
 	if err != nil {
 		panic(err)
 	}
