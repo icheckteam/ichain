@@ -13,15 +13,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/icheckteam/ichain/x/bank"
-	"github.com/icheckteam/ichain/x/ibc"
 	"github.com/icheckteam/ichain/x/identity"
 	"github.com/icheckteam/ichain/x/invoice"
 	"github.com/icheckteam/ichain/x/shipping"
-	"github.com/icheckteam/ichain/x/stake"
 	"github.com/icheckteam/ichain/x/warranty"
 )
 

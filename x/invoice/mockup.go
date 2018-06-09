@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/icheckteam/ichain/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // dummy addresses used for testing

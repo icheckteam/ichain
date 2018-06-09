@@ -16,10 +16,10 @@ import (
 	"github.com/icheckteam/ichain/client/lcd"
 
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
+	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
 	"github.com/icheckteam/ichain/version"
-	bankcmd "github.com/icheckteam/ichain/x/bank/client/cli"
-	ibccmd "github.com/icheckteam/ichain/x/ibc/client/cli"
-	stakecmd "github.com/icheckteam/ichain/x/stake/client/cli"
 )
 
 // rootCmd is the entry point for this binary

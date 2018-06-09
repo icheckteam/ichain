@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/icheckteam/ichain/types"
-	"github.com/icheckteam/ichain/x/bank"
 )
 
 // Keeper manages contracts

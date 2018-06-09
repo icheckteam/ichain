@@ -32,7 +32,15 @@
     "x/auth/client/cli",
     "x/auth/client/rest",
     "x/bank",
-    "x/ibc"
+    "x/bank/client",
+    "x/bank/client/cli",
+    "x/bank/client/rest",
+    "x/ibc",
+    "x/ibc/client/cli",
+    "x/ibc/client/rest",
+    "x/stake",
+    "x/stake/client/cli",
+    "x/stake/client/rest"
   ]
   revision = "cf46be225b7f3853e36af0feac04e29188cd4c95"
   version = "v0.17.5"
@@ -482,6 +490,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ba292b5aad5ca7c9c0877f2a56645cb10869dc999b6b76f73f7b3f3b4d0b2dcc"
+  inputs-digest = "e2a194f3625195a1ea3bead01ef8a606a6f9f57dde00b201cd6920216d36d9cf"
   solver-name = "gps-cdcl"
   solver-version = 1
