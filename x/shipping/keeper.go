@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	coin "github.com/icheckteam/ichain/x/bank"
+	coin "github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // Keeper manages shipping orders

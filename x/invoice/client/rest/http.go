@@ -113,7 +113,7 @@ func makeCreateInvoiceEndpoint(ctx cosmosContext.CoreContext, cdc *wire.Codec, k
 		}
 
 		issuer := info.PubKey.Address()
-		receiver, _ := sdk.GetAddress(req.Receiver)
+		receiver, _ := sdk.GetAccAddressHex(req.Receiver)
 		msg := invoice.NewMsgCreate(
 			req.ID,
 			issuer,

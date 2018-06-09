@@ -28,26 +28,23 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "~0.17.5"
-  
-[[override]]
-  name = "github.com/tendermint/tmlibs"
-  version = "~0.8.4"
+  version = "~0.18.0-rc0"
 
-[[constraint]]
-  name = "github.com/tendermint/iavl"
-  version = "~0.7.0"
-
-[[override]]
-  name = "github.com/tendermint/go-wire"
-  version = "0.7.3"
 [[constraint]]
   name = "github.com/tendermint/tendermint"
-  version = "0.19.9-rc0"
+  version = "=0.20.0-rc3"
+
+[[constraint]]
+  name = "github.com/tendermint/go-crypto"
+  version = "~0.6.2"
+
+[[constraint]]
+  name = "github.com/tendermint/abci"
+  version = "=0.11.0-rc4"
 
 [[override]]
-  name = "google.golang.org/genproto"
-  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
+  name = "github.com/tendermint/tmlibs"
+  branch = "develop"
 
 [prune]
   go-tests = true
