@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"os"
 
 	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -15,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 
 	"github.com/icheckteam/ichain/types"
@@ -27,6 +29,12 @@ import (
 
 const (
 	appName = "IchainApp"
+)
+
+// default home directories for expected binaries
+var (
+	DefaultCLIHome  = os.ExpandEnv("$HOME/.ichaincli")
+	DefaultNodeHome = os.ExpandEnv("$HOME/.ichaind")
 )
 
 // IchainApp Extended ABCI application
@@ -44,17 +52,20 @@ type IchainApp struct {
 	keyWarranty *sdk.KVStoreKey
 	keyShipping *sdk.KVStoreKey
 	keyInvoice  *sdk.KVStoreKey
+	keySlashing *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
-	accountMapper  sdk.AccountMapper
-	bankKeeper     bank.Keeper
-	ibcMapper      ibc.Mapper
-	stakeKeeper    stake.Keeper
-	assetKeeper    asset.Keeper
-	identityKeeper identity.Keeper
-	warrantyKeeper warranty.Keeper
-	shippingKeeper shipping.Keeper
-	invoiceKeeper  invoice.InvoiceKeeper
+	accountMapper       auth.AccountMapper
+	bankKeeper          bank.Keeper
+	ibcMapper           ibc.Mapper
+	stakeKeeper         stake.Keeper
+	slashingKeeper      slashing.Keeper
+	feeCollectionKeeper auth.FeeCollectionKeeper
+	assetKeeper         asset.Keeper
+	identityKeeper      identity.Keeper
+	warrantyKeeper      warranty.Keeper
+	shippingKeeper      shipping.Keeper
+	invoiceKeeper       invoice.InvoiceKeeper
 }
 
 // NewIchainApp  new ichain application
@@ -73,6 +84,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyWarranty: sdk.NewKVStoreKey("warranty"),
 		keyShipping: sdk.NewKVStoreKey("shipping"),
 		keyInvoice:  sdk.NewKVStoreKey("invoice"),
+		keySlashing: sdk.NewKVStoreKey("slashing"),
+		keyStake:    sdk.NewKVStoreKey("stake"),
 	}
 
 	// Define the accountMapper.
@@ -91,6 +104,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.warrantyKeeper = warranty.NewKeeper(app.keyWarranty, cdc, app.bankKeeper)
 	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.bankKeeper)
 	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.bankKeeper)
+	app.slashingKeeper = slashing.NewKeeper(app.cdc, app.keySlashing, app.stakeKeeper, app.RegisterCodespace(slashing.DefaultCodespace))
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
@@ -103,12 +117,19 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 
 	// initialize Ichain App
 	app.SetInitChainer(app.initChainer)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, auth.BurnFeeHandler))
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetEndBlocker(app.EndBlocker)
+	app.SetAnteHandler(auth.NewAnteHandler(app.accountMapper, app.feeCollectionKeeper))
 	app.MountStoresIAVL(
 		app.keyMain,
 		app.keyAccount,
-		app.keyIBC, app.keyAsset,
-		app.keyIdentity, app.keyShipping,
+		app.keyIBC,
+		app.keyStake,
+		app.keySlashing,
+
+		app.keyAsset,
+		app.keyIdentity,
+		app.keyShipping,
 		app.keyWarranty,
 		app.keyInvoice,
 	)
@@ -133,14 +154,33 @@ func MakeCodec() *wire.Codec {
 	warranty.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
+	slashing.RegisterWire(cdc)
 
 	// register custom AppAccount
-	cdc.RegisterInterface((*sdk.Account)(nil), nil)
-	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
+	cdc.RegisterInterface((*auth.Account)(nil), nil)
+	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
 	return cdc
 }
 
-// custom logic for basecoin initialization
+// application updates every end block
+func (app *IchainApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	tags := slashing.BeginBlocker(ctx, req, app.slashingKeeper)
+
+	return abci.ResponseBeginBlock{
+		Tags: tags.ToKVPairs(),
+	}
+}
+
+// application updates every end block
+func (app *IchainApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	validatorUpdates := stake.EndBlocker(ctx, app.stakeKeeper)
+
+	return abci.ResponseEndBlock{
+		ValidatorUpdates: validatorUpdates,
+	}
+}
+
+// Custom logic for basecoin initialization
 func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 
@@ -150,6 +190,7 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
 		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
+
 	for _, gacc := range genesisState.Accounts {
 		acc, err := gacc.ToAppAccount()
 		if err != nil {
@@ -158,6 +199,10 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		}
 		app.accountMapper.SetAccount(ctx, acc)
 	}
+
+	// load the initial stake information
+	stake.InitGenesis(ctx, app.stakeKeeper, genesisState.StakeData)
+
 	return abci.ResponseInitChain{}
 }
 
@@ -167,7 +212,7 @@ func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, err error)
 
 	// iterate to get the accounts
 	accounts := []*types.GenesisAccount{}
-	appendAccount := func(acc sdk.Account) (stop bool) {
+	appendAccount := func(acc auth.Account) (stop bool) {
 		account := &types.GenesisAccount{
 			Address: acc.GetAddress(),
 			Coins:   acc.GetCoins(),

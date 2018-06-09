@@ -14,6 +14,12 @@
   revision = "1432d294a5b055c297457c25434efbf13384cc46"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/btcsuite/btcutil"
+  packages = ["bech32"]
+  revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
+
+[[projects]]
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -38,12 +44,14 @@
     "x/ibc",
     "x/ibc/client/cli",
     "x/ibc/client/rest",
+    "x/slashing",
+    "x/slashing/client/cli",
     "x/stake",
     "x/stake/client/cli",
     "x/stake/client/rest"
   ]
-  revision = "cf46be225b7f3853e36af0feac04e29188cd4c95"
-  version = "v0.17.5"
+  revision = "af15f89531600b89f807399420b5ede83833efe5"
+  version = "v0.18.0-rc0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -293,8 +301,8 @@
     "server",
     "types"
   ]
-  revision = "78a8905690ef54f9d57e3b2b0ee7ad3a04ef3f1f"
-  version = "v0.10.3"
+  revision = "9af8b7a7c87478869f8c280ed9539470b8f470b4"
+  version = "v0.11.0-rc4"
 
 [[projects]]
   branch = "master"
@@ -325,16 +333,13 @@
   version = "v0.6.2"
 
 [[projects]]
-  name = "github.com/tendermint/go-wire"
-  packages = ["."]
-  revision = "fa721242b042ecd4c6ed1a934ee740db4f74e45c"
-  version = "v0.7.3"
-
-[[projects]]
   name = "github.com/tendermint/iavl"
-  packages = ["."]
-  revision = "fd37a0fa3a7454423233bc3d5ea828f38e0af787"
-  version = "v0.7.0"
+  packages = [
+    ".",
+    "sha256truncated"
+  ]
+  revision = "c9206995e8f948e99927f5084a88a7e94ca256da"
+  version = "v0.8.0-rc0"
 
 [[projects]]
   name = "github.com/tendermint/tendermint"
@@ -359,7 +364,6 @@
     "p2p/conn",
     "p2p/pex",
     "p2p/upnp",
-    "privval",
     "proxy",
     "rpc/client",
     "rpc/core",
@@ -374,15 +378,18 @@
     "state/txindex/kv",
     "state/txindex/null",
     "types",
+    "types/priv_validator",
     "version"
   ]
-  revision = "057e076ca914e25933a7517af64d7f86c8abdf97"
-  version = "v0.19.9"
+  revision = "b5baab0238c9ec26e3b2d229b0243f9ff9220bdb"
+  version = "v0.20.0-rc3"
 
 [[projects]]
+  branch = "develop"
   name = "github.com/tendermint/tmlibs"
   packages = [
     "autofile",
+    "bech32",
     "cli",
     "cli/flags",
     "clist",
@@ -390,10 +397,10 @@
     "db",
     "flowrate",
     "log",
-    "merkle"
+    "merkle",
+    "merkle/tmhash"
   ]
-  revision = "692f1d86a6e2c0efa698fd1e4541b68c74ffaf38"
-  version = "v0.8.4"
+  revision = "640af0205d98d1f45fb2f912f9c35c8bf816adc9"
 
 [[projects]]
   branch = "master"
@@ -490,6 +497,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e2a194f3625195a1ea3bead01ef8a606a6f9f57dde00b201cd6920216d36d9cf"
+  inputs-digest = "f5885e76c39d61e5e64913d3bf176205b8babbbb5d92c46fb8af144744b7287d"
   solver-name = "gps-cdcl"
   solver-version = 1

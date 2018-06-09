@@ -105,8 +105,8 @@ func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 }
 
 func buildCreateOrderMsg(creator sdk.Address, body createOrderBody) sdk.Msg {
-	carrier, _ := sdk.GetAddress(body.Carrier)
-	receiver, _ := sdk.GetAddress(body.Receiver)
+	carrier, _ := sdk.GetValAddressHex(body.Carrier)
+	receiver, _ := sdk.GetAccAddressHex(body.Receiver)
 
 	return shipping.CreateOrderMsg{
 		ID:                body.OrderID,
