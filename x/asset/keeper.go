@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/icheckteam/ichain/types"
 )
 
 const (
@@ -105,7 +106,7 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
-	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	tags := sdk.NewTags("sender", types.AddrToBytes(msg.Issuer), "asset_id", []byte(asset.ID))
 	for _, attr := range msg.Attributes {
 		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
 		if !authorized {
@@ -232,7 +233,7 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
-		"sender", msg.Issuer.Bytes(),
+		"sender", types.AddrToBytes(msg.Issuer),
 		"asset_id", []byte(asset.ID),
 		"action", []byte("createProposal"),
 	)
@@ -270,7 +271,7 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags
 
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
-		"sender", msg.Issuer.Bytes(),
+		"sender", types.AddrToBytes(msg.Issuer),
 		"asset_id", []byte(asset.ID),
 		"action", []byte("revokeProposal"),
 	)
@@ -296,7 +297,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags
 
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
-		"sender", msg.Recipient.Bytes(),
+		"sender", types.AddrToBytes(msg.Recipient),
 		"asset_id", []byte(asset.ID),
 		"action", []byte("answerProposal"),
 	)

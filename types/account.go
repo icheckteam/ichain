@@ -72,3 +72,7 @@ func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount, err error) {
 		Name:        ga.Name,
 	}, nil
 }
+
+func AddrToBytes(addr sdk.Address) []byte {
+	return []byte(addr.String())
+}
