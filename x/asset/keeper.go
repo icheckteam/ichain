@@ -59,8 +59,8 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags
 		return nil, nil, err
 	}
 
-	tags.AppendTag("asset_id", []byte(asset.ID))
-	tags.AppendTag("action", []byte("registerAsset"))
+	tags = tags.AppendTag("asset_id", []byte(asset.ID)).
+		AppendTag("action", []byte("registerAsset"))
 	return coins, tags, nil
 }
 
@@ -113,9 +113,9 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 		}
 		setAttribute(asset, attr)
-		tags.AppendTag("attribute_name", []byte(attr.Name))
+		tags = tags.AppendTag("attribute_name", []byte(attr.Name))
 	}
-	tags.AppendTag("action", []byte("updateAttribute"))
+	tags = tags.AppendTag("action", []byte("updateAttribute"))
 	k.setAsset(ctx, *asset)
 	return tags, nil
 }
@@ -152,8 +152,8 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk
 		return nil, nil, err
 	}
 
-	tags.AppendTag("asset_id", []byte(asset.ID))
-	tags.AppendTag("action", []byte("addQuantity"))
+	tags = tags.AppendTag("asset_id", []byte(asset.ID)).
+		AppendTag("action", []byte("addQuantity"))
 	return coins, tags, nil
 }
 
@@ -178,8 +178,8 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	}
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
-	tags.AppendTag("asset_id", []byte(asset.ID))
-	tags.AppendTag("action", []byte("subtractQuantity"))
+	tags = tags.AppendTag("asset_id", []byte(asset.ID)).
+		AppendTag("action", []byte("subtractQuantity"))
 	return coins, tags, err
 }
 
