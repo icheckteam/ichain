@@ -21,6 +21,7 @@ type addAssetQuantityBody struct {
 	Materials        asset.Materials `json:"materials"`
 	ChainID          string          `json:"chain_id"`
 	Sequence         int64           `json:"sequence"`
+	Gas              int64           `json:"gas"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -68,9 +69,13 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 		}
 		// build message
 		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m)
-
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
+		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

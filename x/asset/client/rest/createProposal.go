@@ -17,6 +17,7 @@ type createProposalBody struct {
 	Password         string `json:"password"`
 	ChainID          string `json:"chain_id"`
 	Sequence         int64  `json:"sequence"`
+	Gas              int64  `json:"gas"`
 
 	AssetID     string             `json:"asset_id"`
 	Recipient   sdk.Address        `json:"recipient"`
@@ -82,8 +83,12 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).
-			WithChainID(m.ChainID)
+		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

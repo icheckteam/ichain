@@ -22,6 +22,7 @@ import (
 	ibc "github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 	"github.com/icheckteam/ichain/client/tx"
+	"github.com/icheckteam/ichain/types"
 	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
@@ -81,6 +82,7 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	}
 
 	ctx := context.NewCoreContextFromViper()
+	ctx = ctx.WithDecoder(types.GetAccountDecoder(cdc))
 
 	// TODO make more functional? aka r = keys.RegisterRoutes(r)
 	keys.RegisterRoutes(r)

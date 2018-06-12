@@ -19,6 +19,7 @@ type createAssetBody struct {
 	Asset            assetBody `json:"asset"`
 	ChainID          string    `json:"chain_id"`
 	Sequence         int64     `json:"sequence"`
+	Gas              int64     `json:"gas"`
 }
 
 type assetBody struct {
@@ -86,8 +87,12 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).
-			WithChainID(m.ChainID)
+		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("withContextErr:" + err.Error()))
+			return
+		}
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

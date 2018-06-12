@@ -19,6 +19,7 @@ type updateAttributeBody struct {
 	Attributes       []asset.Attribute `json:"attributes"`
 	ChainID          string            `json:"chain_id"`
 	Sequence         int64             `json:"sequence"`
+	Gas              int64             `json:"gas"`
 }
 
 func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -62,7 +63,12 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		msg := buildUpdateAttributeMsg(info.PubKey.Address(), vars["id"], m)
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
+		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
