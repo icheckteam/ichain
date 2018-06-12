@@ -148,7 +148,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk
 		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
 
-	if err =! nil {
+	if err != nil {
 		return nil, nil, err
 	}
 
