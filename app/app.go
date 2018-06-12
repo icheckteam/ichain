@@ -155,9 +155,8 @@ func MakeCodec() *wire.Codec {
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
 	slashing.RegisterWire(cdc)
-
+	auth.RegisterWire(cdc)
 	// register custom AppAccount
-	cdc.RegisterInterface((*auth.Account)(nil), nil)
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
 	return cdc
 }
@@ -223,7 +222,8 @@ func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, err error)
 	app.accountMapper.IterateAccounts(ctx, appendAccount)
 
 	genState := types.GenesisState{
-		Accounts: accounts,
+		Accounts:  accounts,
+		StakeData: stake.WriteGenesis(ctx, app.stakeKeeper),
 	}
 	return wire.MarshalJSONIndent(app.cdc, genState)
 }

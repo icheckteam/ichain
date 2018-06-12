@@ -28,7 +28,8 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  version = "~0.18.0"
+  version = "=0.18.0"
+  source = "https://github.com/thang14/cosmos-sdk.git"
 
 [[constraint]]
   name = "github.com/tendermint/tendermint"
@@ -45,7 +46,9 @@
 [[override]]
   name = "github.com/tendermint/tmlibs"
   branch = "develop"
-
+[[override]]
+  name = "google.golang.org/genproto"
+  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
 [prune]
   go-tests = true
   unused-packages = true

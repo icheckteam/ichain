@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	coin "github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/icheckteam/ichain/types"
 )
 
 // Keeper manages shipping orders
@@ -89,9 +90,9 @@ func (k Keeper) CreateOrder(ctx sdk.Context, msg CreateOrderMsg) (sdk.Tags, sdk.
 	k.setOrder(ctx, order)
 
 	allTags := sdk.EmptyTags()
-	allTags.AppendTag("issuer", msg.Issuer.Bytes())
-	allTags.AppendTag("carrier", msg.Carrier.Bytes())
-	allTags.AppendTag("receiver", msg.Receiver.Bytes())
+	allTags.AppendTag("issuer", types.AddrToBytes(msg.Issuer))
+	allTags.AppendTag("carrier", types.AddrToBytes(msg.Carrier))
+	allTags.AppendTag("receiver", types.AddrToBytes(msg.Receiver))
 	allTags.AppendTag("order_id", []byte(msg.ID))
 	return allTags, nil
 }
