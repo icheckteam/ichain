@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -84,7 +85,47 @@ var (
 			bank.NewOutput(addr2, manyCoins),
 		},
 	}
+
+	msgCreateAsset = asset.RegisterMsg{
+		ID:       "asset1",
+		Issuer:   addr1,
+		Name:     "asset1",
+		Quantity: 10,
+	}
 )
+
+// Test Create Asset
+// ---------------------------------------
+func TestMsgCreateAsset(t *testing.T) {
+	gapp := newIchainApp()
+
+	// Construct some genesis bytes to reflect GaiaAccount
+	// Give 77 foocoin to the first key
+	coins, err := sdk.ParseCoins("77foocoin")
+	require.Nil(t, err)
+	baseAcc := &types.AppAccount{
+		BaseAccount: auth.BaseAccount{
+			Address: addr1,
+			Coins:   coins,
+		},
+	}
+
+	// Construct genesis state
+	err = setGenesis(gapp, baseAcc)
+	require.Nil(t, err)
+
+	// A checkTx context (true)
+	ctxCheck := gapp.BaseApp.NewContext(true, abci.Header{})
+	res1 := gapp.accountMapper.GetAccount(ctxCheck, addr1)
+	assert.Equal(t, baseAcc, res1.(*types.AppAccount))
+
+	// Run a CheckDeliver
+	SignCheckDeliver(t, gapp, msgCreateAsset, []int64{0}, true, priv1)
+
+	newAsset := gapp.assetKeeper.GetAsset(ctxCheck, msgCreateAsset.ID)
+	assert.Equal(t, newAsset.ID, newAsset.ID)
+
+}
 
 func loggerAndDB() (log.Logger, dbm.DB) {
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "sdk/app")

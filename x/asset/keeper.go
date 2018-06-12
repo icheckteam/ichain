@@ -8,6 +8,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
+const (
+	costGetAsset         sdk.Gas = 10
+	costRegisterAsset    sdk.Gas = 100
+	costHasAsset         sdk.Gas = 10
+	costSubtractCoin     sdk.Gas = 10
+	costAddQuantity      sdk.Gas = 10
+	costUpdateAttributes sdk.Gas = 10
+	costCreateProposal   sdk.Gas = 10
+	costRevokeProposal   sdk.Gas = 10
+	costAnswerProposal   sdk.Gas = 10
+)
+
 // Keeper ...
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
@@ -26,6 +38,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 
 // Register register new asset
 func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costRegisterAsset, "registerAsset")
 	if asset.ID == "icc" {
 		return nil, nil, InvalidTransaction("Asset already exists")
 	}
@@ -37,9 +50,16 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags
 	k.setAsset(ctx, asset)
 
 	// add coin ...
-	return k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
 	})
+
+	if err == nil {
+		return nil, nil, err
+	}
+
+	tags.AppendTag("asset_id", []byte(asset.ID))
+	return coins, tags, nil
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
@@ -57,6 +77,7 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 
 // Has asset
 func (k Keeper) Has(ctx sdk.Context, assetID string) bool {
+	ctx.GasMeter().ConsumeGas(costHasAsset, "hasAsset")
 	store := ctx.KVStore(k.storeKey)
 	assetKey := GetAssetKey(assetID)
 	return store.Has(assetKey)
@@ -64,6 +85,7 @@ func (k Keeper) Has(ctx sdk.Context, assetID string) bool {
 
 // GetAsset get asset by IDS
 func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
+	ctx.GasMeter().ConsumeGas(costGetAsset, "getAsset")
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetAssetKey(assetID))
 	asset := &Asset{}
@@ -77,7 +99,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 
 // UpdateAttribute ...
 func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, sdk.Error) {
-	allTags := sdk.EmptyTags()
+	ctx.GasMeter().ConsumeGas(costUpdateAttributes, "updateAttributes")
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
@@ -92,13 +114,13 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 	}
 
 	k.setAsset(ctx, *asset)
-	allTags.AppendTag("owner", msg.Issuer.Bytes())
-	allTags.AppendTag("asset_id", []byte(msg.ID))
-	return allTags, nil
+	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	return tags, nil
 }
 
 // AddQuantity ...
 func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costAddQuantity, "addQuantity")
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, nil, ErrUnknownAsset("Asset not found")
@@ -120,13 +142,21 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
 	// add coin ...
-	return k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
+	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
 		sdk.Coin{Denom: asset.ID, Amount: msg.Quantity},
 	})
+
+	if err == nil {
+		return nil, nil, err
+	}
+
+	tags.AppendTag("asset_id", []byte(asset.ID))
+	return coins, tags, nil
 }
 
 // SubtractQuantity ...
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Coins, sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costSubtractCoin, "subtractQuantity")
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, nil, ErrUnknownAsset("Asset not found")
@@ -145,6 +175,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	}
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
+	tags.AppendTag("asset_id", []byte(asset.ID))
 	return coins, tags, err
 }
 
@@ -161,6 +192,7 @@ func setAttribute(a *Asset, attr Attribute) {
 // CreateProposal validates and adds a new proposal to the asset,
 // or update a propsal if there already exists one for the recipient
 func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costCreateProposal, "createProposal")
 	switch msg.Role {
 	case RoleOwner, RoleReporter:
 		break
@@ -196,12 +228,14 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 	}
 
 	k.setAsset(ctx, *asset)
-	return nil, nil
+	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	return tags, nil
 }
 
 // RevokeProposal delete some properties from an existing proposal
 // and will delete the proposal if there is no property left
 func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costRevokeProposal, "revokeProposal")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
@@ -228,11 +262,13 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags
 	}
 
 	k.setAsset(ctx, *asset)
-	return nil, nil
+	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	return tags, nil
 }
 
 // AnswerProposal update the status of the proposal of the recipient if the answer is valid
 func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costAnswerProposal, "answerProposal")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrUnknownAsset("Asset not found")
@@ -248,5 +284,6 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags
 	asset.Proposals[proposalIndex] = *proposal
 
 	k.setAsset(ctx, *asset)
-	return nil, nil
+	tags := sdk.NewTags("sender", msg.Recipient.Bytes(), "asset_id", []byte(asset.ID))
+	return tags, nil
 }
