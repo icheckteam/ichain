@@ -59,6 +59,7 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags
 	}
 
 	tags.AppendTag("asset_id", []byte(asset.ID))
+	tags.AppendTag("action", []byte("registerAsset"))
 	return coins, tags, nil
 }
 
@@ -104,17 +105,17 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
-
+	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
 	for _, attr := range msg.Attributes {
 		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
 		if !authorized {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 		}
 		setAttribute(asset, attr)
+		tags.AppendTag("attribute_name", []byte(attr.Name))
 	}
-
+	tags.AppendTag("action", []byte("updateAttribute"))
 	k.setAsset(ctx, *asset)
-	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
 	return tags, nil
 }
 
@@ -151,6 +152,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Coins, sdk
 	}
 
 	tags.AppendTag("asset_id", []byte(asset.ID))
+	tags.AppendTag("action", []byte("addQuantity"))
 	return coins, tags, nil
 }
 
@@ -176,6 +178,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
 	tags.AppendTag("asset_id", []byte(asset.ID))
+	tags.AppendTag("action", []byte("subtractQuantity"))
 	return coins, tags, err
 }
 
@@ -228,7 +231,11 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 	}
 
 	k.setAsset(ctx, *asset)
-	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	tags := sdk.NewTags(
+		"sender", msg.Issuer.Bytes(),
+		"asset_id", []byte(asset.ID),
+		"action", []byte("createProposal"),
+	)
 	return tags, nil
 }
 
@@ -262,7 +269,11 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags
 	}
 
 	k.setAsset(ctx, *asset)
-	tags := sdk.NewTags("sender", msg.Issuer.Bytes(), "asset_id", []byte(asset.ID))
+	tags := sdk.NewTags(
+		"sender", msg.Issuer.Bytes(),
+		"asset_id", []byte(asset.ID),
+		"action", []byte("revokeProposal"),
+	)
 	return tags, nil
 }
 
@@ -284,6 +295,10 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags
 	asset.Proposals[proposalIndex] = *proposal
 
 	k.setAsset(ctx, *asset)
-	tags := sdk.NewTags("sender", msg.Recipient.Bytes(), "asset_id", []byte(asset.ID))
+	tags := sdk.NewTags(
+		"sender", msg.Recipient.Bytes(),
+		"asset_id", []byte(asset.ID),
+		"action", []byte("answerProposal"),
+	)
 	return tags, nil
 }
