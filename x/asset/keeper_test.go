@@ -14,21 +14,21 @@ func TestKeeper(t *testing.T) {
 	addr3 := sdk.Address([]byte("addr3"))
 	addr4 := sdk.Address([]byte("addr4"))
 
-	asset := Asset{
+	asset := RegisterMsg{
 		ID:       "asset1",
 		Issuer:   addr,
 		Name:     "asset 1",
 		Quantity: 100,
 	}
 
-	asset2 := Asset{
+	asset2 := RegisterMsg{
 		ID:       "asset2",
 		Issuer:   addr,
 		Name:     "asset 2",
 		Quantity: 100,
 	}
 
-	asset3 := Asset{
+	asset3 := RegisterMsg{
 		ID:       "asset3",
 		Issuer:   addr,
 		Name:     "asset 3",
@@ -45,7 +45,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Quantity == asset.Quantity)
 
 	// asset already exists
-	_, _, err := keeper.RegisterAsset(ctx, asset)
+	_, err := keeper.RegisterAsset(ctx, asset)
 	assert.True(t, err != nil)
 
 	// Test add quantity

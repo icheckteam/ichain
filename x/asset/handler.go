@@ -33,16 +33,8 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result {
-	asset := Asset{
-		ID:       msg.ID,
-		Name:     msg.Name,
-		Issuer:   msg.Issuer,
-		Quantity: msg.Quantity,
-		Company:  msg.Company,
-		Email:    msg.Email,
-	}
 
-	_, tags, err := k.RegisterAsset(ctx, asset)
+	tags, err := k.RegisterAsset(ctx, msg)
 
 	if err != nil {
 		return err.Result()

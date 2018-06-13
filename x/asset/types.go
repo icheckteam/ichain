@@ -8,11 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Assets ...
+// Asset asset infomation
 type Asset struct {
 	ID         string      `json:"id"`
 	Name       string      `json:"name"`
 	Issuer     sdk.Address `json:"issuer"`
+	Owner      sdk.Address `json:"owner"`
+	Parent     string      `json:"parent"`
 	Quantity   int64       `json:"quantity"`
 	Company    string      `json:"company"`
 	Email      string      `json:"email"`
@@ -21,8 +23,13 @@ type Asset struct {
 	Materials  Materials   `json:"materials"`
 }
 
-// IsOwner ....
+// IsOwner check is owner of the asset
 func (a Asset) IsOwner(addr sdk.Address) bool {
+	return bytes.Equal(a.Owner, addr)
+}
+
+// IsIssuer check is issuer of the asset
+func (a Asset) IsIssuer(addr sdk.Address) bool {
 	return bytes.Equal(a.Issuer, addr)
 }
 

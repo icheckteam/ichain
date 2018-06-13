@@ -38,30 +38,29 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 }
 
 // Register register new asset
-func (k Keeper) RegisterAsset(ctx sdk.Context, asset Asset) (sdk.Coins, sdk.Tags, sdk.Error) {
+func (k Keeper) RegisterAsset(ctx sdk.Context, msg RegisterMsg) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costRegisterAsset, "registerAsset")
-	if asset.ID == "icc" {
-		return nil, nil, InvalidTransaction("Asset already exists")
+	if k.Has(ctx, msg.ID) {
+		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.ID))
 	}
 
-	if k.Has(ctx, asset.ID) {
-		return nil, nil, InvalidTransaction("Asset already exists")
+	asset := Asset{
+		ID:       msg.ID,
+		Name:     msg.Name,
+		Issuer:   msg.Issuer,
+		Quantity: msg.Quantity,
+		Company:  msg.Company,
+		Email:    msg.Email,
 	}
+
 	// update asset info
 	k.setAsset(ctx, asset)
-
-	// add coin ...
-	coins, tags, err := k.bank.AddCoins(ctx, asset.Issuer, sdk.Coins{
-		sdk.Coin{Denom: asset.ID, Amount: asset.Quantity},
-	})
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tags = tags.AppendTag("asset_id", []byte(asset.ID)).
-		AppendTag("action", []byte("registerAsset"))
-	return coins, tags, nil
+	tags := sdk.NewTags(
+		"asset_id", asset.ID,
+		"issuer", types.AddrToBytes(asset.Issuer),
+		"owner", types.AddrToBytes(asset.Owner),
+	)
+	return tags, nil
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
@@ -89,11 +88,9 @@ func (k Keeper) Has(ctx sdk.Context, assetID string) bool {
 func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 	ctx.GasMeter().ConsumeGas(costGetAsset, "getAsset")
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetAssetKey(assetID))
+	assetBytes := store.Get(GetAssetKey(assetID))
 	asset := &Asset{}
-
-	// marshal the record and add to the state
-	if err := k.cdc.UnmarshalBinary(b, asset); err != nil {
+	if err := k.cdc.UnmarshalBinary(assetBytes, asset); err != nil {
 		return nil
 	}
 	return asset
@@ -106,17 +103,15 @@ func (k Keeper) UpdateAttribute(ctx sdk.Context, msg UpdateAttrMsg) (sdk.Tags, s
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
-	tags := sdk.NewTags("sender", types.AddrToBytes(msg.Issuer), "asset_id", []byte(asset.ID))
 	for _, attr := range msg.Attributes {
 		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
 		if !authorized {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 		}
 		setAttribute(asset, attr)
-		tags = tags.AppendTag("attribute_name", []byte(attr.Name))
 	}
-	tags = tags.AppendTag("action", []byte("updateAttribute"))
 	k.setAsset(ctx, *asset)
+	tags := sdk.NewTags()
 	return tags, nil
 }
 
