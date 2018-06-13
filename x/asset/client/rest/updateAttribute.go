@@ -16,7 +16,7 @@ import (
 type updateAttributeBody struct {
 	LocalAccountName string            `json:"account_name"`
 	Password         string            `json:"password"`
-	Attributes       []asset.Attribute `json:"attributes"`
+	Propertipes      asset.Propertipes `json:"propertipes"`
 	ChainID          string            `json:"chain_id"`
 	Sequence         int64             `json:"sequence"`
 	Gas              int64             `json:"gas"`
@@ -47,9 +47,9 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 
-		if len(m.Attributes) == 0 {
+		if len(m.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("attribute.name is required"))
+			w.Write([]byte("propertipes is required"))
 			return
 		}
 
@@ -60,7 +60,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 		// build message
-		msg := buildUpdateAttributeMsg(info.PubKey.Address(), vars["id"], m)
+		msg := buildUpdateAttributeMsg(info.PubKey.Address(), vars["id"], m.Propertipes)
 
 		// sign
 		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
@@ -95,10 +95,10 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 	}
 }
 
-func buildUpdateAttributeMsg(creator sdk.Address, assetID string, body updateAttributeBody) sdk.Msg {
-	return asset.UpdateAttrMsg{
-		Issuer:     creator,
-		ID:         assetID,
-		Attributes: body.Attributes,
+func buildUpdateAttributeMsg(creator sdk.Address, assetID string, props asset.Propertipes) sdk.Msg {
+	return asset.MsgUpdatePropertipes{
+		Issuer:      creator,
+		ID:          assetID,
+		Propertipes: props,
 	}
 }

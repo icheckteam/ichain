@@ -85,33 +85,33 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
-// UpdateAttrMsg ...
+// MsgUpdatePropertipes ...
 // ---------------------------------------------------------------
-type UpdateAttrMsg struct {
-	Issuer     sdk.Address `json:"issuer"`
-	ID         string      `json:"id"`
-	Attributes []Attribute `json:"attribute"`
+type MsgUpdatePropertipes struct {
+	Issuer      sdk.Address `json:"issuer"`
+	ID          string      `json:"id"`
+	Propertipes Propertipes `json:"propertipes"`
 }
 
-func (msg UpdateAttrMsg) Type() string                            { return msgType }
-func (msg UpdateAttrMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg UpdateAttrMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
-func (msg UpdateAttrMsg) String() string {
-	return fmt.Sprintf("UpdateAttrMsg{%s->%v}", msg.ID, msg.Attributes)
+func (msg MsgUpdatePropertipes) Type() string                            { return msgType }
+func (msg MsgUpdatePropertipes) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgUpdatePropertipes) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgUpdatePropertipes) String() string {
+	return fmt.Sprintf("MsgUpdatePropertipes{%s->%v}", msg.ID, msg.Propertipes)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
+func (msg MsgUpdatePropertipes) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
 	if len(msg.ID) == 0 {
 		return ErrMissingField("id")
 	}
-	if len(msg.Attributes) == 0 {
+	if len(msg.Propertipes) == 0 {
 		return ErrMissingField("name")
 	}
-	for _, attr := range msg.Attributes {
+	for _, attr := range msg.Propertipes {
 		switch attr.Type {
 		case AttributeTypeBoolean,
 			AttributeTypeBytes,
@@ -128,7 +128,7 @@ func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg UpdateAttrMsg) GetSignBytes() []byte {
+func (msg MsgUpdatePropertipes) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)

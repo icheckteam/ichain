@@ -9,10 +9,14 @@ import (
 )
 
 var (
-	attr = Attribute{
+	attr = Property{
 		Name:        "weight",
 		Type:        3,
 		NumberValue: 100,
+	}
+
+	props = Propertipes{
+		attr,
 	}
 )
 
@@ -107,9 +111,9 @@ func TestUpdateAttrMsgMsg(t *testing.T) {
 func TestUpdateAttrMsgType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 
-	var msg = UpdateAttrMsg{
+	var msg = MsgUpdatePropertipes{
 		Issuer: addr,
-		Attributes: []Attribute{
+		Propertipes: []Property{
 			attr,
 		},
 	}
@@ -123,14 +127,14 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 	addr1 := sdk.Address([]byte{1, 2})
 	cases := []struct {
 		valid bool
-		tx    UpdateAttrMsg
+		tx    MsgUpdatePropertipes
 	}{
-		{false, UpdateAttrMsg{}},              // no asset info
-		{false, UpdateAttrMsg{Issuer: addr1}}, // only set owner
-		{false, UpdateAttrMsg{Issuer: addr1, Attributes: []Attribute{
+		{false, MsgUpdatePropertipes{}},              // no asset info
+		{false, MsgUpdatePropertipes{Issuer: addr1}}, // only set owner
+		{false, MsgUpdatePropertipes{Issuer: addr1, Propertipes: []Property{
 			attr,
 		}}}, // missing id
-		{true, UpdateAttrMsg{Issuer: addr1, Attributes: []Attribute{
+		{true, MsgUpdatePropertipes{Issuer: addr1, Propertipes: []Property{
 			attr,
 		}, ID: "1212"}},
 	}
@@ -147,7 +151,7 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 
 func TestUpdateAttrMsgGet(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = UpdateAttrMsg{
+	var msg = MsgUpdatePropertipes{
 		Issuer: addr1,
 	}
 	res := msg.Get(nil)
@@ -156,21 +160,19 @@ func TestUpdateAttrMsgGet(t *testing.T) {
 
 func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = UpdateAttrMsg{
-		Issuer: addr1,
-		ID:     "1",
-		Attributes: []Attribute{
-			attr,
-		},
+	var msg = MsgUpdatePropertipes{
+		Issuer:      addr1,
+		ID:          "1",
+		Propertipes: props,
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"id\":\"1\",\"attribute\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":0,\"longitude\":0}}]}")
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"id\":\"1\",\"propertipes\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":0,\"longitude\":0}}]}")
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = UpdateAttrMsg{
+	var msg = MsgUpdatePropertipes{
 		Issuer: addr1,
 	}
 	res := msg.GetSigners()

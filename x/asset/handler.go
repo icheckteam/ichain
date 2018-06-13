@@ -17,8 +17,8 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
 			return handleAddQuantity(ctx, k, msg)
-		case UpdateAttrMsg:
-			return handleUpdateAttr(ctx, k, msg)
+		case MsgUpdatePropertipes:
+			return handleUpdatePropertipes(ctx, k, msg)
 		case CreateProposalMsg:
 			return handleCreateProposal(ctx, k, msg)
 		case AnswerProposalMsg:
@@ -45,8 +45,8 @@ func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result 
 	}
 }
 
-func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
-	tags, err := k.UpdateAttribute(ctx, msg)
+func handleUpdatePropertipes(ctx sdk.Context, k Keeper, msg MsgUpdatePropertipes) sdk.Result {
+	tags, err := k.UpdatePropertipes(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
@@ -56,7 +56,7 @@ func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
 }
 
 func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result {
-	_, tags, err := k.AddQuantity(ctx, msg)
+	tags, err := k.AddQuantity(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
@@ -66,7 +66,7 @@ func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result
 }
 
 func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) sdk.Result {
-	_, tags, err := k.SubtractQuantity(ctx, msg)
+	tags, err := k.SubtractQuantity(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

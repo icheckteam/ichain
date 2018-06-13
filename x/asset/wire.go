@@ -9,6 +9,6 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(RegisterMsg{}, "ichain/RegisterMsg", nil)
 	cdc.RegisterConcrete(AddQuantityMsg{}, "ichain/AddQuantityMsg", nil)
 	cdc.RegisterConcrete(SubtractQuantityMsg{}, "ichain/SubtractQuantityMsg", nil)
-	cdc.RegisterConcrete(UpdateAttrMsg{}, "ichain/UpdateAttrMsg", nil)
+	cdc.RegisterConcrete(MsgUpdatePropertipes{}, "ichain/MsgUpdatePropertipes", nil)
 
 }

@@ -38,7 +38,6 @@ func TestKeeper(t *testing.T) {
 	// Test register asset
 	keeper.RegisterAsset(ctx, asset)
 	newAsset := keeper.GetAsset(ctx, asset.ID)
-	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
 	assert.True(t, newAsset.ID == asset.ID)
 	assert.True(t, newAsset.Issuer.String() == asset.Issuer.String())
 	assert.True(t, newAsset.Name == asset.Name)
@@ -52,66 +51,31 @@ func TestKeeper(t *testing.T) {
 	keeper.AddQuantity(ctx, AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50})
 	newAsset = keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, newAsset.Quantity == 150)
-	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 150}}))
 
 	// Test subtract quantity
 	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50})
-	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
 	newAsset = keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, newAsset.Quantity == 100)
 
 	// Test subtract quantity error
-	_, _, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 102})
+	_, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 102})
 	assert.True(t, err != nil)
-	assert.True(t, keeper.bank.GetCoins(ctx, addr).IsEqual(sdk.Coins{sdk.Coin{Denom: asset.ID, Amount: 100}}))
 
 	keeper.RegisterAsset(ctx, asset2)
 	keeper.RegisterAsset(ctx, asset3)
 
-	// test add materials
-	addQuantityMsg := AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
-		Material{AssetID: asset2.ID, Quantity: 1},
-	}}
-	keeper.AddQuantity(ctx, addQuantityMsg)
+	// Test Update Propertipes
+	props := Propertipes{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.ID, Issuer: addr, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.ID)
-	assert.True(t, newAsset.Materials[0].AssetID == asset2.ID)
-	assert.True(t, newAsset.Materials[0].Quantity == 1)
+	assert.True(t, newAsset.Propertipes[0].Name == "weight")
+	assert.True(t, newAsset.Propertipes[0].NumberValue == 100)
+	assert.True(t, newAsset.Propertipes[1].Name == "size")
+	assert.True(t, newAsset.Propertipes[1].NumberValue == 2)
 
-	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
-		Material{AssetID: asset2.ID, Quantity: 1},
-	}}
-	keeper.AddQuantity(ctx, addQuantityMsg)
-	newAsset = keeper.GetAsset(ctx, asset.ID)
-	assert.True(t, newAsset.Materials[0].AssetID == asset2.ID)
-	assert.True(t, newAsset.Materials[0].Quantity == 2)
-
-	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
-		Material{AssetID: asset3.ID, Quantity: 1},
-	}}
-	keeper.AddQuantity(ctx, addQuantityMsg)
-	newAsset = keeper.GetAsset(ctx, asset.ID)
-	assert.True(t, newAsset.Materials[1].AssetID == asset3.ID)
-	assert.True(t, newAsset.Materials[1].Quantity == 1)
-
-	// invalid material quantity
-	addQuantityMsg = AddQuantityMsg{ID: asset.ID, Issuer: addr, Quantity: 50, Materials: Materials{
-		Material{AssetID: asset3.ID, Quantity: 1111},
-	}}
-	_, _, err = keeper.AddQuantity(ctx, addQuantityMsg)
-	assert.True(t, err != nil)
-
-	// Test update attributes
-	attrs := []Attribute{Attribute{Name: "weight", NumberValue: 100}, Attribute{Name: "size", NumberValue: 2}}
-	keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr, Attributes: attrs})
-	newAsset = keeper.GetAsset(ctx, asset.ID)
-	assert.True(t, newAsset.Attributes[0].Name == "weight")
-	assert.True(t, newAsset.Attributes[0].NumberValue == 100)
-	assert.True(t, newAsset.Attributes[1].Name == "size")
-	assert.True(t, newAsset.Attributes[1].NumberValue == 2)
-
-	// Invalid attribute type
-	attrs = []Attribute{Attribute{Name: "weight", NumberValue: 100, Type: 10}}
-	keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr, Attributes: attrs})
+	// Invalid property type
+	props = Propertipes{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.ID, Issuer: addr, Propertipes: props})
 
 	//-------------- Test create proposal
 	createProposalMsg := CreateProposalMsg{asset.ID, addr, addr2, []string{"weight"}, RoleReporter}
@@ -228,15 +192,15 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, proposal.Properties[0] == "weight")
 	assert.True(t, proposal.Properties[1] == "size")
 
-	// Test update attributes
-	attrs = []Attribute{Attribute{Name: "weight", NumberValue: 250}, Attribute{Name: "size", NumberValue: 3}}
-	_, err = keeper.UpdateAttribute(ctx, UpdateAttrMsg{ID: asset.ID, Issuer: addr2, Attributes: attrs})
+	// Test UpdatePropertipes
+	props = Propertipes{Property{Name: "weight", NumberValue: 250}, Property{Name: "size", NumberValue: 3}}
+	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.ID, Issuer: addr2, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.ID)
 	assert.True(t, err == nil)
-	assert.True(t, newAsset.Attributes[0].Name == "weight")
-	assert.True(t, newAsset.Attributes[0].NumberValue == 250)
-	assert.True(t, newAsset.Attributes[1].Name == "size")
-	assert.True(t, newAsset.Attributes[1].NumberValue == 3)
+	assert.True(t, newAsset.Propertipes[0].Name == "weight")
+	assert.True(t, newAsset.Propertipes[0].NumberValue == 250)
+	assert.True(t, newAsset.Propertipes[1].Name == "size")
+	assert.True(t, newAsset.Propertipes[1].NumberValue == 3)
 
 	//-------------- Test revoke proposal
 	// Refused recipient is not authorized
