@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"os"
 
+	bam "github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/abci/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	cmn "github.com/tendermint/tmlibs/common"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
-
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -88,9 +88,9 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		keyStake:    sdk.NewKVStoreKey("stake"),
 	}
 
-	// Define the accountMapper.
+	// define the accountMapper
 	app.accountMapper = auth.NewAccountMapper(
-		cdc,
+		app.cdc,
 		app.keyAccount,      // target store
 		&types.AppAccount{}, // prototype
 	)
@@ -113,7 +113,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
 		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper)).
 		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper)).
-		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper))
+		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper)).
+		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper))
 
 	// initialize Ichain App
 	app.SetInitChainer(app.initChainer)
@@ -146,16 +147,18 @@ func MakeCodec() *wire.Codec {
 	var cdc = wire.NewCodec()
 
 	// Register Msgs
-	wire.RegisterCrypto(cdc) // Register crypto.
-	sdk.RegisterWire(cdc)    // Register Msgs
-	bank.RegisterWire(cdc)
 	ibc.RegisterWire(cdc)
+	bank.RegisterWire(cdc)
+	stake.RegisterWire(cdc)
+	slashing.RegisterWire(cdc)
+	auth.RegisterWire(cdc)
+	sdk.RegisterWire(cdc)
+	wire.RegisterCrypto(cdc)
+
 	asset.RegisterWire(cdc)
 	warranty.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
-	slashing.RegisterWire(cdc)
-	auth.RegisterWire(cdc)
 	// register custom AppAccount
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
 	return cdc
@@ -189,13 +192,9 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
 		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
-
 	for _, gacc := range genesisState.Accounts {
-		acc, err := gacc.ToAppAccount()
-		if err != nil {
-			panic(err) // TODO https://github.com/cosmos/cosmos-sdk/issues/468
-			//	return sdk.ErrGenesisParse("").TraceCause(err, "")
-		}
+		acc := gacc.ToAccount()
+		acc.BaseAccount.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
 		app.accountMapper.SetAccount(ctx, acc)
 	}
 
@@ -206,16 +205,13 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 }
 
 // Custom logic for state export
-func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, err error) {
+func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := app.NewContext(true, abci.Header{})
 
 	// iterate to get the accounts
-	accounts := []*types.GenesisAccount{}
+	accounts := []types.GenesisAccount{}
 	appendAccount := func(acc auth.Account) (stop bool) {
-		account := &types.GenesisAccount{
-			Address: acc.GetAddress(),
-			Coins:   acc.GetCoins(),
-		}
+		account := types.NewGenesisAccountI(acc)
 		accounts = append(accounts, account)
 		return false
 	}
@@ -225,5 +221,10 @@ func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, err error)
 		Accounts:  accounts,
 		StakeData: stake.WriteGenesis(ctx, app.stakeKeeper),
 	}
-	return wire.MarshalJSONIndent(app.cdc, genState)
+	appState, err = wire.MarshalJSONIndent(app.cdc, genState)
+	if err != nil {
+		return
+	}
+	validators = stake.WriteValidators(ctx, app.stakeKeeper)
+	return
 }

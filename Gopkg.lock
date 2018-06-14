@@ -48,9 +48,8 @@
     "x/stake/client/cli",
     "x/stake/client/rest"
   ]
-  revision = "ad61a95c8bec16ceab6d91b4d500dda19586f8fb"
-  source = "https://github.com/thang14/cosmos-sdk.git"
-  version = "v0.18.0"
+  revision = "c6711810a86f09457481a8dadae899681a9d77ab"
+  version = "v0.19.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -496,6 +495,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "07b4a7b92067196d975ad2226a8a0078438d8701a7bb00b2e6a1a1c136ab38dc"
+  inputs-digest = "d6e1c1b5987f41995420cdaff8fad7e6554249811f95c2c5fd06ffc1f7d57ec7"
   solver-name = "gps-cdcl"
   solver-version = 1
