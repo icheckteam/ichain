@@ -13,7 +13,7 @@ import (
 
 type createAssetBody struct {
 	baseBody
-	Asset asset.RegisterMsg `json:"asset"`
+	Asset asset.MsgCreateAsset `json:"asset"`
 }
 
 // Create asset REST handler
@@ -53,7 +53,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 
-		if m.Asset.ID == "" {
+		if m.Asset.AssetID == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset.id is required"))
 			return

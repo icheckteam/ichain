@@ -73,6 +73,14 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Propertipes[1].Name == "size")
 	assert.True(t, newAsset.Propertipes[1].NumberValue == 2)
 
+	props = Propertipes{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
+	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	assert.True(t, newAsset.Propertipes[0].Name == "weight")
+	assert.True(t, newAsset.Propertipes[0].NumberValue == 150)
+	assert.True(t, newAsset.Propertipes[2].Name == "size")
+	assert.True(t, newAsset.Propertipes[2].NumberValue == 2)
+
 	// Invalid property type
 	props = Propertipes{Property{Name: "weight", NumberValue: 100, Type: 10}}
 	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
@@ -199,8 +207,8 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, err == nil)
 	assert.True(t, newAsset.Propertipes[0].Name == "weight")
 	assert.True(t, newAsset.Propertipes[0].NumberValue == 250)
-	assert.True(t, newAsset.Propertipes[1].Name == "size")
-	assert.True(t, newAsset.Propertipes[1].NumberValue == 3)
+	assert.True(t, newAsset.Propertipes[2].Name == "size")
+	assert.True(t, newAsset.Propertipes[2].NumberValue == 3)
 
 	//-------------- Test revoke proposal
 	// Refused recipient is not authorized

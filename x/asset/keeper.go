@@ -110,6 +110,7 @@ func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sd
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 		}
 	}
+
 	// update all propertipes
 	asset.Propertipes = asset.Propertipes.Adds(msg.Propertipes...)
 	// save asset to store

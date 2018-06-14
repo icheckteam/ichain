@@ -166,6 +166,7 @@ func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
 		propertyA, propertyB := propertipesA[indexA], othersB[indexB]
 		switch strings.Compare(propertyA.Name, propertyB.Name) {
 		case -1:
+			sum = append(sum, propertyA)
 			indexA++
 		case 0:
 			sum = append(sum, propertyB)
@@ -173,8 +174,27 @@ func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
 			indexB++
 		case 1:
 			indexB++
+			sum = append(sum, propertyB)
 		}
 	}
+}
+
+//----------------------------------------
+// Sort interface
+
+//nolint
+func (propertipes Propertipes) Len() int           { return len(propertipes) }
+func (propertipes Propertipes) Less(i, j int) bool { return propertipes[i].Name < propertipes[j].Name }
+func (propertipes Propertipes) Swap(i, j int) {
+	propertipes[i], propertipes[j] = propertipes[j], propertipes[i]
+}
+
+var _ sort.Interface = Propertipes{}
+
+// Sort is a helper function to sort the set of materials inplace
+func (propertipes Propertipes) Sort() Propertipes {
+	sort.Sort(propertipes)
+	return propertipes
 }
 
 //--------------------------------------------------
@@ -301,7 +321,7 @@ func (materials Materials) Plus(materialsB Materials) Materials {
 		materialA, materialB := materials[indexA], materialsB[indexB]
 		switch strings.Compare(materialA.AssetID, materialB.AssetID) {
 		case -1:
-			sum = append(sum, materialB)
+			sum = append(sum, materialA)
 			indexA++
 		case 0:
 			if materialA.Quantity+materialB.Quantity == 0 {
