@@ -139,7 +139,7 @@ func newIchainApp() *IchainApp {
 }
 
 func setGenesis(gapp *IchainApp, accs ...*types.AppAccount) error {
-	genaccs := make([]*types.GenesisAccount, len(accs))
+	genaccs := make([]types.GenesisAccount, len(accs))
 	for i, acc := range accs {
 		genaccs[i] = types.NewGenesisAccount(acc)
 	}
