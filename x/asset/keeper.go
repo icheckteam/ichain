@@ -70,6 +70,10 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Parent:   msg.Parent,
 	}
 
+	if len(msg.Propertipes) > 0 {
+		asset.Propertipes = msg.Propertipes.Sort()
+	}
+
 	// update asset info
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(

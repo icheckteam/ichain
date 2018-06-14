@@ -12,11 +12,13 @@ const msgType = "asset"
 // MsgCreateAsset A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
 type MsgCreateAsset struct {
-	Issuer   sdk.Address `json:"issuer"`
-	AssetID  string      `json:"asset_id"`
-	Name     string      `json:"name"`
-	Quantity int64       `json:"quantity"`
-	Parent   string      `json:"parent"` // the id of the  parent asset
+	Issuer      sdk.Address `json:"issuer"`
+	AssetID     string      `json:"asset_id"`
+	Name        string      `json:"name"`
+	Quantity    int64       `json:"quantity"`
+	Parent      string      `json:"parent"` // the id of the  parent asset
+	Materials   Materials   `json:"materials"`
+	Propertipes Propertipes `json:"propertipes"`
 }
 
 // NewMsgCreateAsset new record create msg
