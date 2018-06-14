@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/icheckteam/ichain/types"
 )
 
 const (
@@ -43,8 +42,10 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	if k.Has(ctx, msg.AssetID) {
 		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
 	}
+	assetIssuer := msg.Issuer
 
 	if len(msg.Parent) > 0 {
+		// get asset to check quantity and check authorized
 		parent := k.GetAsset(ctx, msg.Parent)
 		if parent == nil {
 			return nil, ErrAssetNotFound(msg.Parent)
@@ -58,13 +59,15 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			return nil, ErrInvalidAssetQuantity(parent.ID)
 		}
 		parent.Quantity -= msg.Quantity
+		// save parent asset to store
 		k.setAsset(ctx, *parent)
+		assetIssuer = parent.Issuer
 	}
 
 	asset := Asset{
 		ID:       msg.AssetID,
 		Name:     msg.Name,
-		Issuer:   msg.Issuer,
+		Issuer:   assetIssuer,
 		Owner:    msg.Issuer,
 		Quantity: msg.Quantity,
 		Parent:   msg.Parent,
@@ -78,8 +81,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
-		"issuer", types.AddrToBytes(asset.Issuer),
-		"owner", types.AddrToBytes(asset.Owner),
 	)
 
 	if len(msg.Parent) > 0 {
@@ -223,9 +224,7 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
-		"sender", types.AddrToBytes(msg.Issuer),
 		"asset_id", []byte(asset.ID),
-		"action", []byte("createProposal"),
 	)
 	return tags, nil
 }
