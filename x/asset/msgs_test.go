@@ -28,11 +28,9 @@ func TestRegisterMsg(t *testing.T) {}
 func TestCreateAssetMsgType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 
-	var msg = RegisterMsg{
-		ID:       "1",
+	var msg = MsgCreateAsset{
+		AssetID:  "1",
 		Name:     "asset name",
-		Company:  "company name",
-		Email:    "email",
 		Quantity: 100,
 		Issuer:   addr,
 	}
@@ -45,12 +43,12 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 	addr1 := sdk.Address([]byte{1, 2})
 	cases := []struct {
 		valid bool
-		tx    RegisterMsg
+		tx    MsgCreateAsset
 	}{
-		{false, RegisterMsg{}},                                                  // no asset info
-		{false, RegisterMsg{Issuer: addr1, Quantity: 0, Name: "name", ID: "1"}}, // missing quantity
-		{false, RegisterMsg{Issuer: addr1, Quantity: 1, Name: "name"}},          // missing id
-		{true, RegisterMsg{Issuer: addr1, Quantity: 1, Name: "name", ID: "1"}},  //
+		{false, MsgCreateAsset{}},                                                       // no asset info
+		{false, MsgCreateAsset{Issuer: addr1, Quantity: 0, Name: "name", AssetID: "1"}}, // missing quantity
+		{false, MsgCreateAsset{Issuer: addr1, Quantity: 1, Name: "name"}},               // missing id
+		{true, MsgCreateAsset{Issuer: addr1, Quantity: 1, Name: "name", AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -65,7 +63,7 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 
 func TestRegisterMsgGet(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = RegisterMsg{
+	var msg = MsgCreateAsset{
 		Issuer: addr1,
 	}
 	res := msg.Get(nil)
@@ -74,28 +72,24 @@ func TestRegisterMsgGet(t *testing.T) {
 
 func TestRegisterGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = RegisterMsg{
+	var msg = MsgCreateAsset{
 		Issuer:   addr1,
-		ID:       "1212",
+		AssetID:  "1212",
 		Name:     "name",
 		Quantity: 1,
-		Company:  "1",
-		Email:    "1@gmail.com",
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"issuer":"696E707574","id":"1212","name":"name","quantity":1,"company":"1","email":"1@gmail.com"}`)
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1212\",\"name\":\"name\",\"quantity\":1,\"parent\":\"\"}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = RegisterMsg{
+	var msg = MsgCreateAsset{
 		Issuer:   addr1,
-		ID:       "1212",
+		AssetID:  "1212",
 		Name:     "name",
 		Quantity: 1,
-		Company:  "1",
-		Email:    "1@gmail.com",
 	}
 	res := msg.GetSigners()
 	// TODO bad results

@@ -11,8 +11,8 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case RegisterMsg:
-			return handleRegisterAsset(ctx, k, msg)
+		case MsgCreateAsset:
+			return handleCreateAsset(ctx, k, msg)
 		case SubtractQuantityMsg:
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
@@ -32,9 +32,9 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result {
+func handleCreateAsset(ctx sdk.Context, k Keeper, msg MsgCreateAsset) sdk.Result {
 
-	tags, err := k.RegisterAsset(ctx, msg)
+	tags, err := k.CreateAsset(ctx, msg)
 
 	if err != nil {
 		return err.Result()

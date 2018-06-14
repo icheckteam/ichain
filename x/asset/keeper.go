@@ -38,20 +38,19 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 }
 
 // Register register new asset
-func (k Keeper) RegisterAsset(ctx sdk.Context, msg RegisterMsg) (sdk.Tags, sdk.Error) {
+func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costRegisterAsset, "registerAsset")
-	if k.Has(ctx, msg.ID) {
-		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.ID))
+	if k.Has(ctx, msg.AssetID) {
+		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
 	}
 
 	asset := Asset{
-		ID:       msg.ID,
+		ID:       msg.AssetID,
 		Name:     msg.Name,
 		Issuer:   msg.Issuer,
 		Owner:    msg.Issuer,
 		Quantity: msg.Quantity,
-		Company:  msg.Company,
-		Email:    msg.Email,
+		Parent:   msg.Parent,
 	}
 
 	// update asset info
