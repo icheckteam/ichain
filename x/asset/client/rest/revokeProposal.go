@@ -6,22 +6,15 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
 
 type revokeProposalBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
-	Gas              int64  `json:"gas"`
+	baseBody
 
-	AssetID     string      `json:"asset_id"`
-	Recipient   sdk.Address `json:"recipient"`
-	Propertipes []string    `json:"propertipes"`
+	MsgRevokeProposal asset.RevokeProposalMsg `json:"msg"`
 }
 
 // RevokeProposalHandlerFn RevokeProposalHandlerFn REST handler
@@ -49,19 +42,19 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.Recipient) == 0 {
+		if len(m.MsgRevokeProposal.Recipient) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("recipient is required"))
 			return
 		}
 
-		if len(m.AssetID) == 0 {
+		if len(m.MsgRevokeProposal.AssetID) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset_id is required"))
 			return
 		}
 
-		if len(m.Propertipes) == 0 {
+		if len(m.MsgRevokeProposal.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("propertipes is required"))
 			return
@@ -75,20 +68,13 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		// build message
-		msg := buildRevokeProposalMsg(info.PubKey.Address(), m.AssetID, m.Propertipes)
-		if err != nil { // XXX rechecking same error ?
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		// sign
-		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+		m.MsgRevokeProposal.Issuer = info.PubKey.Address()
+
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
+
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.MsgRevokeProposal, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -111,13 +97,5 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		w.Write(output)
-	}
-}
-
-func buildRevokeProposalMsg(issuer sdk.Address, assetID string, propertipes []string) sdk.Msg {
-	return asset.RevokeProposalMsg{
-		Recipient:   issuer,
-		AssetID:     assetID,
-		Propertipes: propertipes,
 	}
 }

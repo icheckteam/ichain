@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
@@ -14,12 +13,8 @@ import (
 )
 
 type updateAttributeBody struct {
-	LocalAccountName string            `json:"account_name"`
-	Password         string            `json:"password"`
-	Propertipes      asset.Propertipes `json:"propertipes"`
-	ChainID          string            `json:"chain_id"`
-	Sequence         int64             `json:"sequence"`
-	Gas              int64             `json:"gas"`
+	baseBody
+	Msg asset.MsgUpdatePropertipes `json:"msg"`
 }
 
 func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -47,7 +42,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 
-		if len(m.Propertipes) == 0 {
+		if len(m.Msg.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("propertipes is required"))
 			return
@@ -60,16 +55,15 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 		// build message
-		msg := buildUpdateAttributeMsg(info.PubKey.Address(), vars["id"], m.Propertipes)
 
-		// sign
-		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+		m.Msg.Issuer = info.PubKey.Address()
+		m.Msg.ID = vars["id"]
+
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
+
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -92,13 +86,5 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		}
 
 		w.Write(output)
-	}
-}
-
-func buildUpdateAttributeMsg(creator sdk.Address, assetID string, props asset.Propertipes) sdk.Msg {
-	return asset.MsgUpdatePropertipes{
-		Issuer:      creator,
-		ID:          assetID,
-		Propertipes: props,
 	}
 }

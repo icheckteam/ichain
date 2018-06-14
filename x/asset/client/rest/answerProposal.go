@@ -13,14 +13,8 @@ import (
 )
 
 type answerProposalBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
-	Gas              int64  `json:"gas"`
-
-	AssetID  string               `json:"asset_id"`
-	Response asset.ProposalStatus `json:"response"`
+	baseBody
+	Msg asset.AnswerProposalMsg `json:"msg"`
 }
 
 // AnswerProposalHandlerFn  REST handler
@@ -48,7 +42,7 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.AssetID) == 0 {
+		if len(m.Msg.AssetID) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset_id is required"))
 			return
@@ -61,21 +55,14 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		// build message
-		msg := buildAnswerProposalMsg(info.PubKey.Address(), m.AssetID, m.Response)
-		if err != nil { // XXX rechecking same error ?
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
+		m.Msg.Recipient = info.PubKey.Address()
+
 		// sign
-		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
+
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
