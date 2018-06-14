@@ -193,7 +193,7 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		// return sdk.ErrGenesisParse("").TraceCause(err, "")
 	}
 	for _, gacc := range genesisState.Accounts {
-		acc := gacc.ToAppAccount()
+		acc := gacc.ToAccount()
 		acc.BaseAccount.AccountNumber = app.accountMapper.GetNextAccountNumber(ctx)
 		app.accountMapper.SetAccount(ctx, acc)
 	}
@@ -209,12 +209,9 @@ func (app *IchainApp) ExportAppStateJSON() (appState json.RawMessage, validators
 	ctx := app.NewContext(true, abci.Header{})
 
 	// iterate to get the accounts
-	accounts := []*types.GenesisAccount{}
+	accounts := []types.GenesisAccount{}
 	appendAccount := func(acc auth.Account) (stop bool) {
-		account := &types.GenesisAccount{
-			Address: acc.GetAddress(),
-			Coins:   acc.GetCoins(),
-		}
+		account := types.NewGenesisAccountI(acc)
 		accounts = append(accounts, account)
 		return false
 	}

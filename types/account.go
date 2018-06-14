@@ -42,7 +42,7 @@ func GetAccountDecoder(cdc *wire.Codec) auth.AccountDecoder {
 
 // State to Unmarshal
 type GenesisState struct {
-	Accounts  []*GenesisAccount  `json:"accounts"`
+	Accounts  []GenesisAccount   `json:"accounts"`
 	StakeData stake.GenesisState `json:"stake"`
 }
 
@@ -53,16 +53,23 @@ type GenesisAccount struct {
 	Coins   sdk.Coins   `json:"coins"`
 }
 
-func NewGenesisAccount(aa *AppAccount) *GenesisAccount {
-	return &GenesisAccount{
+func NewGenesisAccount(aa *AppAccount) GenesisAccount {
+	return GenesisAccount{
 		Name:    aa.Name,
 		Address: aa.Address,
 		Coins:   aa.Coins.Sort(),
 	}
 }
 
+func NewGenesisAccountI(acc auth.Account) GenesisAccount {
+	return GenesisAccount{
+		Address: acc.GetAddress(),
+		Coins:   acc.GetCoins(),
+	}
+}
+
 // convert GenesisAccount to AppAccount
-func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount) {
+func (ga *GenesisAccount) ToAccount() (acc *AppAccount) {
 	baseAcc := auth.BaseAccount{
 		Address: ga.Address,
 		Coins:   ga.Coins.Sort(),
