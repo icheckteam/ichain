@@ -344,20 +344,20 @@ func (msg RevokeProposalMsg) GetSignBytes() []byte {
 // MsgAddMaterials ...
 type MsgAddMaterials struct {
 	AssetID   string      `json:"asset_id"`
-	Issuer    sdk.Address `json:"issuer"`
+	Sender    sdk.Address `json:"sender"`
 	Materials Materials   `json:"materials"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
 func (msg MsgAddMaterials) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
 func (msg MsgAddMaterials) String() string {
-	return fmt.Sprintf(`MsgAddMaterials{%v->%s->%v}`, msg.Issuer, msg.AssetID, msg.Materials)
+	return fmt.Sprintf(`MsgAddMaterials{%v->%s->%v}`, msg.Sender, msg.AssetID, msg.Materials)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
-	if len(msg.Issuer) == 0 {
+	if len(msg.Sender) == 0 {
 		return ErrMissingField("issuer")
 	}
 	if len(msg.AssetID) == 0 {

@@ -14,7 +14,8 @@ type Asset struct {
 	Name        string      `json:"name"`
 	Issuer      sdk.Address `json:"issuer"`
 	Owner       sdk.Address `json:"owner"`
-	Parent      string      `json:"parent"`
+	Parent      string      `json:"parent"` // the id of the asset parent
+	Root        string      `json:"root"`   // the id of the asset root
 	Quantity    int64       `json:"quantity"`
 	Company     string      `json:"company"`
 	Email       string      `json:"email"`

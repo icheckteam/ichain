@@ -11,9 +11,10 @@ import (
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc("/assets", CreateAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}", QueryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
-	r.HandleFunc("/assets/{id}/add-quantity", AddAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/subtract-quantity", SubtractQuantityBodyHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/update-attribute", UpdateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/add", AddAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/subtract", SubtractQuantityBodyHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/propertipes", UpdateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/materials", AddMaterialsHandlerFn(ctx, cdc, kb)).Methods("POST")
 
 	r.HandleFunc("/assets/{id}/create-proposal", CreateProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/revoke-proposal", RevokeProposalHandlerFn(ctx, cdc, kb)).Methods("POST")

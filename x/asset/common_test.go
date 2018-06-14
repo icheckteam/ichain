@@ -94,8 +94,7 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 		keyMain,             // target store
 		&types.AppAccount{}, // prototype
 	)
-	coinKeeper := bank.NewKeeper(accountMapper)
-	assetKeeper := NewKeeper(keyStake, cdc, coinKeeper)
+	assetKeeper := NewKeeper(keyStake, cdc)
 	return ctx, accountMapper, assetKeeper
 }
 

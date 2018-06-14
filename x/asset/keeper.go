@@ -5,45 +5,43 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 const (
-	costGetAsset         sdk.Gas = 10
-	costRegisterAsset    sdk.Gas = 100
-	costHasAsset         sdk.Gas = 10
-	costSubtractCoin     sdk.Gas = 10
-	costAddQuantity      sdk.Gas = 10
-	costUpdateAttributes sdk.Gas = 10
-	costCreateProposal   sdk.Gas = 10
-	costRevokeProposal   sdk.Gas = 10
-	costAnswerProposal   sdk.Gas = 10
+	costGetAsset              sdk.Gas = 10
+	costCreateAsset           sdk.Gas = 100
+	costHasAsset              sdk.Gas = 10
+	costSubtractAssetQuantity sdk.Gas = 10
+	costAddQuantity           sdk.Gas = 10
+	costUpdatePropertieps     sdk.Gas = 10
+	costCreateProposal        sdk.Gas = 10
+	costRevokeProposal        sdk.Gas = 10
+	costAnswerProposal        sdk.Gas = 10
+	costAddMaterials          sdk.Gas = 10
 )
 
 // Keeper ...
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
 	cdc      *wire.Codec
-	bank     bank.Keeper
 }
 
 // NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	return Keeper{
 		storeKey: key,
 		cdc:      cdc,
-		bank:     bank,
 	}
 }
 
 // Register register new asset
 func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costRegisterAsset, "registerAsset")
+	ctx.GasMeter().ConsumeGas(costCreateAsset, "createAsset")
 	if k.Has(ctx, msg.AssetID) {
 		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
 	}
 	assetIssuer := msg.Issuer
-
+	var assetRoot string
 	if len(msg.Parent) > 0 {
 		// get asset to check quantity and check authorized
 		parent := k.GetAsset(ctx, msg.Parent)
@@ -62,6 +60,11 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		// save parent asset to store
 		k.setAsset(ctx, *parent)
 		assetIssuer = parent.Issuer
+		if len(parent.Root) > 0 {
+			assetRoot = parent.Root
+		} else {
+			assetRoot = parent.ID
+		}
 	}
 
 	asset := Asset{
@@ -70,6 +73,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Issuer:   assetIssuer,
 		Owner:    msg.Issuer,
 		Quantity: msg.Quantity,
+		Root:     assetRoot,
 		Parent:   msg.Parent,
 	}
 
@@ -125,7 +129,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 
 // UpdateAttribute ...
 func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costUpdateAttributes, "updateAttributes")
+	ctx.GasMeter().ConsumeGas(costUpdatePropertieps, "updatePropertipes")
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
@@ -156,7 +160,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.
 		return nil, ErrAssetNotFound(msg.ID)
 	}
 	if !asset.IsIssuer(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add quantity", msg.Issuer))
 	}
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, *asset)
@@ -164,9 +168,42 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.
 	return tags, nil
 }
 
+// AddMaterials add materials to the asset
+func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costAddMaterials, "addMaterials")
+	asset := k.GetAsset(ctx, msg.AssetID)
+	if asset == nil {
+		return nil, ErrAssetNotFound(msg.AssetID)
+	}
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
+	}
+	// subtract quantity
+	materialsToSave := []Asset{}
+	for _, material := range msg.Materials {
+		m := k.GetAsset(ctx, material.AssetID)
+		if !asset.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
+		}
+		if m.Quantity < material.Quantity {
+			return nil, ErrInvalidAssetQuantity(m.ID)
+		}
+		m.Quantity -= material.Quantity
+		materialsToSave = append(materialsToSave, *m)
+	}
+	msg.Materials = msg.Materials.Sort()
+	asset.Materials = asset.Materials.Plus(msg.Materials)
+	materialsToSave = append(materialsToSave, *asset)
+	for _, meterialToSave := range materialsToSave {
+		k.setAsset(ctx, meterialToSave)
+	}
+	tags := sdk.NewTags("asset_id", []byte(asset.ID))
+	return tags, nil
+}
+
 // SubtractQuantity ...
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costSubtractCoin, "subtractQuantity")
+	ctx.GasMeter().ConsumeGas(costSubtractAssetQuantity, "subtractQuantity")
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
