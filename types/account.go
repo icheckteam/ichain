@@ -62,7 +62,7 @@ func NewGenesisAccount(aa *AppAccount) *GenesisAccount {
 }
 
 // convert GenesisAccount to AppAccount
-func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount, err error) {
+func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount) {
 	baseAcc := auth.BaseAccount{
 		Address: ga.Address,
 		Coins:   ga.Coins.Sort(),
@@ -70,7 +70,7 @@ func (ga *GenesisAccount) ToAppAccount() (acc *AppAccount, err error) {
 	return &AppAccount{
 		BaseAccount: baseAcc,
 		Name:        ga.Name,
-	}, nil
+	}
 }
 
 func AddrToBytes(addr sdk.Address) []byte {
