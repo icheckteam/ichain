@@ -386,3 +386,74 @@ func (msg MsgAddMaterials) GetSignBytes() []byte {
 	}
 	return b
 }
+
+// MsgSend ...
+type MsgSend struct {
+	Sender    sdk.Address `json:"sender"`
+	Recipient sdk.Address `json:"recipient"`
+	Assets    []string    `json:"assets"`
+}
+
+func (msg MsgSend) Type() string                            { return msgType }
+func (msg MsgSend) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgSend) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgSend) String() string {
+	return fmt.Sprintf(`MsgSend{%s->%s->%v}`, msg.Sender, msg.Recipient, msg.Assets)
+}
+
+// ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
+func (msg MsgSend) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return ErrMissingField("issuer")
+	}
+	if len(msg.Recipient) == 0 {
+		return ErrMissingField("recipient")
+	}
+	if len(msg.Assets) == 0 {
+		return ErrMissingField("assets")
+	}
+	return nil
+}
+
+// GetSignBytes Get the bytes for the message signer to sign on
+func (msg MsgSend) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// MsgSend ...
+type MsgFinalize struct {
+	Sender  sdk.Address `json:"sender"`
+	AssetID string      `json:"asset_id"`
+}
+
+func (msg MsgFinalize) Type() string                            { return msgType }
+func (msg MsgFinalize) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgFinalize) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgFinalize) String() string {
+	return fmt.Sprintf(`MsgFinalize{%s->%s}`, msg.Sender, msg.AssetID)
+}
+
+// ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
+func (msg MsgFinalize) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return ErrMissingField("sender")
+	}
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
+	}
+
+	return nil
+}
+
+// GetSignBytes Get the bytes for the message signer to sign on
+func (msg MsgFinalize) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}

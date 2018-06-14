@@ -182,7 +182,10 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	materialsToSave := []Asset{}
 	for _, material := range msg.Materials {
 		m := k.GetAsset(ctx, material.AssetID)
-		if !asset.IsOwner(msg.Sender) {
+		if m == nil {
+			return nil, ErrAssetNotFound(material.AssetID)
+		}
+		if !m.IsOwner(msg.Sender) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
 		}
 		if m.Quantity < material.Quantity {
@@ -218,6 +221,48 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	asset.Quantity -= msg.Quantity
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags("asset_id", []byte(asset.ID))
+	return tags, nil
+}
+
+// Send ...
+func (k Keeper) Send(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
+	assets := make([]*Asset, len(msg.Assets))
+	for _, a := range msg.Assets {
+		asset := k.GetAsset(ctx, a)
+		if asset == nil {
+			return nil, ErrAssetNotFound(a)
+		}
+		if !asset.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to send", msg.Sender))
+		}
+		assets = append(assets, asset)
+	}
+	for _, asset := range assets {
+		asset.Owner = msg.Recipient
+		k.setAsset(ctx, *asset)
+	}
+	tags := sdk.NewTags(
+		"sender", []byte(msg.Sender),
+		"recipient", msg.Recipient,
+	)
+	return tags, nil
+}
+
+// Send ...
+func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error) {
+	asset := k.GetAsset(ctx, msg.AssetID)
+	if asset == nil {
+		return nil, ErrAssetNotFound(msg.AssetID)
+	}
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to finalize", msg.Sender))
+	}
+
+	asset.Final = true
+	k.setAsset(ctx, *asset)
+	tags := sdk.NewTags(
+		"sender", []byte(msg.Sender),
+	)
 	return tags, nil
 }
 

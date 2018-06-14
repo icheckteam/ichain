@@ -19,6 +19,7 @@ type Asset struct {
 	Quantity    int64       `json:"quantity"`
 	Company     string      `json:"company"`
 	Email       string      `json:"email"`
+	Final       bool        `json:"final"`
 	Propertipes Propertipes `json:"propertipes"`
 	Proposals   Proposals   `json:"proposals"`
 	Materials   Materials   `json:"materials"`

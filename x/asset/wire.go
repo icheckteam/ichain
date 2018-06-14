@@ -10,5 +10,5 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(AddQuantityMsg{}, "ichain/AddQuantityMsg", nil)
 	cdc.RegisterConcrete(SubtractQuantityMsg{}, "ichain/SubtractQuantityMsg", nil)
 	cdc.RegisterConcrete(MsgUpdatePropertipes{}, "ichain/MsgUpdatePropertipes", nil)
-
+	cdc.RegisterConcrete(MsgSend{}, "ichain/SendAsset", nil)
 }
