@@ -7,20 +7,19 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
 
-type updateAttributeBody struct {
+type addMaterialsBody struct {
 	baseBody
-	Msg asset.MsgUpdatePropertipes `json:"msg"`
+	Msg asset.MsgAddMaterials `json:"msg"`
 }
 
-func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+// AddMaterialsHandlerFn  REST handler
+func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		var m updateAttributeBody
+		var m addMaterialsBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -42,9 +41,9 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 
-		if len(m.Msg.Propertipes) == 0 {
+		if len(m.Msg.AssetID) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("propertipes is required"))
+			w.Write([]byte("asset_id is required"))
 			return
 		}
 
@@ -54,11 +53,10 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			w.Write([]byte(err.Error()))
 			return
 		}
-		// build message
 
-		m.Msg.Issuer = info.PubKey.Address()
-		m.Msg.ID = vars["id"]
+		m.Msg.Sender = info.PubKey.Address()
 
+		// sign
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)

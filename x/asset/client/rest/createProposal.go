@@ -13,16 +13,8 @@ import (
 )
 
 type createProposalBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
-	Gas              int64  `json:"gas"`
-
-	AssetID     string             `json:"asset_id"`
-	Recipient   sdk.Address        `json:"recipient"`
-	Propertipes []string           `json:"propertipes"`
-	Role        asset.ProposalRole `json:"role"`
+	baseBody
+	Msg asset.CreateProposalMsg `json:"msg"`
 }
 
 // CreateProposalHandlerFn CreateProposal REST handler
@@ -50,19 +42,19 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.Recipient) == 0 {
+		if len(m.Msg.Recipient) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("recipient is required"))
 			return
 		}
 
-		if len(m.AssetID) == 0 {
+		if len(m.Msg.AssetID) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset_id is required"))
 			return
 		}
 
-		if len(m.Propertipes) == 0 {
+		if len(m.Msg.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("propertipes is required"))
 			return
@@ -76,19 +68,13 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		// build message
-		msg := buildCreateProposalMsg(info.PubKey.Address(), m.Recipient, m.AssetID, m.Propertipes, m.Role)
-		if err != nil { // XXX rechecking same error ?
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		// sign
-		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
+		m.Msg.Issuer = info.PubKey.Address()
+		msg := m.Msg
+
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
+
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

@@ -15,13 +15,9 @@ import (
 )
 
 type addAssetQuantityBody struct {
-	LocalAccountName string          `json:"account_name"`
-	Password         string          `json:"password"`
-	Quantity         int64           `json:"quantity"`
-	Materials        asset.Materials `json:"materials"`
-	ChainID          string          `json:"chain_id"`
-	Sequence         int64           `json:"sequence"`
-	Gas              int64           `json:"gas"`
+	baseBody
+	Quantity  int64           `json:"quantity"`
+	Materials asset.Materials `json:"materials"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -69,13 +65,11 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 		}
 		// build message
 		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m)
-		// sign
-		ctx, err = withContext(ctx.WithFromAddressName(m.LocalAccountName), m.Gas)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
+
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
+
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

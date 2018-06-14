@@ -17,6 +17,7 @@ const (
 	CodeMissingField           sdk.CodeType      = 505
 	CodeInvalidField           sdk.CodeType      = 506
 	CodeInvalidRevokeRecipient sdk.CodeType      = 507
+	CodeInvalidAssetQuantity   sdk.CodeType      = 508
 	DefaultCodespace           sdk.CodespaceType = 10
 )
 
@@ -37,6 +38,11 @@ func ErrMissingField(field string) sdk.Error {
 // ErrInvalidField ...
 func ErrInvalidField(field string) sdk.Error {
 	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("field %s has invalid value", field))
+}
+
+// ErrInvalidAssetQuantity ...
+func ErrInvalidAssetQuantity(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset quantity is not enough: {%s}", assetID))
 }
 
 // ErrInvalidRevokeRecipient is used when the recipient of

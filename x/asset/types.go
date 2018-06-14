@@ -8,31 +8,40 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Assets ...
+// Asset asset infomation
 type Asset struct {
-	ID         string      `json:"id"`
-	Name       string      `json:"name"`
-	Issuer     sdk.Address `json:"issuer"`
-	Quantity   int64       `json:"quantity"`
-	Company    string      `json:"company"`
-	Email      string      `json:"email"`
-	Attributes []Attribute `json:"attributes"`
-	Proposals  Proposals   `json:"proposals"`
-	Materials  Materials   `json:"materials"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	Issuer      sdk.Address `json:"issuer"`
+	Owner       sdk.Address `json:"owner"`
+	Parent      string      `json:"parent"` // the id of the asset parent
+	Root        string      `json:"root"`   // the id of the asset root
+	Quantity    int64       `json:"quantity"`
+	Company     string      `json:"company"`
+	Email       string      `json:"email"`
+	Final       bool        `json:"final"`
+	Propertipes Propertipes `json:"propertipes"`
+	Proposals   Proposals   `json:"proposals"`
+	Materials   Materials   `json:"materials"`
 }
 
-// IsOwner ....
+// IsOwner check is owner of the asset
 func (a Asset) IsOwner(addr sdk.Address) bool {
+	return bytes.Equal(a.Owner, addr)
+}
+
+// IsIssuer check is issuer of the asset
+func (a Asset) IsIssuer(addr sdk.Address) bool {
 	return bytes.Equal(a.Issuer, addr)
 }
 
 // CheckUpdateAttributeAuthorization returns whether the address is authorized to update the attribute
-func (a Asset) CheckUpdateAttributeAuthorization(address sdk.Address, attr Attribute) bool {
+func (a Asset) CheckUpdateAttributeAuthorization(address sdk.Address, prop Property) bool {
 	if a.IsOwner(address) {
 		return true
 	}
 
-	attributeName := attr.Name
+	attributeName := prop.Name
 
 	// Check if the address exist in the asset's proposals
 	// then check if the proposal's properties includes the attribute name
@@ -123,8 +132,8 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 	return
 }
 
-// Attribute ...
-type Attribute struct {
+// Property property of the asset
+type Property struct {
 	Name         string        `json:"name"`
 	Type         AttributeType `json:"type"`
 	BytesValue   []byte        `json:"bytes_value"`
@@ -138,6 +147,56 @@ type Attribute struct {
 type Location struct {
 	Latitude  float64 `json:"latitude" amino:"unsafe"`
 	Longitude float64 `json:"longitude" amino:"unsafe"`
+}
+
+// list all propertipes
+type Propertipes []Property
+
+func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
+	sum := ([]Property)(nil)
+	indexA, indexB := 0, 0
+	lenA, lenB := len(propertipesA), len(othersB)
+	for {
+		if indexA == lenA {
+			if indexB == lenB {
+				return sum
+			}
+			return append(sum, othersB[indexB:]...)
+		} else if indexB == lenB {
+			return append(sum, propertipesA[indexA:]...)
+		}
+		propertyA, propertyB := propertipesA[indexA], othersB[indexB]
+		switch strings.Compare(propertyA.Name, propertyB.Name) {
+		case -1:
+			sum = append(sum, propertyA)
+			indexA++
+		case 0:
+			sum = append(sum, propertyB)
+			indexA++
+			indexB++
+		case 1:
+			indexB++
+			sum = append(sum, propertyB)
+		}
+	}
+}
+
+//----------------------------------------
+// Sort interface
+
+//nolint
+func (propertipes Propertipes) Len() int           { return len(propertipes) }
+func (propertipes Propertipes) Less(i, j int) bool { return propertipes[i].Name < propertipes[j].Name }
+func (propertipes Propertipes) Swap(i, j int) {
+	propertipes[i], propertipes[j] = propertipes[j], propertipes[i]
+}
+
+var _ sort.Interface = Propertipes{}
+
+// Sort is a helper function to sort the set of materials inplace
+func (propertipes Propertipes) Sort() Propertipes {
+	sort.Sort(propertipes)
+	return propertipes
 }
 
 //--------------------------------------------------
@@ -264,7 +323,7 @@ func (materials Materials) Plus(materialsB Materials) Materials {
 		materialA, materialB := materials[indexA], materialsB[indexB]
 		switch strings.Compare(materialA.AssetID, materialB.AssetID) {
 		case -1:
-			sum = append(sum, materialB)
+			sum = append(sum, materialA)
 			indexA++
 		case 0:
 			if materialA.Quantity+materialB.Quantity == 0 {

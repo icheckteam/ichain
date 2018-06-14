@@ -9,59 +9,47 @@ import (
 
 const msgType = "asset"
 
-// RegisterMsg A really msg record create type, these fields are can be entirely arbitrary and
+// MsgCreateAsset A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
-type RegisterMsg struct {
-	Issuer   sdk.Address `json:"issuer"`
-	ID       string      `json:"id"`
-	Name     string      `json:"name"`
-	Quantity int64       `json:"quantity"`
-
-	// Company info
-	Company string `json:"company"`
-	Email   string `json:"email"`
+type MsgCreateAsset struct {
+	Issuer      sdk.Address `json:"issuer"`
+	AssetID     string      `json:"asset_id"`
+	Name        string      `json:"name"`
+	Quantity    int64       `json:"quantity"`
+	Parent      string      `json:"parent"` // the id of the  parent asset
+	Materials   Materials   `json:"materials"`
+	Propertipes Propertipes `json:"propertipes"`
 }
 
-// NewRegisterMsg new record create msg
-func NewRegisterMsg(issuer sdk.Address, id, name string, quantity int64, company, email string) RegisterMsg {
-	return RegisterMsg{
+// NewMsgCreateAsset new record create msg
+func NewMsgCreateAsset(issuer sdk.Address, id, name string, quantity int64, parent string) MsgCreateAsset {
+	return MsgCreateAsset{
 		Issuer:   issuer,
-		ID:       id,
+		AssetID:  id,
 		Quantity: quantity,
 		Name:     name,
-		Company:  company,
-		Email:    email,
+		Parent:   parent,
 	}
 }
 
 // enforce the msg type at compile time
-var _ sdk.Msg = RegisterMsg{}
+var _ sdk.Msg = MsgCreateAsset{}
 
 // nolint ...
-func (msg RegisterMsg) Type() string                            { return msgType }
-func (msg RegisterMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg RegisterMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
-func (msg RegisterMsg) String() string {
-	return fmt.Sprintf(`RegisterMsg{
-		Issuer:   %s,
-		ID:       %s,
-		Quantity: %d,
-		Name:     %s,
-		Company:  %s,
-		Email:    %s,
-	}`,
-		msg.Issuer, msg.ID, msg.Quantity,
-		msg.Name, msg.Company, msg.Email,
-	)
+func (msg MsgCreateAsset) Type() string                            { return msgType }
+func (msg MsgCreateAsset) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgCreateAsset) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgCreateAsset) String() string {
+	return fmt.Sprintf("MsgCreateAsset{%s}", msg.Name)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg RegisterMsg) ValidateBasic() sdk.Error {
+func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
 
-	if len(msg.ID) == 0 {
+	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
 	}
 
@@ -77,7 +65,7 @@ func (msg RegisterMsg) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg RegisterMsg) GetSignBytes() []byte {
+func (msg MsgCreateAsset) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -85,33 +73,33 @@ func (msg RegisterMsg) GetSignBytes() []byte {
 	return b
 }
 
-// UpdateAttrMsg ...
+// MsgUpdatePropertipes ...
 // ---------------------------------------------------------------
-type UpdateAttrMsg struct {
-	Issuer     sdk.Address `json:"issuer"`
-	ID         string      `json:"id"`
-	Attributes []Attribute `json:"attribute"`
+type MsgUpdatePropertipes struct {
+	Issuer      sdk.Address `json:"issuer"`
+	ID          string      `json:"id"`
+	Propertipes Propertipes `json:"propertipes"`
 }
 
-func (msg UpdateAttrMsg) Type() string                            { return msgType }
-func (msg UpdateAttrMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg UpdateAttrMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
-func (msg UpdateAttrMsg) String() string {
-	return fmt.Sprintf("UpdateAttrMsg{%s->%v}", msg.ID, msg.Attributes)
+func (msg MsgUpdatePropertipes) Type() string                            { return msgType }
+func (msg MsgUpdatePropertipes) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgUpdatePropertipes) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgUpdatePropertipes) String() string {
+	return fmt.Sprintf("MsgUpdatePropertipes{%s->%v}", msg.ID, msg.Propertipes)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
+func (msg MsgUpdatePropertipes) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
 	if len(msg.ID) == 0 {
 		return ErrMissingField("id")
 	}
-	if len(msg.Attributes) == 0 {
+	if len(msg.Propertipes) == 0 {
 		return ErrMissingField("name")
 	}
-	for _, attr := range msg.Attributes {
+	for _, attr := range msg.Propertipes {
 		switch attr.Type {
 		case AttributeTypeBoolean,
 			AttributeTypeBytes,
@@ -128,7 +116,7 @@ func (msg UpdateAttrMsg) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg UpdateAttrMsg) GetSignBytes() []byte {
+func (msg MsgUpdatePropertipes) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -356,20 +344,20 @@ func (msg RevokeProposalMsg) GetSignBytes() []byte {
 // MsgAddMaterials ...
 type MsgAddMaterials struct {
 	AssetID   string      `json:"asset_id"`
-	Issuer    sdk.Address `json:"issuer"`
+	Sender    sdk.Address `json:"sender"`
 	Materials Materials   `json:"materials"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
 func (msg MsgAddMaterials) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
 func (msg MsgAddMaterials) String() string {
-	return fmt.Sprintf(`MsgAddMaterials{%v->%s->%v}`, msg.Issuer, msg.AssetID, msg.Materials)
+	return fmt.Sprintf(`MsgAddMaterials{%v->%s->%v}`, msg.Sender, msg.AssetID, msg.Materials)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
-	if len(msg.Issuer) == 0 {
+	if len(msg.Sender) == 0 {
 		return ErrMissingField("issuer")
 	}
 	if len(msg.AssetID) == 0 {
@@ -392,6 +380,77 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAddMaterials) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// MsgSend ...
+type MsgSend struct {
+	Sender    sdk.Address `json:"sender"`
+	Recipient sdk.Address `json:"recipient"`
+	Assets    []string    `json:"assets"`
+}
+
+func (msg MsgSend) Type() string                            { return msgType }
+func (msg MsgSend) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgSend) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgSend) String() string {
+	return fmt.Sprintf(`MsgSend{%s->%s->%v}`, msg.Sender, msg.Recipient, msg.Assets)
+}
+
+// ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
+func (msg MsgSend) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return ErrMissingField("issuer")
+	}
+	if len(msg.Recipient) == 0 {
+		return ErrMissingField("recipient")
+	}
+	if len(msg.Assets) == 0 {
+		return ErrMissingField("assets")
+	}
+	return nil
+}
+
+// GetSignBytes Get the bytes for the message signer to sign on
+func (msg MsgSend) GetSignBytes() []byte {
+	b, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// MsgSend ...
+type MsgFinalize struct {
+	Sender  sdk.Address `json:"sender"`
+	AssetID string      `json:"asset_id"`
+}
+
+func (msg MsgFinalize) Type() string                            { return msgType }
+func (msg MsgFinalize) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgFinalize) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgFinalize) String() string {
+	return fmt.Sprintf(`MsgFinalize{%s->%s}`, msg.Sender, msg.AssetID)
+}
+
+// ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
+func (msg MsgFinalize) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return ErrMissingField("sender")
+	}
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
+	}
+
+	return nil
+}
+
+// GetSignBytes Get the bytes for the message signer to sign on
+func (msg MsgFinalize) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)

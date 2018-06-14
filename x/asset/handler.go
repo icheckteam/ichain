@@ -11,20 +11,24 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case RegisterMsg:
-			return handleRegisterAsset(ctx, k, msg)
+		case MsgSend:
+			return handleSend(ctx, k, msg)
+		case MsgCreateAsset:
+			return handleCreateAsset(ctx, k, msg)
 		case SubtractQuantityMsg:
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
 			return handleAddQuantity(ctx, k, msg)
-		case UpdateAttrMsg:
-			return handleUpdateAttr(ctx, k, msg)
+		case MsgUpdatePropertipes:
+			return handleUpdatePropertipes(ctx, k, msg)
 		case CreateProposalMsg:
 			return handleCreateProposal(ctx, k, msg)
 		case AnswerProposalMsg:
 			return handleAnswerProposal(ctx, k, msg)
 		case RevokeProposalMsg:
 			return handleRevokeProposal(ctx, k, msg)
+		case MsgAddMaterials:
+			return handleAddMaterials(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -32,29 +36,28 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleRegisterAsset(ctx sdk.Context, k Keeper, msg RegisterMsg) sdk.Result {
-	asset := Asset{
-		ID:       msg.ID,
-		Name:     msg.Name,
-		Issuer:   msg.Issuer,
-		Quantity: msg.Quantity,
-		Company:  msg.Company,
-		Email:    msg.Email,
-	}
-
-	_, tags, err := k.RegisterAsset(ctx, asset)
-
+func handleCreateAsset(ctx sdk.Context, k Keeper, msg MsgCreateAsset) sdk.Result {
+	tags, err := k.CreateAsset(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
-
 	return sdk.Result{
 		Tags: tags,
 	}
 }
 
-func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
-	tags, err := k.UpdateAttribute(ctx, msg)
+func handleSend(ctx sdk.Context, k Keeper, msg MsgSend) sdk.Result {
+	tags, err := k.Send(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+	return sdk.Result{
+		Tags: tags,
+	}
+}
+
+func handleUpdatePropertipes(ctx sdk.Context, k Keeper, msg MsgUpdatePropertipes) sdk.Result {
+	tags, err := k.UpdatePropertipes(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
@@ -64,7 +67,17 @@ func handleUpdateAttr(ctx sdk.Context, k Keeper, msg UpdateAttrMsg) sdk.Result {
 }
 
 func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result {
-	_, tags, err := k.AddQuantity(ctx, msg)
+	tags, err := k.AddQuantity(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+	return sdk.Result{
+		Tags: tags,
+	}
+}
+
+func handleAddMaterials(ctx sdk.Context, k Keeper, msg MsgAddMaterials) sdk.Result {
+	tags, err := k.AddMaterials(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
@@ -74,7 +87,7 @@ func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result
 }
 
 func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) sdk.Result {
-	_, tags, err := k.SubtractQuantity(ctx, msg)
+	tags, err := k.SubtractQuantity(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}
