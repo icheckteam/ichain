@@ -44,6 +44,23 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
 	}
 
+	if len(msg.Parent) > 0 {
+		parent := k.GetAsset(ctx, msg.Parent)
+		if parent == nil {
+			return nil, ErrAssetNotFound(msg.Parent)
+		}
+
+		if parent.IsOwner(msg.Issuer) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized ", msg.Issuer))
+		}
+
+		if parent.Quantity < msg.Quantity {
+			return nil, ErrInvalidAssetQuantity(parent.ID)
+		}
+		parent.Quantity -= msg.Quantity
+		k.setAsset(ctx, *parent)
+	}
+
 	asset := Asset{
 		ID:       msg.AssetID,
 		Name:     msg.Name,
@@ -60,6 +77,11 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		"issuer", types.AddrToBytes(asset.Issuer),
 		"owner", types.AddrToBytes(asset.Owner),
 	)
+
+	if len(msg.Parent) > 0 {
+		tags = tags.AppendTag("parent_asset_id", []byte(msg.Parent))
+	}
+
 	return tags, nil
 }
 
