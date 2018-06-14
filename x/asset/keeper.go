@@ -18,6 +18,8 @@ const (
 	costRevokeProposal        sdk.Gas = 10
 	costAnswerProposal        sdk.Gas = 10
 	costAddMaterials          sdk.Gas = 10
+	costFinalize              sdk.Gas = 10
+	costSend                  sdk.Gas = 10
 )
 
 // Keeper ...
@@ -49,7 +51,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
 
-		if parent.IsOwner(msg.Issuer) {
+		if !parent.IsOwner(msg.Issuer) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized ", msg.Issuer))
 		}
 
@@ -211,7 +213,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
-	if !asset.IsIssuer(msg.Issuer) {
+	if !asset.IsOwner(msg.Issuer) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 	}
 
@@ -226,6 +228,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 
 // Send ...
 func (k Keeper) Send(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costSend, "sendAsset")
 	assets := make([]*Asset, len(msg.Assets))
 	for _, a := range msg.Assets {
 		asset := k.GetAsset(ctx, a)
@@ -250,6 +253,7 @@ func (k Keeper) Send(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
 
 // Send ...
 func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costFinalize, "finalizeAsset")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.AssetID)
