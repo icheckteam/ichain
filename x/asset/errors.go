@@ -52,31 +52,8 @@ func ErrInvalidRevokeRecipient(addr sdk.Address) sdk.Error {
 }
 
 // InvalidTransaction ...
-func InvalidTransaction(msg string) sdk.Error {
+func ErrInvalidTransaction(msg string) sdk.Error {
 	return newError(DefaultCodespace, CodeInvalidTransaction, msg)
-}
-
-//----------------------------------------
-// Error constructors
-
-func ErrInvalidInput(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidInput, msg)
-}
-
-func ErrInvalidAssets(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidAssets, msg)
-}
-
-func ErrNoInputs() sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidInput, "")
-}
-
-func ErrInvalidOutput(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidOutput, msg)
-}
-
-func ErrNoOutputs() sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidOutput, "")
 }
 
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.
@@ -84,10 +61,6 @@ func CodeToDefaultMsg(code sdk.CodeType) string {
 	switch code {
 	case CodeUnknownAsset:
 		return "Unknown asset"
-	case CodeInvalidInput:
-		return "Invalid input assets"
-	case CodeInvalidOutput:
-		return "Invalid output assets"
 	default:
 		return fmt.Sprintf("Unknown code %d", code)
 	}

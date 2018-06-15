@@ -40,7 +40,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costCreateAsset, "createAsset")
 	if k.Has(ctx, msg.AssetID) {
-		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already exists", msg.AssetID))
 	}
 
 	tags := sdk.NewTags(
@@ -55,8 +55,12 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
 
+		if parent.Final {
+			return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", msg.AssetID))
+		}
+
 		if !parent.IsOwner(msg.Issuer) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized ", msg.Issuer))
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Issuer))
 		}
 
 		if parent.Quantity < msg.Quantity {
@@ -83,6 +87,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Quantity: msg.Quantity,
 		Root:     assetRoot,
 		Parent:   msg.Parent,
+		Final:    false,
 	}
 
 	if len(msg.Propertipes) > 0 {
@@ -130,10 +135,16 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 // UpdateAttribute ...
 func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costUpdatePropertieps, "updatePropertipes")
+
 	asset := k.GetAsset(ctx, msg.ID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
+
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
 	// check role permissions
 	for _, attr := range msg.Propertipes {
 		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
@@ -159,6 +170,10 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
 	if !asset.IsIssuer(msg.Issuer) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add quantity", msg.Issuer))
 	}
@@ -175,6 +190,11 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
+
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
 	if !asset.IsOwner(msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
 	}
@@ -183,7 +203,10 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	for _, material := range msg.Materials {
 		m := k.GetAsset(ctx, material.AssetID)
 		if m == nil {
-			return nil, ErrAssetNotFound(material.AssetID)
+			return nil, ErrUnknownAsset(fmt.Sprintf("Asset {%s} not found", m.ID))
+		}
+		if m.Final {
+			return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", m.ID))
 		}
 		if !m.IsOwner(msg.Sender) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
@@ -191,6 +214,7 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		if m.Quantity < material.Quantity {
 			return nil, ErrInvalidAssetQuantity(m.ID)
 		}
+
 		m.Quantity -= material.Quantity
 		materialsToSave = append(materialsToSave, *m)
 	}
@@ -213,8 +237,13 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.ID)
 	}
+
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
 	if !asset.IsOwner(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to sbutract", msg.Issuer))
 	}
 
 	if asset.Quantity < msg.Quantity {
@@ -238,6 +267,9 @@ func (k Keeper) Send(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
 		if !asset.IsOwner(msg.Sender) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to send", msg.Sender))
 		}
+		if asset.Final {
+			return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+		}
 		assets = append(assets, asset)
 	}
 	tags := sdk.NewTags(
@@ -259,6 +291,10 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	if asset == nil {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
 	if !asset.IsOwner(msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to finalize", msg.Sender))
 	}
@@ -284,9 +320,11 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
-		return nil, ErrUnknownAsset("Asset not found")
+		return nil, ErrUnknownAsset(fmt.Sprintf("Asset {%s} not found", asset.ID))
 	}
-
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
 	proposal, proposalIndex, authorized := asset.ValidatePropossal(msg.Issuer, msg.Recipient)
 	if !authorized {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
@@ -322,7 +360,10 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags
 	ctx.GasMeter().ConsumeGas(costRevokeProposal, "revokeProposal")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
-		return nil, ErrUnknownAsset("Asset not found")
+		return nil, ErrUnknownAsset(fmt.Sprintf("Asset {%s} not found", asset.ID))
+	}
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
 	}
 
 	proposal, proposalIndex, authorized := asset.ValidatePropossal(msg.Issuer, msg.Recipient)
@@ -357,7 +398,10 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg AnswerProposalMsg) (sdk.Tags
 	ctx.GasMeter().ConsumeGas(costAnswerProposal, "answerProposal")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
-		return nil, ErrUnknownAsset("Asset not found")
+		return nil, ErrUnknownAsset(fmt.Sprintf("Asset {%s} not found", asset.ID))
+	}
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
 	}
 
 	proposal, proposalIndex, authorized := asset.ValidateProposalAnswer(msg.Recipient, ProposalStatus(msg.Response))
