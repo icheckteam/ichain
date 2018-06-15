@@ -42,6 +42,10 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	if k.Has(ctx, msg.AssetID) {
 		return nil, InvalidTransaction(fmt.Sprintf("Asset already exists: {%s}", msg.AssetID))
 	}
+
+	tags := sdk.NewTags(
+		"asset_id", []byte(msg.AssetID),
+	)
 	assetIssuer := msg.Issuer
 	var assetRoot string
 	if len(msg.Parent) > 0 {
@@ -67,6 +71,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		} else {
 			assetRoot = parent.ID
 		}
+
+		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 	}
 
 	asset := Asset{
@@ -85,9 +91,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	// update asset info
 	k.setAsset(ctx, asset)
-	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-	)
 	return tags, nil
 }
 
@@ -194,10 +197,12 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	msg.Materials = msg.Materials.Sort()
 	asset.Materials = asset.Materials.Plus(msg.Materials)
 	materialsToSave = append(materialsToSave, *asset)
+	tags := sdk.NewTags("asset_id", []byte(asset.ID))
 	for _, meterialToSave := range materialsToSave {
 		k.setAsset(ctx, meterialToSave)
+		tags = tags.AppendTag("asset_id", []byte(meterialToSave.ID))
 	}
-	tags := sdk.NewTags("asset_id", []byte(asset.ID))
+
 	return tags, nil
 }
 
@@ -235,14 +240,15 @@ func (k Keeper) Send(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
 		}
 		assets = append(assets, asset)
 	}
+	tags := sdk.NewTags(
+		"account", []byte(msg.Sender.String()),
+		"account", []byte(msg.Recipient.String()),
+	)
 	for _, asset := range assets {
 		asset.Owner = msg.Recipient
 		k.setAsset(ctx, *asset)
+		tags = tags.AppendTag("asset_id", []byte(asset.ID))
 	}
-	tags := sdk.NewTags(
-		"sender", []byte(msg.Sender),
-		"recipient", msg.Recipient,
-	)
 	return tags, nil
 }
 
@@ -260,7 +266,7 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	asset.Final = true
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
-		"sender", []byte(msg.Sender),
+		"asset_id", []byte(msg.AssetID),
 	)
 	return tags, nil
 }
