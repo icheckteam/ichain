@@ -88,11 +88,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
 	)
-
-	if len(msg.Parent) > 0 {
-		tags = tags.AppendTag("parent_asset_id", []byte(msg.Parent))
-	}
-
 	return tags, nil
 }
 
