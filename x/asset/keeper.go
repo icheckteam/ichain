@@ -9,7 +9,8 @@ import (
 
 const (
 	costGetAsset              sdk.Gas = 10
-	costCreateAsset           sdk.Gas = 100
+	costCreateAsset           sdk.Gas = 10
+	costSetAsset              sdk.Gas = 10
 	costHasAsset              sdk.Gas = 10
 	costSubtractAssetQuantity sdk.Gas = 10
 	costAddQuantity           sdk.Gas = 10
@@ -100,15 +101,14 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 }
 
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
+	ctx.GasMeter().ConsumeGas(costSetAsset, "setAsset")
 	store := ctx.KVStore(k.storeKey)
 	assetKey := GetAssetKey(asset.ID)
-
 	// marshal the record and add to the state
 	bz, err := k.cdc.MarshalBinary(asset)
 	if err != nil {
 		panic(err)
 	}
-
 	store.Set(assetKey, bz)
 }
 
@@ -154,6 +154,7 @@ func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sd
 	}
 
 	// update all propertipes
+	msg.Propertipes = msg.Propertipes.Sort()
 	asset.Propertipes = asset.Propertipes.Adds(msg.Propertipes...)
 	// save asset to store
 	k.setAsset(ctx, *asset)
