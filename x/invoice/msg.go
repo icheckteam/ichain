@@ -28,19 +28,19 @@ func (msg MsgCreate) GetSignBytes() []byte {
 
 func (msg MsgCreate) ValidateBasic() sdk.Error {
 	if msg.ID == "" {
-		return types.ErrMissingField("id")
+		return types.ErrMissingField(DefaultCodespace, "id")
 	}
 
 	if len(msg.Issuer) == 0 {
-		return types.ErrMissingField("issuer")
+		return types.ErrMissingField(DefaultCodespace, "issuer")
 	}
 
 	if len(msg.Receiver) == 0 {
-		return types.ErrMissingField("receiver")
+		return types.ErrMissingField(DefaultCodespace, "receiver")
 	}
 
 	if len(msg.Items) == 0 {
-		return types.ErrMissingField("items")
+		return types.ErrMissingField(DefaultCodespace, "items")
 	}
 
 	return nil
