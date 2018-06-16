@@ -18,6 +18,8 @@ const (
 	CodeInvalidField           sdk.CodeType      = 506
 	CodeInvalidRevokeRecipient sdk.CodeType      = 507
 	CodeInvalidAssetQuantity   sdk.CodeType      = 508
+	CodeAssetAlreadyFinal      sdk.CodeType      = 509
+	CodeInvalidAssetRoot       sdk.CodeType      = 5090
 	DefaultCodespace           sdk.CodespaceType = 10
 )
 
@@ -27,7 +29,11 @@ func ErrUnknownAsset(msg string) sdk.Error {
 }
 
 func ErrAssetNotFound(assetID string) sdk.Error {
-	return newError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset id %s not found", assetID))
+	return newError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset {%s} not found", assetID))
+}
+
+func ErrAssetAlreadyFinal(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeAssetAlreadyFinal, fmt.Sprintf("asset {%s} already final", assetID))
 }
 
 // ErrMissingField ...
@@ -43,6 +49,10 @@ func ErrInvalidField(field string) sdk.Error {
 // ErrInvalidAssetQuantity ...
 func ErrInvalidAssetQuantity(assetID string) sdk.Error {
 	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset quantity is not enough: {%s}", assetID))
+}
+
+func ErrInvalidAssetRoot(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeInvalidAssetRoot, fmt.Sprintf("asset {%s} is not root", assetID))
 }
 
 // ErrInvalidRevokeRecipient is used when the recipient of
