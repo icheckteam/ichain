@@ -72,11 +72,11 @@ func (msg CreateOrderMsg) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.ID) == 0 {
-		return types.ErrMissingField("id")
+		return types.ErrMissingField(DefaultCodespace, "id")
 	}
 
 	if len(msg.TransportedAssets) == 0 {
-		return types.ErrMissingField("transported_assets")
+		return types.ErrMissingField(DefaultCodespace, "transported_assets")
 	}
 
 	return nil
@@ -125,7 +125,7 @@ func (msg ConfirmOrderMsg) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.OrderID) == 0 {
-		return types.ErrMissingField("order_id")
+		return types.ErrMissingField(DefaultCodespace, "order_id")
 	}
 
 	return nil
@@ -174,7 +174,7 @@ func (msg CompleteOrderMsg) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.OrderID) == 0 {
-		return types.ErrMissingField("order_id")
+		return types.ErrMissingField(DefaultCodespace, "order_id")
 	}
 
 	return nil
@@ -223,7 +223,7 @@ func (msg CancelOrderMsg) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.OrderID) == 0 {
-		return types.ErrMissingField("order_id")
+		return types.ErrMissingField(DefaultCodespace, "order_id")
 	}
 
 	return nil

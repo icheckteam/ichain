@@ -42,23 +42,23 @@ func (msg MsgCreateContract) GetSignBytes() []byte {
 // Implements Msg.
 func (msg MsgCreateContract) ValidateBasic() sdk.Error {
 	if len(msg.ID) == 0 {
-		return types.ErrMissingField("id")
+		return types.ErrMissingField(DefaultCodespace, "id")
 	}
 
 	if len(msg.Issuer) == 0 {
-		return types.ErrMissingField("issuer")
+		return types.ErrMissingField(DefaultCodespace, "issuer")
 	}
 
 	if len(msg.Recipient) == 0 {
-		return types.ErrMissingField("recipient")
+		return types.ErrMissingField(DefaultCodespace, "recipient")
 	}
 
 	if msg.Expires.IsZero() {
-		return types.ErrMissingField("expires")
+		return types.ErrMissingField(DefaultCodespace, "expires")
 	}
 
 	if len(msg.AssetID) == 0 {
-		return types.ErrMissingField("asset_id")
+		return types.ErrMissingField(DefaultCodespace, "asset_id")
 	}
 
 	return nil
@@ -100,14 +100,14 @@ func (msg MsgCreateClaim) GetSignBytes() []byte {
 // Implements Msg.
 func (msg MsgCreateClaim) ValidateBasic() sdk.Error {
 	if len(msg.ContractID) == 0 {
-		return types.ErrMissingField("contract_id")
+		return types.ErrMissingField(DefaultCodespace, "contract_id")
 	}
 
 	if len(msg.Issuer) == 0 {
-		return types.ErrMissingField("issuer")
+		return types.ErrMissingField(DefaultCodespace, "issuer")
 	}
 	if len(msg.Recipient) == 0 {
-		return types.ErrMissingField("recipient")
+		return types.ErrMissingField(DefaultCodespace, "recipient")
 	}
 	return nil
 }
@@ -140,11 +140,11 @@ func (msg MsgProcessClaim) GetSignBytes() []byte {
 // Implements Msg.
 func (msg MsgProcessClaim) ValidateBasic() sdk.Error {
 	if len(msg.ContractID) == 0 {
-		return types.ErrMissingField("contract_id")
+		return types.ErrMissingField(DefaultCodespace, "contract_id")
 	}
 
 	if len(msg.Issuer) == 0 {
-		return types.ErrMissingField("issuer")
+		return types.ErrMissingField(DefaultCodespace, "issuer")
 	}
 	switch msg.Status {
 	case ClaimStatusPending,
@@ -154,7 +154,7 @@ func (msg MsgProcessClaim) ValidateBasic() sdk.Error {
 		ClaimStatusClaimRepair:
 		break
 	default:
-		return types.ErrInvalidField("status")
+		return types.ErrInvalidField(DefaultCodespace, "status")
 	}
 	return nil
 }

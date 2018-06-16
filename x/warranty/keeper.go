@@ -29,7 +29,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
 func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) sdk.Error {
 	c := k.GetContract(ctx, msg.ID)
 	if c != nil {
-		return types.InvalidTransaction("Contract already exitsts")
+		return types.InvalidTransaction(DefaultCodespace, "Contract already exitsts")
 	}
 
 	// subtract coins of the issuer
@@ -55,7 +55,7 @@ func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) sdk.Error
 func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) sdk.Error {
 	c := k.GetContract(ctx, msg.ContractID)
 	if c == nil {
-		return types.InvalidTransaction("Contract not found")
+		return types.InvalidTransaction(DefaultCodespace, "Contract not found")
 	}
 
 	if c.ValidateCreateClaim(msg.Issuer) == false {
@@ -74,11 +74,11 @@ func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) sdk.Error {
 func (k Keeper) ProcessClaim(ctx sdk.Context, msg MsgProcessClaim) sdk.Error {
 	c := k.GetContract(ctx, msg.ContractID)
 	if c == nil {
-		return types.InvalidTransaction("Contract not found")
+		return types.InvalidTransaction(DefaultCodespace, "Contract not found")
 	}
 
 	if c.Claim == nil {
-		return types.InvalidTransaction("Claim not found")
+		return types.InvalidTransaction(DefaultCodespace, "Claim not found")
 	}
 
 	if !c.ValidateClaimProcess(msg.Issuer, msg.Status) {

@@ -18,6 +18,8 @@ const (
 	CodeInvalidField           sdk.CodeType      = 506
 	CodeInvalidRevokeRecipient sdk.CodeType      = 507
 	CodeInvalidAssetQuantity   sdk.CodeType      = 508
+	CodeAssetAlreadyFinal      sdk.CodeType      = 509
+	CodeInvalidAssetRoot       sdk.CodeType      = 5090
 	DefaultCodespace           sdk.CodespaceType = 10
 )
 
@@ -27,7 +29,11 @@ func ErrUnknownAsset(msg string) sdk.Error {
 }
 
 func ErrAssetNotFound(assetID string) sdk.Error {
-	return newError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset id %s not found", assetID))
+	return newError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset {%s} not found", assetID))
+}
+
+func ErrAssetAlreadyFinal(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeAssetAlreadyFinal, fmt.Sprintf("asset {%s} already final", assetID))
 }
 
 // ErrMissingField ...
@@ -45,6 +51,10 @@ func ErrInvalidAssetQuantity(assetID string) sdk.Error {
 	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset quantity is not enough: {%s}", assetID))
 }
 
+func ErrInvalidAssetRoot(assetID string) sdk.Error {
+	return newError(DefaultCodespace, CodeInvalidAssetRoot, fmt.Sprintf("asset {%s} is not root", assetID))
+}
+
 // ErrInvalidRevokeRecipient is used when the recipient of
 // a revoke proposal message is not in the asset's proposal list
 func ErrInvalidRevokeRecipient(addr sdk.Address) sdk.Error {
@@ -52,31 +62,8 @@ func ErrInvalidRevokeRecipient(addr sdk.Address) sdk.Error {
 }
 
 // InvalidTransaction ...
-func InvalidTransaction(msg string) sdk.Error {
+func ErrInvalidTransaction(msg string) sdk.Error {
 	return newError(DefaultCodespace, CodeInvalidTransaction, msg)
-}
-
-//----------------------------------------
-// Error constructors
-
-func ErrInvalidInput(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidInput, msg)
-}
-
-func ErrInvalidAssets(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidAssets, msg)
-}
-
-func ErrNoInputs() sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidInput, "")
-}
-
-func ErrInvalidOutput(msg string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidOutput, msg)
-}
-
-func ErrNoOutputs() sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidOutput, "")
 }
 
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.
@@ -84,10 +71,6 @@ func CodeToDefaultMsg(code sdk.CodeType) string {
 	switch code {
 	case CodeUnknownAsset:
 		return "Unknown asset"
-	case CodeInvalidInput:
-		return "Invalid input assets"
-	case CodeInvalidOutput:
-		return "Invalid output assets"
 	default:
 		return fmt.Sprintf("Unknown code %d", code)
 	}

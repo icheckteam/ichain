@@ -1,39 +1,61 @@
 package asset
 
 import (
+	"bytes"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestKeeper(t *testing.T) {
-	ctx, _, keeper := createTestInput(t, false, 0)
-	addr := sdk.Address([]byte("addr1"))
-	addr2 := sdk.Address([]byte("addr2"))
-	addr3 := sdk.Address([]byte("addr3"))
-	addr4 := sdk.Address([]byte("addr4"))
+var (
+	addr  = sdk.Address([]byte("addr1"))
+	addr2 = sdk.Address([]byte("addr2"))
+	addr3 = sdk.Address([]byte("addr3"))
+	addr4 = sdk.Address([]byte("addr4"))
 
-	asset := MsgCreateAsset{
+	asset = MsgCreateAsset{
 		AssetID:  "asset1",
 		Issuer:   addr,
 		Name:     "asset 1",
 		Quantity: 100,
 	}
 
-	asset2 := MsgCreateAsset{
+	asset2 = MsgCreateAsset{
 		AssetID:  "asset2",
 		Issuer:   addr,
 		Name:     "asset 2",
 		Quantity: 100,
 	}
 
-	asset3 := MsgCreateAsset{
+	asset3 = MsgCreateAsset{
 		AssetID:  "asset3",
 		Issuer:   addr,
 		Name:     "asset 3",
 		Quantity: 100,
 	}
+
+	assetChild = MsgCreateAsset{
+		AssetID:  "asset4",
+		Issuer:   addr,
+		Name:     "asset 3",
+		Quantity: 100,
+		Parent:   "asset3",
+	}
+
+	assetChild1 = MsgCreateAsset{
+		AssetID:  "asset5",
+		Issuer:   addr,
+		Name:     "asset 5",
+		Quantity: 100,
+		Parent:   "asset4",
+	}
+)
+
+func TestKeeper(t *testing.T) {
+	ctx, _, keeper := createTestInput(t, false, 0)
+	// ----------------------------------
+	// Test Assets
 
 	// Test register asset
 	keeper.CreateAsset(ctx, asset)
@@ -43,8 +65,103 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity == asset.Quantity)
 
+	keeper.CreateAsset(ctx, asset2)
+	keeper.CreateAsset(ctx, asset3)
+
 	// asset already exists
 	_, err := keeper.CreateAsset(ctx, asset)
+	assert.True(t, err != nil)
+
+	// create asset child
+	keeper.CreateAsset(ctx, assetChild)
+	newAsset = keeper.GetAsset(ctx, assetChild.AssetID)
+	assert.True(t, newAsset.Parent == asset3.AssetID)
+	assert.True(t, newAsset.Root == asset3.AssetID)
+
+	// invalid asset quantity
+	assetChild.Quantity += 1
+	_, err = keeper.CreateAsset(ctx, assetChild)
+	assert.True(t, err != nil)
+
+	keeper.CreateAsset(ctx, assetChild1)
+	newAsset = keeper.GetAsset(ctx, assetChild1.AssetID)
+	assert.True(t, newAsset.Parent == assetChild.AssetID)
+	assert.True(t, newAsset.Root == asset3.AssetID)
+
+	// -----------------------------------------
+	// Test Add Materials
+	msgAddMaterials := MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: assetChild1.AssetID, Quantity: 1},
+			Material{AssetID: asset2.AssetID, Quantity: 1},
+		},
+	}
+	keeper.AddMaterials(ctx, msgAddMaterials)
+	newAsset = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
+	msgAddMaterials.Materials = msgAddMaterials.Materials.Sort()
+	assert.True(t, newAsset.Materials[0].AssetID == msgAddMaterials.Materials[0].AssetID)
+	assert.True(t, newAsset.Materials[0].Quantity == msgAddMaterials.Materials[0].Quantity)
+	assert.True(t, newAsset.Materials[1].AssetID == msgAddMaterials.Materials[1].AssetID)
+	assert.True(t, newAsset.Materials[1].Quantity == msgAddMaterials.Materials[1].Quantity)
+
+	// add materials error
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr4,
+		Materials: Materials{
+			Material{AssetID: assetChild1.AssetID, Quantity: 1},
+			Material{AssetID: asset2.AssetID, Quantity: 1},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr4,
+		Materials: Materials{
+			Material{AssetID: assetChild1.AssetID, Quantity: 1000},
+			Material{AssetID: asset2.AssetID, Quantity: 1},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	//-------------------------------------------
+	// Test Finalize
+	msgFinalize := MsgFinalize{
+		Sender:  addr,
+		AssetID: assetChild1.AssetID,
+	}
+	keeper.Finalize(ctx, msgFinalize)
+	newAsset = keeper.GetAsset(ctx, msgFinalize.AssetID)
+	assert.True(t, newAsset.Final == true)
+
+	msgFinalize = MsgFinalize{
+		Sender:  addrs[0],
+		AssetID: assetChild1.AssetID,
+	}
+	_, err = keeper.Finalize(ctx, msgFinalize)
+	assert.True(t, err != nil)
+
+	//-------------------------------------------------
+	// Test Send
+	msgSend := MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
+	keeper.Send(ctx, msgSend)
+	newAsset = keeper.GetAsset(ctx, asset2.AssetID)
+	assert.True(t, bytes.Equal(newAsset.Owner, msgSend.Recipient))
+
+	msgSend = MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
+	_, err = keeper.Send(ctx, msgSend)
+	assert.True(t, err != nil)
+
+	//-------------------------------------------------
+	// Test Add Quantity
+
+	// add quantity err
+	_, err = keeper.AddQuantity(ctx, AddQuantityMsg{ID: assetChild1.AssetID, Issuer: addr, Quantity: 50})
 	assert.True(t, err != nil)
 
 	// Test add quantity
@@ -61,29 +178,36 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.AssetID, Issuer: addr, Quantity: 102})
 	assert.True(t, err != nil)
 
-	keeper.CreateAsset(ctx, asset2)
-	keeper.CreateAsset(ctx, asset3)
-
 	// Test Update Propertipes
 	props := Propertipes{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
 	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Propertipes[0].Name == "weight")
-	assert.True(t, newAsset.Propertipes[0].NumberValue == 100)
-	assert.True(t, newAsset.Propertipes[1].Name == "size")
-	assert.True(t, newAsset.Propertipes[1].NumberValue == 2)
+	props = props.Sort()
+	assert.True(t, newAsset.Propertipes[0].Name == props[0].Name)
+	assert.True(t, newAsset.Propertipes[0].NumberValue == props[0].NumberValue)
+	assert.True(t, newAsset.Propertipes[1].Name == props[1].Name)
+	assert.True(t, newAsset.Propertipes[1].NumberValue == props[1].NumberValue)
 
-	props = Propertipes{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
-	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
+	props2 := Propertipes{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props2})
+	props2 = props2.Sort()
+	props = props.Adds(props2...)
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Propertipes[0].Name == "weight")
-	assert.True(t, newAsset.Propertipes[0].NumberValue == 150)
-	assert.True(t, newAsset.Propertipes[2].Name == "size")
-	assert.True(t, newAsset.Propertipes[2].NumberValue == 2)
+
+	assert.True(t, newAsset.Propertipes[0].Name == props[0].Name)
+	assert.True(t, newAsset.Propertipes[0].NumberValue == props[0].NumberValue)
+	assert.True(t, newAsset.Propertipes[1].Name == props[1].Name)
+	assert.True(t, newAsset.Propertipes[1].NumberValue == props[1].NumberValue)
+	assert.True(t, newAsset.Propertipes[2].Name == props[2].Name)
+	assert.True(t, newAsset.Propertipes[2].NumberValue == props[2].NumberValue)
 
 	// Invalid property type
 	props = Propertipes{Property{Name: "weight", NumberValue: 100, Type: 10}}
 	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
+
+	// invalid issuer
+	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr2, Propertipes: props})
+	assert.True(t, err != nil)
 
 	//-------------- Test create proposal
 	createProposalMsg := CreateProposalMsg{asset.AssetID, addr, addr2, []string{"weight"}, RoleReporter}
@@ -201,14 +325,10 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, proposal.Properties[1] == "size")
 
 	// Test UpdatePropertipes
-	props = Propertipes{Property{Name: "weight", NumberValue: 250}, Property{Name: "size", NumberValue: 3}}
+	props = Propertipes{Property{Name: "weight", NumberValue: 250}}
 	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr2, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, err == nil)
-	assert.True(t, newAsset.Propertipes[0].Name == "weight")
-	assert.True(t, newAsset.Propertipes[0].NumberValue == 250)
-	assert.True(t, newAsset.Propertipes[2].Name == "size")
-	assert.True(t, newAsset.Propertipes[2].NumberValue == 3)
 
 	//-------------- Test revoke proposal
 	// Refused recipient is not authorized

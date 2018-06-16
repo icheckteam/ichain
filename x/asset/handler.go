@@ -29,6 +29,8 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleRevokeProposal(ctx, k, msg)
 		case MsgAddMaterials:
 			return handleAddMaterials(ctx, k, msg)
+		case MsgFinalize:
+			return handleFinalize(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
@@ -78,6 +80,16 @@ func handleAddQuantity(ctx sdk.Context, k Keeper, msg AddQuantityMsg) sdk.Result
 
 func handleAddMaterials(ctx sdk.Context, k Keeper, msg MsgAddMaterials) sdk.Result {
 	tags, err := k.AddMaterials(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+	return sdk.Result{
+		Tags: tags,
+	}
+}
+
+func handleFinalize(ctx sdk.Context, k Keeper, msg MsgFinalize) sdk.Result {
+	tags, err := k.Finalize(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

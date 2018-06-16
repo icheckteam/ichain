@@ -338,7 +338,7 @@ func TestCreateProposalMsgGetSigners(t *testing.T) {
 		Issuer: addrs[0],
 	}
 	res := msg.GetSigners()
-	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6160]`)
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
 }
 
 func TestCreateProposalMsgGetSignBytes(t *testing.T) {
@@ -350,7 +350,7 @@ func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6160","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6161","propertipes":["location"],"role":0}`)
+	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","propertipes":["location"],"role":0}`)
 }
 
 // AnswerProposal  Tests
@@ -393,7 +393,7 @@ func TestAnswerProposalGetSigners(t *testing.T) {
 		Recipient: addrs[0],
 	}
 	res := msg.GetSigners()
-	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6160]`)
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
 }
 
 func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
@@ -403,7 +403,7 @@ func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"response\":0}")
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"response\":0}")
 }
 
 // RevokeProposal Test
@@ -447,7 +447,7 @@ func TestRevokeProposalMsgGetSigners(t *testing.T) {
 		Issuer: addrs[0],
 	}
 	res := msg.GetSigners()
-	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6160]`)
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
 }
 
 func TestRevokeProposalMsgGetSignBytes(t *testing.T) {
@@ -459,5 +459,5 @@ func TestRevokeProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"propertipes\":[\"location\"]}")
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6101\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"propertipes\":[\"location\"]}")
 }
