@@ -19,7 +19,6 @@ const (
 	CodeInvalidRevokeRecipient sdk.CodeType      = 507
 	CodeInvalidAssetQuantity   sdk.CodeType      = 508
 	CodeAssetAlreadyFinal      sdk.CodeType      = 509
-	CodeInvalidAssetRoot       sdk.CodeType      = 5090
 	DefaultCodespace           sdk.CodespaceType = 10
 )
 
@@ -48,11 +47,11 @@ func ErrInvalidField(field string) sdk.Error {
 
 // ErrInvalidAssetQuantity ...
 func ErrInvalidAssetQuantity(assetID string) sdk.Error {
-	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset quantity is not enough: {%s}", assetID))
+	return newError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset {%s} is not enough", assetID))
 }
 
 func ErrInvalidAssetRoot(assetID string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidAssetRoot, fmt.Sprintf("asset {%s} is not root", assetID))
+	return newError(DefaultCodespace, CodeInvalidTransaction, fmt.Sprintf("asset {%s} is not root", assetID))
 }
 
 // ErrInvalidRevokeRecipient is used when the recipient of

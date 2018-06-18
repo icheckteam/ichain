@@ -16,8 +16,7 @@ import (
 
 type addAssetQuantityBody struct {
 	baseBody
-	Quantity  int64           `json:"quantity"`
-	Materials asset.Materials `json:"materials"`
+	Quantity int64 `json:"quantity"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -64,7 +63,7 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			return
 		}
 		// build message
-		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m)
+		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m.Quantity)
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
@@ -96,11 +95,10 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 	}
 }
 
-func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, body addAssetQuantityBody) sdk.Msg {
+func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty int64) sdk.Msg {
 	return asset.AddQuantityMsg{
-		Issuer:    creator,
-		ID:        assetID,
-		Quantity:  body.Quantity,
-		Materials: body.Materials,
+		Issuer:   creator,
+		AssetID:  assetID,
+		Quantity: qty,
 	}
 }

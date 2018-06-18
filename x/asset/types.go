@@ -134,19 +134,19 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 
 // Property property of the asset
 type Property struct {
-	Name         string        `json:"name"`
-	Type         AttributeType `json:"type"`
-	BytesValue   []byte        `json:"bytes_value"`
-	StringValue  string        `json:"string_value"`
-	BooleanValue bool          `json:"boolean_value"`
-	NumberValue  int64         `json:"number_value"`
-	EnumValue    []string      `json:"enum_value"`
-	Location     Location      `json:"location_value"`
+	Name         string       `json:"name"`
+	Type         PropertyType `json:"type"`
+	BytesValue   []byte       `json:"bytes_value"`
+	StringValue  string       `json:"string_value"`
+	BooleanValue bool         `json:"boolean_value"`
+	NumberValue  int64        `json:"number_value"`
+	EnumValue    []string     `json:"enum_value"`
+	Location     Location     `json:"location_value"`
 }
 
 type Location struct {
-	Latitude  float64 `json:"latitude" amino:"unsafe"`
-	Longitude float64 `json:"longitude" amino:"unsafe"`
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
 }
 
 // list all propertipes
@@ -270,17 +270,17 @@ const (
 	StatusRefused                        // The recipient refused the proposal
 )
 
-// AttributeType define the type ò the attribute
-type AttributeType int
+// PropertyType define the type of the property
+type PropertyType int
 
 // All avaliable type ò the attribute
 const (
-	AttributeTypeBytes AttributeType = iota
-	AttributeTypeString
-	AttributeTypeBoolean
-	AttributeTypeNumber
-	AttributeTypeEnum
-	AttributeTypeLocation
+	PropertyTypeBytes PropertyType = iota + 1
+	PropertyTypeString
+	PropertyTypeBoolean
+	PropertyTypeNumber
+	PropertyTypeEnum
+	PropertyTypeLocation
 )
 
 // Material defines the total material of new asset

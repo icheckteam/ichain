@@ -130,7 +130,7 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 		}}}, // missing id
 		{true, MsgUpdatePropertipes{Issuer: addr1, Propertipes: []Property{
 			attr,
-		}, ID: "1212"}},
+		}, AssetID: "1212"}},
 	}
 
 	for i, tc := range cases {
@@ -156,12 +156,12 @@ func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = MsgUpdatePropertipes{
 		Issuer:      addr1,
-		ID:          "1",
+		AssetID:     "1",
 		Propertipes: props,
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"id\":\"1\",\"propertipes\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":0,\"longitude\":0}}]}")
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1\",\"propertipes\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":\"\",\"longitude\":\"\"}}]}")
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {
@@ -184,7 +184,7 @@ func TestAddQuantityType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	var msg = AddQuantityMsg{
 		Issuer:   addr,
-		ID:       "!",
+		AssetID:  "!",
 		Quantity: 1,
 	}
 	// TODO some failures for bad result
@@ -197,10 +197,10 @@ func TestAddQuantityMsgValidation(t *testing.T) {
 		valid bool
 		tx    AddQuantityMsg
 	}{
-		{false, AddQuantityMsg{}},                                    // no asset info
-		{false, AddQuantityMsg{Issuer: addr1, Quantity: 0, ID: "1"}}, // missing quantity
-		{false, AddQuantityMsg{Issuer: addr1, Quantity: 1}},          // missing id
-		{true, AddQuantityMsg{Issuer: addr1, Quantity: 1, ID: "1"}},  //
+		{false, AddQuantityMsg{}},                                         // no asset info
+		{false, AddQuantityMsg{Issuer: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
+		{false, AddQuantityMsg{Issuer: addr1, Quantity: 1}},               // missing id
+		{true, AddQuantityMsg{Issuer: addr1, Quantity: 1, AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -216,14 +216,13 @@ func TestAddQuantityMsgValidation(t *testing.T) {
 func TestAddQuantityMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = AddQuantityMsg{
-		Issuer:    addr1,
-		ID:        "1",
-		Quantity:  1,
-		Materials: Materials{Material{Quantity: 1, AssetID: "1"}},
+		Issuer:   addr1,
+		AssetID:  "1",
+		Quantity: 1,
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"id\":\"1\",\"quantity\":1,\"materials\":[{\"asset_id\":\"1\",\"quantity\":1}]}")
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1\",\"quantity\":1}")
 }
 
 func TestAddQuantityGetGetSigners(t *testing.T) {
@@ -246,7 +245,7 @@ func TestSubtractQuantityMsgType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	var msg = SubtractQuantityMsg{
 		Issuer:   addr,
-		ID:       "!",
+		AssetID:  "!",
 		Quantity: 1,
 	}
 	// TODO some failures for bad result
@@ -259,10 +258,10 @@ func TestSubtractQuantityMsgValidation(t *testing.T) {
 		valid bool
 		tx    SubtractQuantityMsg
 	}{
-		{false, SubtractQuantityMsg{}},                                    // no asset info
-		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 0, ID: "1"}}, // missing quantity
-		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 1}},          // missing id
-		{true, SubtractQuantityMsg{Issuer: addr1, Quantity: 1, ID: "1"}},  //
+		{false, SubtractQuantityMsg{}},                                         // no asset info
+		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
+		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 1}},               // missing id
+		{true, SubtractQuantityMsg{Issuer: addr1, Quantity: 1, AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -279,12 +278,12 @@ func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = SubtractQuantityMsg{
 		Issuer:   addr1,
-		ID:       "1",
+		AssetID:  "1",
 		Quantity: 1,
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"issuer":"696E707574","id":"1","quantity":1}`)
+	assert.Equal(t, string(res), `{"issuer":"696E707574","asset_id":"1","quantity":1}`)
 }
 
 func TestSubtractQuantityMsgGetSigners(t *testing.T) {

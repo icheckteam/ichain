@@ -161,26 +161,26 @@ func TestKeeper(t *testing.T) {
 	// Test Add Quantity
 
 	// add quantity err
-	_, err = keeper.AddQuantity(ctx, AddQuantityMsg{ID: assetChild1.AssetID, Issuer: addr, Quantity: 50})
+	_, err = keeper.AddQuantity(ctx, AddQuantityMsg{AssetID: assetChild1.AssetID, Issuer: addr, Quantity: 50})
 	assert.True(t, err != nil)
 
 	// Test add quantity
-	keeper.AddQuantity(ctx, AddQuantityMsg{ID: asset.AssetID, Issuer: addr, Quantity: 50})
+	keeper.AddQuantity(ctx, AddQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Quantity == 150)
 
 	// Test subtract quantity
-	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.AssetID, Issuer: addr, Quantity: 50})
+	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Quantity == 100)
 
 	// Test subtract quantity error
-	_, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{ID: asset.AssetID, Issuer: addr, Quantity: 102})
+	_, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 102})
 	assert.True(t, err != nil)
 
 	// Test Update Propertipes
 	props := Propertipes{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
-	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{AssetID: asset.AssetID, Issuer: addr, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	props = props.Sort()
 	assert.True(t, newAsset.Propertipes[0].Name == props[0].Name)
@@ -189,7 +189,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Propertipes[1].NumberValue == props[1].NumberValue)
 
 	props2 := Propertipes{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
-	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props2})
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{AssetID: asset.AssetID, Issuer: addr, Propertipes: props2})
 	props2 = props2.Sort()
 	props = props.Adds(props2...)
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
@@ -203,10 +203,10 @@ func TestKeeper(t *testing.T) {
 
 	// Invalid property type
 	props = Propertipes{Property{Name: "weight", NumberValue: 100, Type: 10}}
-	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr, Propertipes: props})
+	keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{AssetID: asset.AssetID, Issuer: addr, Propertipes: props})
 
 	// invalid issuer
-	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr2, Propertipes: props})
+	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{AssetID: asset.AssetID, Issuer: addr2, Propertipes: props})
 	assert.True(t, err != nil)
 
 	//-------------- Test create proposal
@@ -326,7 +326,7 @@ func TestKeeper(t *testing.T) {
 
 	// Test UpdatePropertipes
 	props = Propertipes{Property{Name: "weight", NumberValue: 250}}
-	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{ID: asset.AssetID, Issuer: addr2, Propertipes: props})
+	_, err = keeper.UpdatePropertipes(ctx, MsgUpdatePropertipes{AssetID: asset.AssetID, Issuer: addr2, Propertipes: props})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, err == nil)
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -104,6 +105,22 @@ func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 			w.Write([]byte("You need to provide at least a tag as a key=value pair to search for. Postfix the key with _bech32 to search bech32-encoded addresses or public keys"))
 			return
 		}
+		keyValue := strings.Split(tag, "=")
+		key := keyValue[0]
+		value := keyValue[1]
+		if strings.HasSuffix(key, "_bech32") {
+			bech32address := strings.Trim(value, "'")
+			prefix := strings.Split(bech32address, "1")[0]
+			bz, err := sdk.GetFromBech32(bech32address, prefix)
+			if err != nil {
+				w.WriteHeader(400)
+				w.Write([]byte(err.Error()))
+				return
+			}
+
+			tag = strings.TrimRight(key, "_bech32") + "='" + sdk.Address(bz).String() + "'"
+		}
+
 		txs, err := searchTxs(ctx, cdc, []string{tag})
 		if err != nil {
 			w.WriteHeader(500)

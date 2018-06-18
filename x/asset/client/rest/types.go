@@ -1,7 +1,7 @@
 package rest
 
 type baseBody struct {
-	LocalAccountName string `json:"account_name"`
+	LocalAccountName string `json:"name"`
 	Password         string `json:"password"`
 	ChainID          string `json:"chain_id"`
 	Sequence         int64  `json:"sequence"`
