@@ -57,7 +57,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		// build message
 
 		m.Msg.Issuer = info.PubKey.Address()
-		m.Msg.ID = vars["id"]
+		m.Msg.AssetID = vars["id"]
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)

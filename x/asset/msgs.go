@@ -77,7 +77,7 @@ func (msg MsgCreateAsset) GetSignBytes() []byte {
 // ---------------------------------------------------------------
 type MsgUpdatePropertipes struct {
 	Issuer      sdk.Address `json:"issuer"`
-	ID          string      `json:"id"`
+	AssetID     string      `json:"asset_id"`
 	Propertipes Propertipes `json:"propertipes"`
 }
 
@@ -85,7 +85,7 @@ func (msg MsgUpdatePropertipes) Type() string                            { retur
 func (msg MsgUpdatePropertipes) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgUpdatePropertipes) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg MsgUpdatePropertipes) String() string {
-	return fmt.Sprintf("MsgUpdatePropertipes{%s->%v}", msg.ID, msg.Propertipes)
+	return fmt.Sprintf("MsgUpdatePropertipes{%s->%v}", msg.AssetID, msg.Propertipes)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
@@ -93,23 +93,23 @@ func (msg MsgUpdatePropertipes) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.ID) == 0 {
-		return ErrMissingField("id")
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
 	}
 	if len(msg.Propertipes) == 0 {
 		return ErrMissingField("name")
 	}
 	for _, attr := range msg.Propertipes {
 		switch attr.Type {
-		case AttributeTypeBoolean,
-			AttributeTypeBytes,
-			AttributeTypeEnum,
-			AttributeTypeLocation,
-			AttributeTypeNumber,
-			AttributeTypeString:
+		case PropertyTypeBoolean,
+			PropertyTypeBytes,
+			PropertyTypeEnum,
+			PropertyTypeLocation,
+			PropertyTypeNumber,
+			PropertyTypeString:
 			break
 		default:
-			return ErrInvalidField("attributes")
+			return ErrInvalidField("propertipes")
 		}
 	}
 	return nil
@@ -127,10 +127,9 @@ func (msg MsgUpdatePropertipes) GetSignBytes() []byte {
 // AddQuantityMsg ...
 // ---------------------------------------------------------------
 type AddQuantityMsg struct {
-	Issuer    sdk.Address `json:"issuer"`
-	ID        string      `json:"id"`
-	Quantity  int64       `json:"quantity"`
-	Materials Materials   `json:"materials"`
+	Issuer   sdk.Address `json:"issuer"`
+	AssetID  string      `json:"asset_id"`
+	Quantity int64       `json:"quantity"`
 }
 
 func (msg AddQuantityMsg) Type() string                            { return msgType }
@@ -145,8 +144,8 @@ func (msg AddQuantityMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.ID) == 0 {
-		return ErrMissingField("id")
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
 	}
 	if msg.Quantity <= 0 {
 		return ErrMissingField("quantity")
@@ -167,7 +166,7 @@ func (msg AddQuantityMsg) GetSignBytes() []byte {
 // ---------------------------------------------------------------
 type SubtractQuantityMsg struct {
 	Issuer   sdk.Address `json:"issuer"`
-	ID       string      `json:"id"`
+	AssetID  string      `json:"asset_id"`
 	Quantity int64       `json:"quantity"`
 }
 
@@ -183,8 +182,8 @@ func (msg SubtractQuantityMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
-	if len(msg.ID) == 0 {
-		return ErrMissingField("id")
+	if len(msg.AssetID) == 0 {
+		return ErrMissingField("asset_id")
 	}
 	if msg.Quantity <= 0 {
 		return ErrMissingField("quantity")

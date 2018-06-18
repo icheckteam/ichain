@@ -140,7 +140,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costUpdatePropertieps, "updatePropertipes")
 
-	asset := k.GetAsset(ctx, msg.ID)
+	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
 		return nil, ErrAssetNotFound(asset.ID)
 	}
@@ -170,9 +170,9 @@ func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sd
 // AddQuantity ...
 func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costAddQuantity, "addQuantity")
-	asset := k.GetAsset(ctx, msg.ID)
+	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
-		return nil, ErrAssetNotFound(msg.ID)
+		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 	if asset.Final {
 		return nil, ErrAssetAlreadyFinal(asset.ID)
@@ -241,9 +241,9 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 // SubtractQuantity ...
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costSubtractAssetQuantity, "subtractQuantity")
-	asset := k.GetAsset(ctx, msg.ID)
+	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
-		return nil, ErrAssetNotFound(msg.ID)
+		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 	if asset.Final {
 		return nil, ErrAssetAlreadyFinal(asset.ID)
