@@ -145,8 +145,8 @@ type Property struct {
 }
 
 type Location struct {
-	Latitude  float64 `json:"latitude" amino:"unsafe"`
-	Longitude float64 `json:"longitude" amino:"unsafe"`
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
 }
 
 // list all propertipes

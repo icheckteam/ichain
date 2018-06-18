@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -402,6 +403,39 @@ func TestBonding(t *testing.T) {
 
 }
 
+func TestAsset(t *testing.T) {
+
+	name, password, assetName := "test", "1234567890", "tomato"
+	addr, _ := CreateAddr(t, "test", password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 2, []sdk.Address{addr})
+	defer cleanup()
+
+	// Create Asset
+	// --------------------------------------
+
+	// query empty
+	res, body := Request(t, port, "GET", "/assets"+assetName, nil)
+	require.Equal(t, http.StatusNotFound, res.StatusCode, body)
+
+	resultTx := doCreateAsset(t, port, name, password, assetName, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	asset := getAsset(t, port, assetName)
+	assert.Equal(t, asset.ID, assetName)
+
+	// Update Propertipes
+
+	resultTx = doUpdatePropertipes(t, port, name, password, assetName, "size", addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, asset.Propertipes[0].Name, "size")
+
+}
+
 //_____________________________________________________________________________
 // get the account to get the sequence
 func getAccount(t *testing.T, port string, addr sdk.Address) auth.Account {
@@ -412,6 +446,74 @@ func getAccount(t *testing.T, port string, addr sdk.Address) auth.Account {
 	err := cdc.UnmarshalJSON([]byte(body), &acc)
 	require.Nil(t, err)
 	return acc
+}
+
+func doCreateAsset(t *testing.T, port, name, password, assetName string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"asset": {
+			"name": "%s",
+			"asset_id": "%s",
+			"quantity": %d
+		}
+	}`, name, password, accnum, sequence, assetName, assetName, 100))
+
+	res, body := Request(t, port, "POST", "/assets", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+
+}
+
+func doUpdatePropertipes(t *testing.T, port, name, password, assetID, propName string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"propertipes": [
+			{"name": "%s", "type": %d, "string_value": "%s"}
+		]
+	}`, name, password, accnum, sequence, propName, asset.PropertyTypeString, propName))
+
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/propertipes", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+
+}
+
+func getAsset(t *testing.T, port string, assetID string) asset.Asset {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s", assetID), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var asset asset.Asset
+	err := cdc.UnmarshalJSON([]byte(body), &asset)
+	require.Nil(t, err)
+	return asset
 }
 
 func doSend(t *testing.T, port, seed, name, password string, addr sdk.Address) (receiveAddr sdk.Address, resultTx ctypes.ResultBroadcastTxCommit) {

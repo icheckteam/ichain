@@ -14,7 +14,7 @@ import (
 
 type updateAttributeBody struct {
 	baseBody
-	Msg asset.MsgUpdatePropertipes `json:"msg"`
+	Propertipes asset.Propertipes
 }
 
 func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -42,7 +42,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 
-		if len(m.Msg.Propertipes) == 0 {
+		if len(m.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("propertipes is required"))
 			return
@@ -56,14 +56,17 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		}
 		// build message
 
-		m.Msg.Issuer = info.PubKey.Address()
-		m.Msg.AssetID = vars["id"]
+		msg := asset.MsgUpdatePropertipes{
+			AssetID:     vars["id"],
+			Propertipes: m.Propertipes,
+			Issuer:      info.PubKey.Address(),
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

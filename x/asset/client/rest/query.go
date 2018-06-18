@@ -20,7 +20,20 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 		assetID := vars["id"]
 		key := asset.GetAssetKey(assetID)
 		res, err := ctx.Query(key, storeName)
+
+		if res == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
+			return
+		}
+
 		var asset asset.Asset
+
 		err = cdc.UnmarshalBinary(res, &asset)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -31,7 +44,7 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 		output, err := cdc.MarshalJSON(asset)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
 			return
 		}
 
