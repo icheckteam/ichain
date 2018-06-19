@@ -122,7 +122,7 @@ func TestMsgCreateAsset(t *testing.T) {
 	// Run a CheckDeliver
 	SignCheckDeliver(t, gapp, msgCreateAsset, []int64{0}, []int64{0}, true, priv1)
 
-	newAsset := gapp.assetKeeper.GetAsset(ctxCheck, msgCreateAsset.AssetID)
+	newAsset, _ := gapp.assetKeeper.GetAsset(ctxCheck, msgCreateAsset.AssetID)
 	assert.Equal(t, newAsset.ID, newAsset.ID)
 
 }

@@ -59,7 +59,7 @@ func TestKeeper(t *testing.T) {
 
 	// Test register asset
 	keeper.CreateAsset(ctx, asset)
-	newAsset := keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ := keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.ID == asset.AssetID)
 	assert.True(t, newAsset.Issuer.String() == asset.Issuer.String())
 	assert.True(t, newAsset.Name == asset.Name)
@@ -74,7 +74,7 @@ func TestKeeper(t *testing.T) {
 
 	// create asset child
 	keeper.CreateAsset(ctx, assetChild)
-	newAsset = keeper.GetAsset(ctx, assetChild.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, assetChild.AssetID)
 	assert.True(t, newAsset.Parent == asset3.AssetID)
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
@@ -84,7 +84,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, err != nil)
 
 	keeper.CreateAsset(ctx, assetChild1)
-	newAsset = keeper.GetAsset(ctx, assetChild1.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, assetChild1.AssetID)
 	assert.True(t, newAsset.Parent == assetChild.AssetID)
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
@@ -99,7 +99,7 @@ func TestKeeper(t *testing.T) {
 		},
 	}
 	keeper.AddMaterials(ctx, msgAddMaterials)
-	newAsset = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
 	msgAddMaterials.Materials = msgAddMaterials.Materials.Sort()
 	assert.True(t, newAsset.Materials[0].AssetID == msgAddMaterials.Materials[0].AssetID)
 	assert.True(t, newAsset.Materials[0].Quantity == msgAddMaterials.Materials[0].Quantity)
@@ -136,7 +136,7 @@ func TestKeeper(t *testing.T) {
 		AssetID: assetChild1.AssetID,
 	}
 	keeper.Finalize(ctx, msgFinalize)
-	newAsset = keeper.GetAsset(ctx, msgFinalize.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
 	assert.True(t, newAsset.Final == true)
 
 	msgFinalize = MsgFinalize{
@@ -150,7 +150,7 @@ func TestKeeper(t *testing.T) {
 	// Test Send
 	msgSend := MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
 	keeper.Send(ctx, msgSend)
-	newAsset = keeper.GetAsset(ctx, asset2.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset2.AssetID)
 	assert.True(t, bytes.Equal(newAsset.Owner, msgSend.Recipient))
 
 	msgSend = MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
@@ -166,12 +166,12 @@ func TestKeeper(t *testing.T) {
 
 	// Test add quantity
 	keeper.AddQuantity(ctx, AddQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Quantity == 150)
 
 	// Test subtract quantity
 	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Quantity == 100)
 
 	// Test subtract quantity error
@@ -181,7 +181,7 @@ func TestKeeper(t *testing.T) {
 	// Test Update Properties
 	props := Properties{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
 	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Issuer: addr, Properties: props})
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	props = props.Sort()
 	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
 	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
@@ -192,7 +192,7 @@ func TestKeeper(t *testing.T) {
 	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Issuer: addr, Properties: props2})
 	props2 = props2.Sort()
 	props = props.Adds(props2...)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 
 	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
 	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
@@ -212,7 +212,7 @@ func TestKeeper(t *testing.T) {
 	//-------------- Test create proposal
 	createProposalMsg := CreateProposalMsg{asset.AssetID, addr, addr2, []string{"weight"}, RoleReporter}
 	keeper.CreateProposal(ctx, createProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Proposals[0].Role == RoleReporter)
 	assert.True(t, newAsset.Proposals[0].Issuer.String() == addr.String())
 	assert.True(t, newAsset.Proposals[0].Recipient.String() == addr2.String())
@@ -222,7 +222,7 @@ func TestKeeper(t *testing.T) {
 
 	createProposalMsg = CreateProposalMsg{asset.AssetID, addr, addr3, []string{"size", "weight"}, RoleOwner}
 	keeper.CreateProposal(ctx, createProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Proposals[1].Role == RoleOwner)
 	assert.True(t, newAsset.Proposals[1].Issuer.String() == addr.String())
 	assert.True(t, newAsset.Proposals[1].Recipient.String() == addr3.String())
@@ -239,7 +239,7 @@ func TestKeeper(t *testing.T) {
 	//-------------- Test update properties
 	createProposalMsg = CreateProposalMsg{asset.AssetID, addr, addr2, []string{"weight", "size"}, RoleOwner}
 	keeper.CreateProposal(ctx, createProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal := newAsset.Proposals[0]
 	assert.True(t, proposal.Role == RoleOwner)
 	assert.True(t, proposal.Issuer.String() == addr.String())
@@ -253,7 +253,7 @@ func TestKeeper(t *testing.T) {
 	// Valid answer
 	answerProposalMsg := AnswerProposalMsg{asset.AssetID, addr2, StatusAccepted}
 	_, err = keeper.AnswerProposal(ctx, answerProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal = newAsset.Proposals[0]
 	assert.True(t, err == nil)
 	assert.True(t, proposal.Role == RoleOwner)
@@ -282,7 +282,7 @@ func TestKeeper(t *testing.T) {
 	// Valid answer
 	answerProposalMsg = AnswerProposalMsg{asset.AssetID, addr3, StatusRefused}
 	_, err = keeper.AnswerProposal(ctx, answerProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal = newAsset.Proposals[1]
 	assert.True(t, err == nil)
 	assert.True(t, proposal.Role == RoleOwner)
@@ -301,7 +301,7 @@ func TestKeeper(t *testing.T) {
 	// Accepted recipient with role owner is
 	createProposalMsg = CreateProposalMsg{asset.AssetID, addr2, addr4, []string{"weight", "size"}, RoleOwner}
 	keeper.CreateProposal(ctx, createProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal = newAsset.Proposals[2]
 	assert.True(t, proposal.Role == RoleOwner)
 	assert.True(t, proposal.Issuer.String() == addr2.String())
@@ -314,7 +314,7 @@ func TestKeeper(t *testing.T) {
 	// Asset issuer is always authorized
 	createProposalMsg = CreateProposalMsg{asset.AssetID, addr, addr4, []string{}, RoleReporter}
 	keeper.CreateProposal(ctx, createProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal = newAsset.Proposals[2]
 	assert.True(t, proposal.Role == RoleReporter)
 	assert.True(t, proposal.Issuer.String() == addr2.String())
@@ -327,7 +327,7 @@ func TestKeeper(t *testing.T) {
 	// Test UpdateProperties
 	props = Properties{Property{Name: "weight", NumberValue: 250}}
 	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Issuer: addr2, Properties: props})
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, err == nil)
 
 	//-------------- Test revoke proposal
@@ -339,7 +339,7 @@ func TestKeeper(t *testing.T) {
 	// addr2 is authorized
 	revokeProposalMsg = RevokeProposalMsg{asset.AssetID, addr2, addr4, []string{"weight"}}
 	_, err = keeper.RevokeProposal(ctx, revokeProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	proposal = newAsset.Proposals[2]
 	assert.True(t, err == nil)
 	assert.True(t, proposal.Role == RoleReporter)
@@ -352,6 +352,6 @@ func TestKeeper(t *testing.T) {
 	// proposal is deleted when there is no more property
 	revokeProposalMsg = RevokeProposalMsg{asset.AssetID, addr, addr4, []string{"size"}}
 	_, err = keeper.RevokeProposal(ctx, revokeProposalMsg)
-	newAsset = keeper.GetAsset(ctx, asset.AssetID)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, len(newAsset.Proposals) == 2)
 }
