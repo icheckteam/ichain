@@ -27,7 +27,6 @@
     "client/context",
     "client/keys",
     "client/rpc",
-    "cmd/gaia/app",
     "server",
     "store",
     "tests",
@@ -497,6 +496,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a9dcb1ff1d367cdfec3eaf439a424ede30ad544379da14b49948657134890ceb"
+  inputs-digest = "58ee3ed24eae5d6e634b33b96d4f8645ff286167eaf10429a1d48df28163dae0"
   solver-name = "gps-cdcl"
   solver-version = 1

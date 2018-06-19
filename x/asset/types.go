@@ -10,19 +10,19 @@ import (
 
 // Asset asset infomation
 type Asset struct {
-	ID          string      `json:"id"`
-	Name        string      `json:"name"`
-	Issuer      sdk.Address `json:"issuer"`
-	Owner       sdk.Address `json:"owner"`
-	Parent      string      `json:"parent"` // the id of the asset parent
-	Root        string      `json:"root"`   // the id of the asset root
-	Quantity    int64       `json:"quantity"`
-	Company     string      `json:"company"`
-	Email       string      `json:"email"`
-	Final       bool        `json:"final"`
-	Propertipes Propertipes `json:"propertipes"`
-	Proposals   Proposals   `json:"proposals"`
-	Materials   Materials   `json:"materials"`
+	ID         string      `json:"id"`
+	Name       string      `json:"name"`
+	Issuer     sdk.Address `json:"issuer"`
+	Owner      sdk.Address `json:"owner"`
+	Parent     string      `json:"parent"` // the id of the asset parent
+	Root       string      `json:"root"`   // the id of the asset root
+	Quantity   int64       `json:"quantity"`
+	Company    string      `json:"company"`
+	Email      string      `json:"email"`
+	Final      bool        `json:"final"`
+	Properties Properties  `json:"properties"`
+	Proposals  Proposals   `json:"proposals"`
+	Materials  Materials   `json:"materials"`
 }
 
 // IsOwner check is owner of the asset
@@ -149,13 +149,13 @@ type Location struct {
 	Longitude string `json:"longitude"`
 }
 
-// list all propertipes
-type Propertipes []Property
+// list all properties
+type Properties []Property
 
-func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
+func (propertiesA Properties) Adds(othersB ...Property) Properties {
 	sum := ([]Property)(nil)
 	indexA, indexB := 0, 0
-	lenA, lenB := len(propertipesA), len(othersB)
+	lenA, lenB := len(propertiesA), len(othersB)
 	for {
 		if indexA == lenA {
 			if indexB == lenB {
@@ -163,9 +163,9 @@ func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
 			}
 			return append(sum, othersB[indexB:]...)
 		} else if indexB == lenB {
-			return append(sum, propertipesA[indexA:]...)
+			return append(sum, propertiesA[indexA:]...)
 		}
-		propertyA, propertyB := propertipesA[indexA], othersB[indexB]
+		propertyA, propertyB := propertiesA[indexA], othersB[indexB]
 		switch strings.Compare(propertyA.Name, propertyB.Name) {
 		case -1:
 			sum = append(sum, propertyA)
@@ -185,18 +185,18 @@ func (propertipesA Propertipes) Adds(othersB ...Property) Propertipes {
 // Sort interface
 
 //nolint
-func (propertipes Propertipes) Len() int           { return len(propertipes) }
-func (propertipes Propertipes) Less(i, j int) bool { return propertipes[i].Name < propertipes[j].Name }
-func (propertipes Propertipes) Swap(i, j int) {
-	propertipes[i], propertipes[j] = propertipes[j], propertipes[i]
+func (properties Properties) Len() int           { return len(properties) }
+func (properties Properties) Less(i, j int) bool { return properties[i].Name < properties[j].Name }
+func (properties Properties) Swap(i, j int) {
+	properties[i], properties[j] = properties[j], properties[i]
 }
 
-var _ sort.Interface = Propertipes{}
+var _ sort.Interface = Properties{}
 
 // Sort is a helper function to sort the set of materials inplace
-func (propertipes Propertipes) Sort() Propertipes {
-	sort.Sort(propertipes)
-	return propertipes
+func (properties Properties) Sort() Properties {
+	sort.Sort(properties)
+	return properties
 }
 
 //--------------------------------------------------

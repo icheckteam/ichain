@@ -14,7 +14,7 @@ import (
 
 type updateAttributeBody struct {
 	baseBody
-	Propertipes asset.Propertipes
+	Properties asset.Properties `json:"properties"`
 }
 
 func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -42,9 +42,9 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 			return
 		}
 
-		if len(m.Propertipes) == 0 {
+		if len(m.Properties) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("propertipes is required"))
+			w.Write([]byte("properties is required"))
 			return
 		}
 
@@ -56,10 +56,10 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		}
 		// build message
 
-		msg := asset.MsgUpdatePropertipes{
-			AssetID:     vars["id"],
-			Propertipes: m.Propertipes,
-			Issuer:      info.PubKey.Address(),
+		msg := asset.MsgUpdateProperties{
+			AssetID:    vars["id"],
+			Properties: m.Properties,
+			Issuer:     info.PubKey.Address(),
 		}
 
 		ctx = ctx.WithGas(m.Gas)

@@ -19,8 +19,8 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
 			return handleAddQuantity(ctx, k, msg)
-		case MsgUpdatePropertipes:
-			return handleUpdatePropertipes(ctx, k, msg)
+		case MsgUpdateProperties:
+			return handleUpdateProperties(ctx, k, msg)
 		case CreateProposalMsg:
 			return handleCreateProposal(ctx, k, msg)
 		case AnswerProposalMsg:
@@ -58,8 +58,8 @@ func handleSend(ctx sdk.Context, k Keeper, msg MsgSend) sdk.Result {
 	}
 }
 
-func handleUpdatePropertipes(ctx sdk.Context, k Keeper, msg MsgUpdatePropertipes) sdk.Result {
-	tags, err := k.UpdatePropertipes(ctx, msg)
+func handleUpdateProperties(ctx sdk.Context, k Keeper, msg MsgUpdateProperties) sdk.Result {
+	tags, err := k.UpdateProperties(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

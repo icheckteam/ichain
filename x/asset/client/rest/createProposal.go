@@ -15,9 +15,9 @@ import (
 
 type createProposalBody struct {
 	baseBody
-	Recipient   string             `json:"recipient"`
-	Propertipes []string           `json:"propertipes"`
-	Role        asset.ProposalRole `json:"role"`
+	Recipient  string             `json:"recipient"`
+	Properties []string           `json:"properties"`
+	Role       asset.ProposalRole `json:"role"`
 }
 
 // CreateProposalHandlerFn CreateProposal REST handler
@@ -52,9 +52,9 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.Propertipes) == 0 {
+		if len(m.Properties) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("propertipes is required"))
+			w.Write([]byte("properties is required"))
 			return
 		}
 
@@ -80,11 +80,11 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 
 		// build message
 		msg := asset.CreateProposalMsg{
-			AssetID:     vars["id"],
-			Issuer:      info.PubKey.Address(),
-			Recipient:   recipient,
-			Propertipes: m.Propertipes,
-			Role:        m.Role,
+			AssetID:    vars["id"],
+			Issuer:     info.PubKey.Address(),
+			Recipient:  recipient,
+			Properties: m.Properties,
+			Role:       m.Role,
 		}
 
 		ctx = ctx.WithGas(m.Gas)
@@ -114,15 +114,5 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		w.Write(output)
-	}
-}
-
-func buildCreateProposalMsg(issuer, recipient sdk.Address, assetID string, propertipes []string, role asset.ProposalRole) sdk.Msg {
-	return asset.CreateProposalMsg{
-		Issuer:      issuer,
-		Recipient:   recipient,
-		AssetID:     assetID,
-		Propertipes: propertipes,
-		Role:        role,
 	}
 }

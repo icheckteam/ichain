@@ -426,12 +426,12 @@ func TestAsset(t *testing.T) {
 	asset := getAsset(t, port, assetName)
 	assert.Equal(t, asset.ID, assetName)
 
-	// Update Propertipes
-	resultTx = doUpdatePropertipes(t, port, name, password, assetName, "size", addr)
+	// Update Properties
+	resultTx = doUpdateProperties(t, port, name, password, assetName, "size", addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, asset.Propertipes[0].Name, "size")
+	assert.Equal(t, asset.Properties[0].Name, "size")
 
 	// Add Materials
 	resultTx = doCreateAsset(t, port, name, password, "tomato2", addr)
@@ -506,7 +506,7 @@ func doCreateAsset(t *testing.T, port, name, password, assetName string, addr sd
 
 }
 
-func doUpdatePropertipes(t *testing.T, port, name, password, assetID, propName string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doUpdateProperties(t *testing.T, port, name, password, assetID, propName string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
@@ -518,12 +518,12 @@ func doUpdatePropertipes(t *testing.T, port, name, password, assetID, propName s
 		"account_number":%d, 
 		"sequence":%d, 
 		"gas": 10000,
-		"propertipes": [
+		"properties": [
 			{"name": "%s", "type": %d, "string_value": "%s"}
 		]
 	}`, name, password, accnum, sequence, propName, asset.PropertyTypeString, propName))
 
-	res, body := Request(t, port, "POST", "/assets/"+assetID+"/propertipes", jsonStr)
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/properties", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -685,7 +685,7 @@ func doCreateProposal(t *testing.T, port, name, password, assetID string, addr s
 		"gas": 10000,
 
 		"recipient": "%s",
-		"propertipes": ["size"],
+		"properties": ["size"],
 		"role": 1
 	}`, name, password, accnum, sequence, receiveAddrBech))
 
@@ -738,7 +738,7 @@ func doRevokeProposal(t *testing.T, port, name, password, assetID string, addr s
 		"sequence": %d, 
 		"gas": 10000,
 		"recipient": "%s",
-		"propertipes": ["%s]
+		"properties": ["%s]
 	}`, name, password, accnum, sequence, recipient, []string{"size"}))
 
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/revoke-proposal", assetID), jsonStr)

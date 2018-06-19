@@ -14,7 +14,7 @@ const (
 	costHasAsset              sdk.Gas = 10
 	costSubtractAssetQuantity sdk.Gas = 10
 	costAddQuantity           sdk.Gas = 10
-	costUpdatePropertieps     sdk.Gas = 10
+	costUpdateProperties      sdk.Gas = 10
 	costCreateProposal        sdk.Gas = 10
 	costRevokeProposal        sdk.Gas = 10
 	costAnswerProposal        sdk.Gas = 10
@@ -95,8 +95,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Final:    false,
 	}
 
-	if len(msg.Propertipes) > 0 {
-		asset.Propertipes = msg.Propertipes.Sort()
+	if len(msg.Properties) > 0 {
+		asset.Properties = msg.Properties.Sort()
 	}
 
 	// update asset info
@@ -137,8 +137,8 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) *Asset {
 }
 
 // UpdateAttribute ...
-func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costUpdatePropertieps, "updatePropertipes")
+func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costUpdateProperties, "updateProperties")
 
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {
@@ -149,16 +149,16 @@ func (k Keeper) UpdatePropertipes(ctx sdk.Context, msg MsgUpdatePropertipes) (sd
 	}
 
 	// check role permissions
-	for _, attr := range msg.Propertipes {
+	for _, attr := range msg.Properties {
 		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
 		if !authorized {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
 		}
 	}
 
-	// update all propertipes
-	msg.Propertipes = msg.Propertipes.Sort()
-	asset.Propertipes = asset.Propertipes.Adds(msg.Propertipes...)
+	// update all Properties
+	msg.Properties = msg.Properties.Sort()
+	asset.Properties = asset.Properties.Adds(msg.Properties...)
 	// save asset to store
 	k.setAsset(ctx, *asset)
 	tags := sdk.NewTags(
@@ -340,14 +340,14 @@ func (k Keeper) CreateProposal(ctx sdk.Context, msg CreateProposalMsg) (sdk.Tags
 	if proposal != nil {
 		// Update proposal
 		proposal.Role = msg.Role
-		proposal.AddProperties(msg.Propertipes)
+		proposal.AddProperties(msg.Properties)
 		asset.Proposals[proposalIndex] = *proposal
 	} else {
 		// Add new proposal
 		proposal = &Proposal{
 			Role:       msg.Role,
 			Status:     StatusPending,
-			Properties: msg.Propertipes,
+			Properties: msg.Properties,
 			Issuer:     msg.Issuer,
 			Recipient:  msg.Recipient,
 		}
@@ -382,7 +382,7 @@ func (k Keeper) RevokeProposal(ctx sdk.Context, msg RevokeProposalMsg) (sdk.Tags
 		return nil, ErrInvalidRevokeRecipient(msg.Recipient)
 	}
 
-	proposal.RemoveProperties(msg.Propertipes)
+	proposal.RemoveProperties(msg.Properties)
 
 	if len(proposal.Properties) > 0 {
 		// Update proposal

@@ -16,8 +16,8 @@ import (
 type revokeProposalBody struct {
 	baseBody
 
-	Recipient   string   `json:"recipient"`
-	Propertipes []string `json:"propertipes"`
+	Recipient  string   `json:"recipient"`
+	Properties []string `json:"properties"`
 }
 
 // RevokeProposalHandlerFn RevokeProposalHandlerFn REST handler
@@ -62,10 +62,10 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 
 		// build message
 		msg := asset.RevokeProposalMsg{
-			Issuer:      info.PubKey.Address(),
-			Recipient:   recipient,
-			AssetID:     vars["id"],
-			Propertipes: m.Propertipes,
+			Issuer:     info.PubKey.Address(),
+			Recipient:  recipient,
+			AssetID:    vars["id"],
+			Properties: m.Properties,
 		}
 
 		ctx = ctx.WithGas(m.Gas)

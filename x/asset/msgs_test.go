@@ -15,7 +15,7 @@ var (
 		NumberValue: 100,
 	}
 
-	props = Propertipes{
+	props = Properties{
 		attr,
 	}
 )
@@ -80,7 +80,7 @@ func TestRegisterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1212\",\"name\":\"name\",\"quantity\":1,\"parent\":\"\",\"materials\":null,\"propertipes\":null}")
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1212\",\"name\":\"name\",\"quantity\":1,\"parent\":\"\",\"materials\":null,\"properties\":null}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
@@ -105,9 +105,9 @@ func TestUpdateAttrMsgMsg(t *testing.T) {
 func TestUpdateAttrMsgType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 
-	var msg = MsgUpdatePropertipes{
+	var msg = MsgUpdateProperties{
 		Issuer: addr,
-		Propertipes: []Property{
+		Properties: []Property{
 			attr,
 		},
 	}
@@ -121,14 +121,14 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 	addr1 := sdk.Address([]byte{1, 2})
 	cases := []struct {
 		valid bool
-		tx    MsgUpdatePropertipes
+		tx    MsgUpdateProperties
 	}{
-		{false, MsgUpdatePropertipes{}},              // no asset info
-		{false, MsgUpdatePropertipes{Issuer: addr1}}, // only set owner
-		{false, MsgUpdatePropertipes{Issuer: addr1, Propertipes: []Property{
+		{false, MsgUpdateProperties{}},              // no asset info
+		{false, MsgUpdateProperties{Issuer: addr1}}, // only set owner
+		{false, MsgUpdateProperties{Issuer: addr1, Properties: []Property{
 			attr,
 		}}}, // missing id
-		{true, MsgUpdatePropertipes{Issuer: addr1, Propertipes: []Property{
+		{true, MsgUpdateProperties{Issuer: addr1, Properties: []Property{
 			attr,
 		}, AssetID: "1212"}},
 	}
@@ -145,7 +145,7 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 
 func TestUpdateAttrMsgGet(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgUpdatePropertipes{
+	var msg = MsgUpdateProperties{
 		Issuer: addr1,
 	}
 	res := msg.Get(nil)
@@ -154,19 +154,19 @@ func TestUpdateAttrMsgGet(t *testing.T) {
 
 func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgUpdatePropertipes{
-		Issuer:      addr1,
-		AssetID:     "1",
-		Propertipes: props,
+	var msg = MsgUpdateProperties{
+		Issuer:     addr1,
+		AssetID:    "1",
+		Properties: props,
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1\",\"propertipes\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":\"\",\"longitude\":\"\"}}]}")
+	assert.Equal(t, string(res), "{\"issuer\":\"696E707574\",\"asset_id\":\"1\",\"properties\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":\"\",\"longitude\":\"\"}}]}")
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgUpdatePropertipes{
+	var msg = MsgUpdateProperties{
 		Issuer: addr1,
 	}
 	res := msg.GetSigners()
@@ -311,9 +311,9 @@ func TestCreateProposalMsgValidation(t *testing.T) {
 		{false, CreateProposalMsg{AssetID: "1"}},
 		{false, CreateProposalMsg{AssetID: "1", Issuer: addrs[0]}},
 		{false, CreateProposalMsg{AssetID: "1", Recipient: addrs[0]}},
-		{false, CreateProposalMsg{AssetID: "1", Propertipes: []string{"location"}}},
+		{false, CreateProposalMsg{AssetID: "1", Properties: []string{"location"}}},
 		{false, CreateProposalMsg{AssetID: "1", Issuer: addrs[0], Recipient: addrs[1]}},
-		{true, CreateProposalMsg{AssetID: "1", Issuer: addrs[0], Recipient: addrs[1], Propertipes: []string{"location"}}},
+		{true, CreateProposalMsg{AssetID: "1", Issuer: addrs[0], Recipient: addrs[1], Properties: []string{"location"}}},
 	}
 
 	for i, tc := range cases {
@@ -342,14 +342,14 @@ func TestCreateProposalMsgGetSigners(t *testing.T) {
 
 func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	msg := CreateProposalMsg{
-		AssetID:     "1",
-		Propertipes: []string{"location"},
-		Issuer:      addrs[0],
-		Recipient:   addrs[1],
+		AssetID:    "1",
+		Properties: []string{"location"},
+		Issuer:     addrs[0],
+		Recipient:  addrs[1],
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","propertipes":["location"],"role":0}`)
+	assert.Equal(t, string(res), `{"asset_id":"1","issuer":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","properties":["location"],"role":0}`)
 }
 
 // AnswerProposal  Tests
@@ -421,8 +421,8 @@ func TestRevokeProposalMsgValidation(t *testing.T) {
 		{false, RevokeProposalMsg{AssetID: "1", Recipient: addrs[1]}},
 		{false, RevokeProposalMsg{AssetID: "1", Issuer: addrs[1]}},
 		{false, RevokeProposalMsg{AssetID: "1", Issuer: addrs[1], Recipient: addrs[1]}},
-		{false, RevokeProposalMsg{AssetID: "1", Issuer: addrs[1], Recipient: addrs[1], Propertipes: []string{}}},
-		{true, RevokeProposalMsg{AssetID: "1", Recipient: addrs[0], Issuer: addrs[1], Propertipes: []string{"location"}}},
+		{false, RevokeProposalMsg{AssetID: "1", Issuer: addrs[1], Recipient: addrs[1], Properties: []string{}}},
+		{true, RevokeProposalMsg{AssetID: "1", Recipient: addrs[0], Issuer: addrs[1], Properties: []string{"location"}}},
 	}
 
 	for i, tc := range cases {
@@ -451,12 +451,12 @@ func TestRevokeProposalMsgGetSigners(t *testing.T) {
 
 func TestRevokeProposalMsgGetSignBytes(t *testing.T) {
 	msg := RevokeProposalMsg{
-		AssetID:     "1",
-		Recipient:   addrs[0],
-		Issuer:      addrs[1],
-		Propertipes: []string{"location"},
+		AssetID:    "1",
+		Recipient:  addrs[0],
+		Issuer:     addrs[1],
+		Properties: []string{"location"},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6101\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"propertipes\":[\"location\"]}")
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6101\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"properties\":[\"location\"]}")
 }
