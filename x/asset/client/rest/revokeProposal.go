@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
@@ -14,12 +16,14 @@ import (
 type revokeProposalBody struct {
 	baseBody
 
-	MsgRevokeProposal asset.RevokeProposalMsg `json:"msg"`
+	Recipient   string   `json:"recipient"`
+	Propertipes []string `json:"propertipes"`
 }
 
 // RevokeProposalHandlerFn RevokeProposalHandlerFn REST handler
 func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var m revokeProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
@@ -42,24 +46,6 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.MsgRevokeProposal.Recipient) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("recipient is required"))
-			return
-		}
-
-		if len(m.MsgRevokeProposal.AssetID) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset_id is required"))
-			return
-		}
-
-		if len(m.MsgRevokeProposal.Propertipes) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("propertipes is required"))
-			return
-		}
-
 		info, err := kb.Get(m.LocalAccountName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -67,14 +53,26 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
+		recipient, err := sdk.GetAccAddressBech32(m.Recipient)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		// build message
-		m.MsgRevokeProposal.Issuer = info.PubKey.Address()
+		msg := asset.RevokeProposalMsg{
+			Issuer:      info.PubKey.Address(),
+			Recipient:   recipient,
+			AssetID:     vars["id"],
+			Propertipes: m.Propertipes,
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.MsgRevokeProposal, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

@@ -10,8 +10,12 @@ var msgCdc = wire.NewCodec()
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgCreateAsset{}, "ichain/MsgCreateAsset", nil)
 	cdc.RegisterConcrete(AddQuantityMsg{}, "ichain/AddQuantityMsg", nil)
-	cdc.RegisterConcrete(SubtractQuantityMsg{}, "ichain/SubtractQuantityMsg", nil)
+	cdc.RegisterConcrete(MsgSubtractQuantity{}, "ichain/MsgSubtractQuantity", nil)
 	cdc.RegisterConcrete(MsgUpdatePropertipes{}, "ichain/MsgUpdatePropertipes", nil)
 	cdc.RegisterConcrete(MsgSend{}, "ichain/SendAsset", nil)
 	cdc.RegisterConcrete(MsgFinalize{}, "ichain/FinalizeAsset", nil)
+	cdc.RegisterConcrete(MsgAddMaterials{}, "ichain/AddMaterials", nil)
+	cdc.RegisterConcrete(CreateProposalMsg{}, "ichain/CreateProposalMsg", nil)
+	cdc.RegisterConcrete(AnswerProposalMsg{}, "ichain/AnswerProposalMsg", nil)
+	cdc.RegisterConcrete(RevokeProposalMsg{}, "ichain/RevokeProposalMsg", nil)
 }

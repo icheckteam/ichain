@@ -243,7 +243,7 @@ func TestSubtractQuantityMsg(t *testing.T) {
 
 func TestSubtractQuantityMsgType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
-	var msg = SubtractQuantityMsg{
+	var msg = MsgSubtractQuantity{
 		Issuer:   addr,
 		AssetID:  "!",
 		Quantity: 1,
@@ -256,12 +256,12 @@ func TestSubtractQuantityMsgValidation(t *testing.T) {
 	addr1 := sdk.Address([]byte{1, 2})
 	cases := []struct {
 		valid bool
-		tx    SubtractQuantityMsg
+		tx    MsgSubtractQuantity
 	}{
-		{false, SubtractQuantityMsg{}},                                         // no asset info
-		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
-		{false, SubtractQuantityMsg{Issuer: addr1, Quantity: 1}},               // missing id
-		{true, SubtractQuantityMsg{Issuer: addr1, Quantity: 1, AssetID: "1"}},  //
+		{false, MsgSubtractQuantity{}},                                         // no asset info
+		{false, MsgSubtractQuantity{Issuer: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
+		{false, MsgSubtractQuantity{Issuer: addr1, Quantity: 1}},               // missing id
+		{true, MsgSubtractQuantity{Issuer: addr1, Quantity: 1, AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -276,7 +276,7 @@ func TestSubtractQuantityMsgValidation(t *testing.T) {
 
 func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
-	var msg = SubtractQuantityMsg{
+	var msg = MsgSubtractQuantity{
 		Issuer:   addr1,
 		AssetID:  "1",
 		Quantity: 1,

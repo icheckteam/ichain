@@ -162,23 +162,23 @@ func (msg AddQuantityMsg) GetSignBytes() []byte {
 	return b
 }
 
-// AddQuantityMsg ...
+// MsgSubtractQuantity ...
 // ---------------------------------------------------------------
-type SubtractQuantityMsg struct {
+type MsgSubtractQuantity struct {
 	Issuer   sdk.Address `json:"issuer"`
 	AssetID  string      `json:"asset_id"`
 	Quantity int64       `json:"quantity"`
 }
 
-func (msg SubtractQuantityMsg) Type() string                            { return msgType }
-func (msg SubtractQuantityMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg SubtractQuantityMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
-func (msg SubtractQuantityMsg) String() string {
-	return fmt.Sprintf("SubtractQuantityMsg{Issuer: %v, quantity: %v}", msg.Issuer, msg.Quantity)
+func (msg MsgSubtractQuantity) Type() string                            { return msgType }
+func (msg MsgSubtractQuantity) Get(key interface{}) (value interface{}) { return nil }
+func (msg MsgSubtractQuantity) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgSubtractQuantity) String() string {
+	return fmt.Sprintf("MsgSubtractQuantity{Issuer: %v, quantity: %v}", msg.Issuer, msg.Quantity)
 }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
-func (msg SubtractQuantityMsg) ValidateBasic() sdk.Error {
+func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
 		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
 	}
@@ -192,7 +192,7 @@ func (msg SubtractQuantityMsg) ValidateBasic() sdk.Error {
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
-func (msg SubtractQuantityMsg) GetSignBytes() []byte {
+func (msg MsgSubtractQuantity) GetSignBytes() []byte {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
@@ -319,9 +319,6 @@ func (msg RevokeProposalMsg) String() string {
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg RevokeProposalMsg) ValidateBasic() sdk.Error {
-	if len(msg.Recipient) == 0 {
-		return ErrMissingField("recipient")
-	}
 	if len(msg.Issuer) == 0 {
 		return ErrMissingField("Issuer")
 	}

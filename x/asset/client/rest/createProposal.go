@@ -8,18 +8,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
 
 type createProposalBody struct {
 	baseBody
-	Msg asset.CreateProposalMsg `json:"msg"`
+	Recipient   string             `json:"recipient"`
+	Propertipes []string           `json:"propertipes"`
+	Role        asset.ProposalRole `json:"role"`
 }
 
 // CreateProposalHandlerFn CreateProposal REST handler
 func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var m createProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
@@ -42,21 +46,28 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.Msg.Recipient) == 0 {
+		if len(m.Recipient) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("recipient is required"))
 			return
 		}
 
-		if len(m.Msg.AssetID) == 0 {
+		if len(m.Propertipes) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset_id is required"))
+			w.Write([]byte("propertipes is required"))
 			return
 		}
 
-		if len(m.Msg.Propertipes) == 0 {
+		if m.Role == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("propertipes is required"))
+			w.Write([]byte("ROLE is required"))
+			return
+		}
+
+		recipient, err := sdk.GetAccAddressBech32(m.Recipient)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -68,8 +79,13 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		// build message
-		m.Msg.Issuer = info.PubKey.Address()
-		msg := m.Msg
+		msg := asset.CreateProposalMsg{
+			AssetID:     vars["id"],
+			Issuer:      info.PubKey.Address(),
+			Recipient:   recipient,
+			Propertipes: m.Propertipes,
+			Role:        m.Role,
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)

@@ -7,18 +7,20 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
 
 type addMaterialsBody struct {
 	baseBody
-	Msg asset.MsgAddMaterials `json:"msg"`
+	Materials asset.Materials `json:"materials"`
 }
 
 // AddMaterialsHandlerFn  REST handler
 func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var m addMaterialsBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
@@ -41,9 +43,9 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		if len(m.Msg.AssetID) == 0 {
+		if len(m.Materials) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset_id is required"))
+			w.Write([]byte("materials is required"))
 			return
 		}
 
@@ -54,14 +56,18 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		m.Msg.Sender = info.PubKey.Address()
+		msg := asset.MsgAddMaterials{
+			AssetID:   vars["id"],
+			Sender:    info.PubKey.Address(),
+			Materials: m.Materials,
+		}
 
 		// sign
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

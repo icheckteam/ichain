@@ -14,7 +14,7 @@ import (
 
 type subtractAssetQuantityBody struct {
 	baseBody
-	Msg asset.SubtractQuantityMsg `json:"msg"`
+	Quantity int64 `json:"quantity"`
 }
 
 func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -42,9 +42,9 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			return
 		}
 
-		if m.Msg.Quantity == 0 {
+		if m.Quantity == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Quantity is required"))
+			w.Write([]byte("quantity is required"))
 			return
 		}
 		info, err := kb.Get(m.LocalAccountName)
@@ -54,14 +54,18 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			return
 		}
 		// build message
-		m.Msg.Issuer = info.PubKey.Address()
-		m.Msg.AssetID = vars["id"]
+
+		msg := asset.MsgSubtractQuantity{
+			Issuer:   info.PubKey.Address(),
+			AssetID:  vars["id"],
+			Quantity: m.Quantity,
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

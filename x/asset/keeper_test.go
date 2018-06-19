@@ -170,12 +170,12 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Quantity == 150)
 
 	// Test subtract quantity
-	keeper.SubtractQuantity(ctx, SubtractQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
+	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Issuer: addr, Quantity: 50})
 	newAsset = keeper.GetAsset(ctx, asset.AssetID)
 	assert.True(t, newAsset.Quantity == 100)
 
 	// Test subtract quantity error
-	_, err = keeper.SubtractQuantity(ctx, SubtractQuantityMsg{AssetID: asset.AssetID, Issuer: addr, Quantity: 102})
+	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Issuer: addr, Quantity: 102})
 	assert.True(t, err != nil)
 
 	// Test Update Propertipes
