@@ -414,7 +414,7 @@ func TestAsset(t *testing.T) {
 	// --------------------------------------
 
 	// query empty
-	res, body := Request(t, port, "GET", "/assets"+assetName, nil)
+	res, body := Request(t, port, "GET", "/assets/"+assetName, nil)
 	require.Equal(t, http.StatusNotFound, res.StatusCode, body)
 
 	resultTx := doCreateAsset(t, port, name, password, assetName, addr)
@@ -427,12 +427,40 @@ func TestAsset(t *testing.T) {
 	assert.Equal(t, asset.ID, assetName)
 
 	// Update Propertipes
-
 	resultTx = doUpdatePropertipes(t, port, name, password, assetName, "size", addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 
 	asset = getAsset(t, port, assetName)
 	assert.Equal(t, asset.Propertipes[0].Name, "size")
+
+	// Add Materials
+	resultTx = doCreateAsset(t, port, name, password, "tomato2", addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	resultTx = doAddMaterials(t, port, name, password, assetName, "tomato2", addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	asset = getAsset(t, port, "tomato2")
+	assert.Equal(t, asset.Materials[0].AssetID, assetName)
+
+	// Add Quantity
+	resultTx = doAddQuantity(t, port, name, password, assetName, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, int64(100), asset.Quantity)
+
+	// Subtract quantity
+	resultTx = doSubtractQuantity(t, port, name, password, assetName, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, int64(99), asset.Quantity)
+
+	// CreateProposal
+	resultTx = doCreateProposal(t, port, name, password, assetName, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, asset.Proposals[0].Issuer, addr)
 
 }
 
@@ -504,6 +532,223 @@ func doUpdatePropertipes(t *testing.T, port, name, password, assetID, propName s
 
 	return resultTx
 
+}
+
+func doAddMaterials(t *testing.T, port, name, password, fromAsset, toAsset string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"materials": [
+			{"asset_id": "%s", "quantity": %d}
+		]
+	}`, name, password, accnum, sequence, fromAsset, 1))
+
+	res, body := Request(t, port, "POST", "/assets/"+toAsset+"/materials", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doAddQuantity(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"quantity": %d
+	}`, name, password, accnum, sequence, 1))
+
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/add", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doSubtractQuantity(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"quantity": %d
+	}`, name, password, accnum, sequence, 1))
+
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/subtract", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doFinalizeAsset(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000
+	}`, name, password, accnum, sequence))
+
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/finalize", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doSendAsset(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	kb := client.MockKeyBase()
+	receiveInfo, _, err := kb.Create("receive_address", "1234567890", cryptoKeys.CryptoAlgo("ed25519"))
+	require.Nil(t, err)
+	receiveAddr := receiveInfo.PubKey.Address()
+	receiveAddrBech := sdk.MustBech32ifyAcc(receiveAddr)
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"assets": ["%s"]
+	}`, name, password, accnum, sequence, assetID))
+
+	res, body := Request(t, port, "POST", "/accounts/"+receiveAddrBech+"/send-asset", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doCreateProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	kb := client.MockKeyBase()
+	receiveInfo, _, err := kb.Create("receive_address", "1234567890", cryptoKeys.CryptoAlgo("ed25519"))
+	require.Nil(t, err)
+	receiveAddr := receiveInfo.PubKey.Address()
+	receiveAddrBech := sdk.MustBech32ifyAcc(receiveAddr)
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+
+		"recipient": "%s",
+		"propertipes": ["size"],
+		"role": 1
+	}`, name, password, accnum, sequence, receiveAddrBech))
+
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/create-proposal", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doAnswerProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+
+		"response": %d
+	}`, name, password, accnum, sequence, 1))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/answer-proposal", assetID), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doRevokeProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence": %d, 
+		"gas": 10000,
+		"recipient": "%s",
+		"propertipes": ["%s]
+	}`, name, password, accnum, sequence, recipient, []string{"size"}))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/revoke-proposal", assetID), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
 }
 
 func getAsset(t *testing.T, port string, assetID string) asset.Asset {

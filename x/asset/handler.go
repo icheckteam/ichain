@@ -15,7 +15,7 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleSend(ctx, k, msg)
 		case MsgCreateAsset:
 			return handleCreateAsset(ctx, k, msg)
-		case SubtractQuantityMsg:
+		case MsgSubtractQuantity:
 			return handleSubtractQuantity(ctx, k, msg)
 		case AddQuantityMsg:
 			return handleAddQuantity(ctx, k, msg)
@@ -98,7 +98,7 @@ func handleFinalize(ctx sdk.Context, k Keeper, msg MsgFinalize) sdk.Result {
 	}
 }
 
-func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg SubtractQuantityMsg) sdk.Result {
+func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg MsgSubtractQuantity) sdk.Result {
 	tags, err := k.SubtractQuantity(ctx, msg)
 	if err != nil {
 		return err.Result()

@@ -15,7 +15,6 @@ import (
 
 type finalizeBody struct {
 	baseBody
-	Msg asset.MsgFinalize
 }
 
 func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -51,14 +50,16 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 		// build message
-		m.Msg.Sender = info.PubKey.Address()
-		m.Msg.AssetID = vars["id"]
+		msg := asset.MsgFinalize{
+			Sender:  info.PubKey.Address(),
+			AssetID: vars["id"],
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

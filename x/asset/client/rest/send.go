@@ -16,7 +16,7 @@ import (
 
 type sendBody struct {
 	baseBody
-	Msg asset.MsgSend
+	Assets []string `json:"asset"`
 }
 
 func SendHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -54,7 +54,7 @@ func SendHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) fu
 			return
 		}
 
-		if len(m.Msg.Assets) == 0 {
+		if len(m.Assets) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("assets is required"))
 			return
@@ -67,14 +67,17 @@ func SendHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) fu
 			return
 		}
 		// build message
-		m.Msg.Sender = info.PubKey.Address()
-		m.Msg.Recipient = address
+		msg := asset.MsgSend{
+			Assets:    m.Assets,
+			Recipient: address,
+			Sender:    info.PubKey.Address(),
+		}
 
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

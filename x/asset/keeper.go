@@ -239,7 +239,7 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 }
 
 // SubtractQuantity ...
-func (k Keeper) SubtractQuantity(ctx sdk.Context, msg SubtractQuantityMsg) (sdk.Tags, sdk.Error) {
+func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costSubtractAssetQuantity, "subtractQuantity")
 	asset := k.GetAsset(ctx, msg.AssetID)
 	if asset == nil {

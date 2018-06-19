@@ -6,20 +6,21 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/tendermint/go-crypto/keys"
 )
 
 type answerProposalBody struct {
 	baseBody
-	Msg asset.AnswerProposalMsg `json:"msg"`
+	Response asset.ProposalStatus `json:"response"`
 }
 
 // AnswerProposalHandlerFn  REST handler
 func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		var m answerProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
@@ -42,9 +43,9 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if len(m.Msg.AssetID) == 0 {
+		if m.Response == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset_id is required"))
+			w.Write([]byte("Response is required"))
 			return
 		}
 
@@ -55,14 +56,18 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		m.Msg.Recipient = info.PubKey.Address()
+		msg := asset.AnswerProposalMsg{
+			AssetID:   vars["id"],
+			Recipient: info.PubKey.Address(),
+			Response:  m.Response,
+		}
 
 		// sign
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
 
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, m.Msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -85,13 +90,5 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		w.Write(output)
-	}
-}
-
-func buildAnswerProposalMsg(issuer sdk.Address, assetID string, response asset.ProposalStatus) sdk.Msg {
-	return asset.AnswerProposalMsg{
-		Recipient: issuer,
-		Response:  response,
-		AssetID:   assetID,
 	}
 }
