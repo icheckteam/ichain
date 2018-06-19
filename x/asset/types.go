@@ -253,7 +253,7 @@ type ProposalRole int
 const (
 	// RoleReporter is authorized to update the asset's attributes
 	// whose name is included in the proposal's properties field
-	RoleReporter ProposalRole = iota + 1
+	RoleReporter ProposalRole = iota
 
 	// RoleOwner has the same authorization as RoleReporter
 	// but also authorized to make proposal to other recipient
@@ -265,9 +265,9 @@ type ProposalStatus int
 
 // All available status of the proposal
 const (
-	StatusPending  ProposalStatus = iota + 1 // The recipient has not answered
-	StatusAccepted                           // The recipient accepted the proposal
-	StatusRefused                            // The recipient refused the proposal
+	StatusPending  ProposalStatus = iota // The recipient has not answered
+	StatusAccepted                       // The recipient accepted the proposal
+	StatusRefused                        // The recipient refused the proposal
 )
 
 // PropertyType define the type of the property

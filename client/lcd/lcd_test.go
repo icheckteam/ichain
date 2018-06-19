@@ -406,8 +406,9 @@ func TestBonding(t *testing.T) {
 func TestAsset(t *testing.T) {
 
 	name, password, assetName := "test", "1234567890", "tomato"
-	addr, _ := CreateAddr(t, "test", password, GetKB(t))
-	cleanup, _, port := InitializeTestLCD(t, 2, []sdk.Address{addr})
+	addr, _ := CreateAddr(t, name, password, GetKB(t))
+	recipient, _ := CreateAddr(t, "test2", password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 2, []sdk.Address{addr, recipient})
 	defer cleanup()
 
 	// Create Asset
@@ -457,10 +458,22 @@ func TestAsset(t *testing.T) {
 	assert.Equal(t, int64(99), asset.Quantity)
 
 	// CreateProposal
-	resultTx = doCreateProposal(t, port, name, password, assetName, addr)
+	resultTx = doCreateProposal(t, port, name, password, assetName, addr, recipient)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
 	assert.Equal(t, asset.Proposals[0].Issuer, addr)
+
+	// doAnswerProposal
+	resultTx = doAnswerProposal(t, port, recipient, "test2", password, assetName)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, asset.Proposals[0].Issuer, addr)
+
+	// RevokeProposal
+	resultTx = doRevokeProposal(t, port, name, password, assetName, addr, asset.Proposals[0].Recipient)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	asset = getAsset(t, port, assetName)
+	assert.Equal(t, len(asset.Proposals), 0)
 
 }
 
@@ -665,16 +678,12 @@ func doSendAsset(t *testing.T, port, name, password, assetID string, addr sdk.Ad
 	return resultTx
 }
 
-func doCreateProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doCreateProposal(t *testing.T, port, name, password, assetID string, addr, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
 
-	kb := client.MockKeyBase()
-	receiveInfo, _, err := kb.Create("receive_address", "1234567890", cryptoKeys.CryptoAlgo("ed25519"))
-	require.Nil(t, err)
-	receiveAddr := receiveInfo.PubKey.Address()
-	receiveAddrBech := sdk.MustBech32ifyAcc(receiveAddr)
+	receiveAddrBech := sdk.MustBech32ifyAcc(recipient)
 
 	// send
 	jsonStr := []byte(fmt.Sprintf(`{
@@ -691,7 +700,7 @@ func doCreateProposal(t *testing.T, port, name, password, assetID string, addr s
 
 	res, body := Request(t, port, "POST", "/assets/"+assetID+"/create-proposal", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
 	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -699,7 +708,7 @@ func doCreateProposal(t *testing.T, port, name, password, assetID string, addr s
 	return resultTx
 }
 
-func doAnswerProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doAnswerProposal(t *testing.T, port string, addr sdk.Address, name, password, assetName string) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
@@ -715,7 +724,7 @@ func doAnswerProposal(t *testing.T, port, name, password, assetID string, addr s
 		"response": %d
 	}`, name, password, accnum, sequence, 1))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/answer-proposal", assetID), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/answer-proposal", assetName), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -738,8 +747,8 @@ func doRevokeProposal(t *testing.T, port, name, password, assetID string, addr s
 		"sequence": %d, 
 		"gas": 10000,
 		"recipient": "%s",
-		"propertipes": ["%s]
-	}`, name, password, accnum, sequence, recipient, []string{"size"}))
+		"propertipes": ["size"]
+	}`, name, password, accnum, sequence, sdk.MustBech32ifyAcc(recipient)))
 
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/revoke-proposal", assetID), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
