@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/icheckteam/ichain/app"
 	"github.com/spf13/cobra"
@@ -30,8 +29,7 @@ func main() {
 		server.ConstructAppExporter(exportAppState, "ichain"))
 
 	// prepare and add flags
-	rootDir := os.ExpandEnv("$HOME/.ichaind")
-	executor := cli.PrepareBaseCmd(rootCmd, "IC", rootDir)
+	executor := cli.PrepareBaseCmd(rootCmd, "IC", app.DefaultNodeHome)
 	executor.Execute()
 }
 
