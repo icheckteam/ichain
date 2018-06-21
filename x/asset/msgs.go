@@ -91,7 +91,7 @@ func (msg MsgUpdateProperties) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.ErrInvalidAddress(msg.Issuer.String()).Trace("")
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
@@ -142,7 +142,7 @@ func (msg AddQuantityMsg) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg AddQuantityMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.ErrInvalidAddress(msg.Issuer.String())
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
@@ -180,7 +180,7 @@ func (msg MsgSubtractQuantity) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.ErrInvalidAddress(msg.Issuer.String())
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
@@ -226,7 +226,7 @@ func (msg CreateProposalMsg) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg CreateProposalMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.ErrInvalidAddress(msg.Issuer.String())
 	}
 	if len(msg.Recipient) == 0 {
 		return ErrMissingField("recipient")
@@ -278,7 +278,7 @@ func (msg AnswerProposalMsg) ValidateBasic() sdk.Error {
 		return ErrMissingField("asset_id")
 	}
 	if len(msg.Recipient) == 0 {
-		return ErrMissingField("recipient")
+		return sdk.ErrInvalidAddress(msg.Recipient.String())
 	}
 	if msg.Response > 2 {
 		return ErrMissingField("response")
@@ -320,7 +320,7 @@ func (msg RevokeProposalMsg) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg RevokeProposalMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return ErrMissingField("Issuer")
+		return sdk.ErrInvalidAddress(msg.Issuer.String())
 	}
 	if len(msg.Properties) == 0 {
 		return ErrMissingField("properties")
@@ -354,7 +354,7 @@ func (msg MsgAddMaterials) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
-		return ErrMissingField("issuer")
+		return sdk.ErrInvalidAddress(msg.Sender.String())
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
@@ -400,10 +400,10 @@ func (msg MsgSend) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgSend) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
-		return ErrMissingField("issuer")
+		return sdk.ErrInvalidAddress(msg.Sender.String())
 	}
 	if len(msg.Recipient) == 0 {
-		return ErrMissingField("recipient")
+		return sdk.ErrInvalidAddress(msg.Recipient.String())
 	}
 	if len(msg.Assets) == 0 {
 		return ErrMissingField("assets")
@@ -436,7 +436,7 @@ func (msg MsgFinalize) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgFinalize) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
-		return ErrMissingField("sender")
+		return sdk.ErrInvalidAddress(msg.Sender.String())
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
