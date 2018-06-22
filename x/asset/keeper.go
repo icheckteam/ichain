@@ -112,6 +112,11 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	store.Set(GetAssetKey(asset.ID), bz)
 }
 
+// set the main record holding asset details
+func (k Keeper) SetAsset(ctx sdk.Context, asset Asset) {
+	k.setAsset(ctx, asset)
+}
+
 // Has asset
 func (k Keeper) has(ctx sdk.Context, assetID string) bool {
 	ctx.GasMeter().ConsumeGas(costHasAsset, "hasAsset")

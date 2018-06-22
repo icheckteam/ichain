@@ -1,10 +1,11 @@
-package warranty
+package insurance
 
 import (
 	"encoding/hex"
 	"testing"
 
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tmlibs/log"
 
@@ -77,26 +78,23 @@ func makeTestCodec() *wire.Codec {
 }
 
 // hogpodge of all sorts of input required for testing
-func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, auth.AccountMapper, Keeper) {
+func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, Keeper) {
 	db := dbm.NewMemDB()
-	keyStake := sdk.NewKVStoreKey("warranty")
-	keyMain := keyStake //sdk.NewKVStoreKey("main") //TODO fix multistore
+	keyWarranty := sdk.NewKVStoreKey("warranty")
+	keyAsset := sdk.NewKVStoreKey("asset")
 
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyStake, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyWarranty, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyAsset, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil, log.NewNopLogger())
 	cdc := makeTestCodec()
-	accountMapper := auth.NewAccountMapper(
-		cdc,                 // amino codec
-		keyMain,             // target store
-		&types.AppAccount{}, // prototype
-	)
-	coinKeeper := bank.NewKeeper(accountMapper)
-	assetKeeper := NewKeeper(keyStake, cdc, coinKeeper)
-	return ctx, accountMapper, assetKeeper
+	assetKeeper := asset.NewKeeper(keyAsset, cdc)
+
+	keeper := NewKeeper(keyWarranty, cdc, assetKeeper)
+	return ctx, keeper
 }
 
 func newPubKey(pk string) (res crypto.PubKey) {

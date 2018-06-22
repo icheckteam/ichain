@@ -7,15 +7,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
-	"github.com/icheckteam/ichain/x/warranty"
+	"github.com/icheckteam/ichain/x/insurance"
 )
 
 func QueryContractHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		key := warranty.GetContractKey(vars["id"])
+		key := insurance.GetContractKey(vars["id"])
 		res, err := ctx.Query(key, storeName)
-		var c warranty.Contract
+		var c insurance.Contract
 		err = cdc.UnmarshalBinary(res, &c)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

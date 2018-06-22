@@ -26,9 +26,9 @@ import (
 	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
+	insurance "github.com/icheckteam/ichain/x/insurance/client/rest"
 	invoice "github.com/icheckteam/ichain/x/invoice/client/rest"
 	shipping "github.com/icheckteam/ichain/x/shipping/client/rest"
-	warranty "github.com/icheckteam/ichain/x/warranty/client/rest"
 )
 
 const (
@@ -95,7 +95,7 @@ func createHandler(cdc *wire.Codec) http.Handler {
 
 	asset.RegisterRoutes(ctx, r, cdc, kb, "asset")
 	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
-	warranty.RegisterRoutes(ctx, r, cdc, kb, "warranty")
+	insurance.RegisterRoutes(ctx, r, cdc, kb, "insurance")
 	shipping.RegisterRoutes(ctx, r, cdc, kb, "shipping")
 	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
 	return r

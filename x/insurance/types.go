@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 import (
 	"bytes"

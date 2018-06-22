@@ -1,15 +1,15 @@
-package warranty
+package insurance
 
 import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKeeper(t *testing.T) {
-	ctx, _, keeper := createTestInput(t, false, 0)
+	ctx, keeper := createTestInput(t, false, 0)
 
 	msg := MsgCreateContract{
 		ID:        "1",
@@ -17,17 +17,21 @@ func TestKeeper(t *testing.T) {
 		Recipient: addrs[1],
 		Expires:   time.Now(),
 		Serial:    "100495",
-		AssetID:   "abc",
+		AssetID:   "demi",
 	}
 
 	// invalid asset
-	err := keeper.CreateContract(ctx, msg)
+	_, err := keeper.CreateContract(ctx, msg)
 	assert.True(t, err != nil)
 
-	keeper.bank.AddCoins(ctx, addrs[0], sdk.Coins{sdk.Coin{Denom: msg.AssetID, Amount: 10}})
+	keeper.assetKeeper.CreateAsset(ctx, asset.MsgCreateAsset{
+		AssetID:  "demi",
+		Quantity: 1,
+		Sender:   addrs[0],
+	})
 
 	// Test create contract
-	err = keeper.CreateContract(ctx, msg)
+	_, err = keeper.CreateContract(ctx, msg)
 	newContract := keeper.GetContract(ctx, msg.ID)
 	assert.True(t, newContract.ID == msg.ID)
 	assert.True(t, newContract.Issuer.String() == msg.Issuer.String())

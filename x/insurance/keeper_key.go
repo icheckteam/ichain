@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 // TODO remove some of these prefixes once have working multistore
 

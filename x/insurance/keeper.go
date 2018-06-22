@@ -1,42 +1,47 @@
-package warranty
+package insurance
 
 import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 // Keeper manages contracts
 type Keeper struct {
-	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
-	cdc      *wire.Codec
-	bank     bank.Keeper
+	storeKey    sdk.StoreKey // The (unexposed) key used to access the store from the Context.
+	cdc         *wire.Codec
+	assetKeeper asset.Keeper
 }
 
 // NewKeeper returns the keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, assetKeeper asset.Keeper) Keeper {
 	return Keeper{
-		storeKey: key,
-		cdc:      cdc,
-		bank:     bank,
+		storeKey:    key,
+		cdc:         cdc,
+		assetKeeper: assetKeeper,
 	}
 }
 
 // CreateContract create new a contract
-func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) sdk.Error {
+func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) (sdk.Tags, sdk.Error) {
 	c := k.GetContract(ctx, msg.ID)
 	if c != nil {
-		return types.InvalidTransaction(DefaultCodespace, "Contract already exitsts")
+		return nil, types.InvalidTransaction(DefaultCodespace, "Contract already exitsts")
 	}
 
-	// subtract coins of the issuer
-	coins := sdk.Coins{sdk.Coin{Denom: msg.AssetID, Amount: 1}}
-	_, _, err := k.bank.SubtractCoins(ctx, msg.Issuer, coins)
-	if err != nil {
-		return err
+	a, found := k.assetKeeper.GetAsset(ctx, msg.AssetID)
+	if !found {
+		return nil, asset.ErrAssetNotFound(msg.AssetID)
+	}
+	if a.Final {
+		return nil, asset.ErrAssetAlreadyFinal(a.ID)
+	}
+
+	if !a.IsOwner(msg.Issuer) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
 	}
 
 	// save contract to db
@@ -48,7 +53,17 @@ func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) sdk.Error
 		Serial:    msg.Serial,
 		Recipient: msg.Recipient,
 	})
-	return nil
+
+	a.Final = true
+	k.assetKeeper.SetAsset(ctx, a)
+
+	tags := sdk.NewTags(
+		"asset_id", []byte(msg.AssetID),
+		"sender", []byte(msg.Issuer),
+		"recipient", []byte(msg.Recipient),
+	)
+
+	return tags, nil
 }
 
 // CreateClaim create new a claim

@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/icheckteam/ichain/types"
 )
 
-const msgType = "warranty"
+const msgType = "insurance"
 
 // MsgCreateContract
 // --------------------------------------------------
