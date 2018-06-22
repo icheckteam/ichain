@@ -457,23 +457,23 @@ func TestAsset(t *testing.T) {
 	asset = getAsset(t, port, assetName)
 	assert.Equal(t, int64(99), asset.Quantity)
 
-	// CreateProposal
-	resultTx = doCreateProposal(t, port, name, password, assetName, addr, recipient)
+	// doCreateReporter
+	resultTx = doCreateReporter(t, port, name, password, assetName, addr, recipient)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, asset.Proposals[0].Issuer, addr)
+	assert.Equal(t, asset.Reporters[0].Addr, recipient)
 
-	// doAnswerProposal
-	resultTx = doAnswerProposal(t, port, recipient, "test2", password, assetName)
+	// doRevokeReporter
+	resultTx = doRevokeReporter(t, port, name, password, assetName, addr, asset.Reporters[0].Addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, asset.Proposals[0].Issuer, addr)
+	assert.Equal(t, len(asset.Reporters), 0)
 
-	// RevokeProposal
-	resultTx = doRevokeProposal(t, port, name, password, assetName, addr, asset.Proposals[0].Recipient)
+	// doRevokeReporter
+	resultTx = doTransferAsset(t, port, name, password, assetName, addr, recipient)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, len(asset.Proposals), 0)
+	assert.Equal(t, asset.Owner, recipient)
 
 }
 
@@ -537,6 +537,34 @@ func doUpdateProperties(t *testing.T, port, name, password, assetID, propName st
 	}`, name, password, accnum, sequence, propName, asset.PropertyTypeString, propName))
 
 	res, body := Request(t, port, "POST", "/assets/"+assetID+"/properties", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+
+}
+
+func doTransferAsset(t *testing.T, port, name, password, assetID string, addr, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	receiveAddrBech := sdk.MustBech32ifyAcc(recipient)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"account_number":%d, 
+		"sequence":%d, 
+		"gas": 10000,
+		"assets": [
+			"%s"
+		]
+	}`, name, password, accnum, sequence, assetID))
+
+	res, body := Request(t, port, "POST", "/accounts/"+receiveAddrBech+"/transfer-asset", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -648,7 +676,7 @@ func doFinalizeAsset(t *testing.T, port, name, password, assetID string, addr sd
 	return resultTx
 }
 
-func doCreateProposal(t *testing.T, port, name, password, assetID string, addr, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doCreateReporter(t *testing.T, port, name, password, assetID string, addr, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
@@ -663,12 +691,11 @@ func doCreateProposal(t *testing.T, port, name, password, assetID string, addr, 
 		"sequence":%d, 
 		"gas": 10000,
 
-		"recipient": "%s",
-		"properties": ["size"],
-		"role": 1
+		"reporter": "%s",
+		"properties": ["size"]
 	}`, name, password, accnum, sequence, receiveAddrBech))
 
-	res, body := Request(t, port, "POST", "/assets/"+assetID+"/create-proposal", jsonStr)
+	res, body := Request(t, port, "POST", "/assets/"+assetID+"/reporters", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -678,33 +705,7 @@ func doCreateProposal(t *testing.T, port, name, password, assetID string, addr, 
 	return resultTx
 }
 
-func doAnswerProposal(t *testing.T, port string, addr sdk.Address, name, password, assetName string) (resultTx ctypes.ResultBroadcastTxCommit) {
-	acc := getAccount(t, port, addr)
-	accnum := acc.GetAccountNumber()
-	sequence := acc.GetSequence()
-
-	// send
-	jsonStr := []byte(fmt.Sprintf(`{
-		"name":"%s", 
-		"password":"%s",
-		"account_number":%d, 
-		"sequence":%d, 
-		"gas": 10000,
-
-		"response": %d
-	}`, name, password, accnum, sequence, 1))
-
-	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/answer-proposal", assetName), jsonStr)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-
-	return resultTx
-}
-
-func doRevokeProposal(t *testing.T, port, name, password, assetID string, addr sdk.Address, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr sdk.Address, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
@@ -715,12 +716,10 @@ func doRevokeProposal(t *testing.T, port, name, password, assetID string, addr s
 		"password":"%s",
 		"account_number":%d, 
 		"sequence": %d, 
-		"gas": 10000,
-		"recipient": "%s",
-		"properties": ["size"]
-	}`, name, password, accnum, sequence, receiveAddrBech))
+		"gas": 10000
+	}`, name, password, accnum, sequence))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/revoke-proposal", assetID), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/reporters/%s/revoke", assetID, receiveAddrBech), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)

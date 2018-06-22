@@ -13,18 +13,15 @@ import (
 	"github.com/tendermint/go-crypto/keys"
 )
 
-type revokeProposalBody struct {
+type transferBody struct {
 	baseBody
-
-	Recipient  string   `json:"recipient"`
-	Properties []string `json:"properties"`
+	Assets []string
 }
 
-// RevokeProposalHandlerFn RevokeProposalHandlerFn REST handler
-func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func TrasferHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var m transferBody
 		vars := mux.Vars(r)
-		var m revokeProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -34,15 +31,16 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
-		if m.Password == "" {
+		if len(m.Assets) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
+			w.Write([]byte("assets is required"))
 			return
 		}
 
@@ -53,7 +51,7 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		recipient, err := sdk.GetAccAddressBech32(m.Recipient)
+		address, err := sdk.GetAccAddressBech32(vars["address"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -61,11 +59,11 @@ func RevokeProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		// build message
-		msg := asset.RevokeProposalMsg{
-			Issuer:     info.PubKey.Address(),
-			Recipient:  recipient,
-			AssetID:    vars["id"],
-			Properties: m.Properties,
+
+		msg := asset.MsgTransfer{
+			Sender:    info.PubKey.Address(),
+			Recipient: address,
+			Assets:    m.Assets,
 		}
 
 		ctx = ctx.WithGas(m.Gas)

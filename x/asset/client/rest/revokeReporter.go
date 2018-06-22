@@ -13,18 +13,14 @@ import (
 	"github.com/tendermint/go-crypto/keys"
 )
 
-type createProposalBody struct {
+type revokeReporterBody struct {
 	baseBody
-	Recipient  string             `json:"recipient"`
-	Properties []string           `json:"properties"`
-	Role       asset.ProposalRole `json:"role"`
 }
 
-// CreateProposalHandlerFn CreateProposal REST handler
-func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		var m createProposalBody
+		var m createReporterBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -34,37 +30,7 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		if m.LocalAccountName == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
-			return
-		}
-
-		if m.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
-			return
-		}
-
-		if len(m.Recipient) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("recipient is required"))
-			return
-		}
-
-		if len(m.Properties) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("properties is required"))
-			return
-		}
-
-		if m.Role == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("ROLE is required"))
-			return
-		}
-
-		recipient, err := sdk.GetAccAddressBech32(m.Recipient)
+		err = m.Validate()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -78,13 +44,19 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
+		address, err := sdk.GetAccAddressBech32(vars["address"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		// build message
-		msg := asset.CreateProposalMsg{
-			AssetID:    vars["id"],
-			Issuer:     info.PubKey.Address(),
-			Recipient:  recipient,
-			Properties: m.Properties,
-			Role:       m.Role,
+
+		msg := asset.MsgRevokeReporter{
+			Sender:   info.PubKey.Address(),
+			Reporter: address,
+			AssetID:  vars["id"],
 		}
 
 		ctx = ctx.WithGas(m.Gas)

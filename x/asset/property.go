@@ -103,9 +103,9 @@ func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.
 
 	// check role permissions
 	for _, attr := range msg.Properties {
-		authorized := asset.CheckUpdateAttributeAuthorization(msg.Issuer, attr)
+		authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, attr)
 		if !authorized {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Issuer))
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 		}
 	}
 
@@ -116,7 +116,7 @@ func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Issuer.String()),
+		"sender", []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }

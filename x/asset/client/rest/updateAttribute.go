@@ -59,7 +59,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		msg := asset.MsgUpdateProperties{
 			AssetID:    vars["id"],
 			Properties: m.Properties,
-			Issuer:     info.PubKey.Address(),
+			Sender:     info.PubKey.Address(),
 		}
 
 		ctx = ctx.WithGas(m.Gas)

@@ -96,8 +96,8 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 }
 
 func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty int64) sdk.Msg {
-	return asset.AddQuantityMsg{
-		Issuer:   creator,
+	return asset.MsgAddQuantity{
+		Sender:   creator,
 		AssetID:  assetID,
 		Quantity: qty,
 	}

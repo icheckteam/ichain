@@ -66,7 +66,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 		}
 
 		// build message
-		m.Asset.Issuer = info.PubKey.Address()
+		m.Asset.Sender = info.PubKey.Address()
 		msg := m.Asset
 		if err != nil { // XXX rechecking same error ?
 			w.WriteHeader(http.StatusInternalServerError)

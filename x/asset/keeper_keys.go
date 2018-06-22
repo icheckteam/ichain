@@ -7,8 +7,9 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 //nolint
 var (
 	// Keys for store prefixes
-	AssetKey        = []byte{0x00} // prefix for each key to an asset
-	AccountAssetKey = []byte{0x01} // prefix for each key to an account
+	AssetKey             = []byte{0x00} // prefix for each key to an asset
+	AccountAssetKey      = []byte{0x01} // prefix for each key to an account
+	ProposalRecipientKey = []byte{0x02} // prefix for each key to an account a proposal
 )
 
 // GetAssetKey get the key for the record with address

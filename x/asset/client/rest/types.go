@@ -2,8 +2,6 @@ package rest
 
 import (
 	"errors"
-
-	"github.com/cosmos/cosmos-sdk/client/context"
 )
 
 type baseBody struct {
@@ -26,11 +24,4 @@ func (b baseBody) Validate() error {
 		return errors.New("gas is required")
 	}
 	return nil
-}
-
-func (b baseBody) WithContext(ctx context.CoreContext) context.CoreContext {
-	ctx = ctx.WithGas(b.Gas)
-	ctx = ctx.WithAccountNumber(b.AccountNumber)
-	ctx = ctx.WithSequence(b.Sequence)
-	return ctx
 }

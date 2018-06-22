@@ -46,9 +46,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	tags := sdk.NewTags(
 		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Issuer.String()),
+		"sender", []byte(msg.Sender.String()),
 	)
-	assetIssuer := msg.Issuer
 	var assetRoot string
 	if len(msg.Parent) > 0 {
 		// get asset to check quantity and check authorized
@@ -60,8 +59,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			return nil, ErrAssetAlreadyFinal(parent.ID)
 		}
 
-		if !parent.IsOwner(msg.Issuer) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Issuer))
+		if !parent.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Sender))
 		}
 
 		if parent.Quantity < msg.Quantity {
@@ -75,7 +74,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 		// save parent asset to store
 		k.setAsset(ctx, parent)
-		assetIssuer = parent.Issuer
 		if len(parent.Root) > 0 {
 			assetRoot = parent.Root
 		} else {
@@ -88,8 +86,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	asset := Asset{
 		ID:        msg.AssetID,
 		Name:      msg.Name,
-		Issuer:    assetIssuer,
-		Owner:     msg.Issuer,
+		Owner:     msg.Sender,
 		Quantity:  msg.Quantity,
 		Root:      assetRoot,
 		Parent:    msg.Parent,
@@ -137,7 +134,7 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (asset Asset, found bo
 }
 
 // AddQuantity ...
-func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.Error) {
+func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costAddQuantity, "addQuantity")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
@@ -151,14 +148,14 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg AddQuantityMsg) (sdk.Tags, sdk.
 		return nil, ErrInvalidAssetRoot(asset.ID)
 	}
 
-	if !asset.IsIssuer(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Issuer))
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
 	}
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Issuer.String()),
+		"sender", []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -174,8 +171,8 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 		return nil, ErrAssetAlreadyFinal(asset.ID)
 	}
 
-	if !asset.IsOwner(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to sbutract", msg.Issuer))
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to sbutract", msg.Sender))
 	}
 
 	if asset.Quantity < msg.Quantity {
@@ -185,7 +182,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Issuer.String()),
+		"sender", []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -211,5 +208,37 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 		"asset_id", []byte(msg.AssetID),
 		"sender", []byte(msg.Sender.String()),
 	)
+	return tags, nil
+}
+
+// Transfer transfer asset
+func (k Keeper) Transfer(ctx sdk.Context, msg MsgTransfer) (sdk.Tags, sdk.Error) {
+	assets := []Asset{}
+	for _, a := range msg.Assets {
+		asset, found := k.GetAsset(ctx, a)
+		if !found {
+			return nil, ErrAssetNotFound(a)
+		}
+		if asset.Final {
+			return nil, ErrAssetAlreadyFinal(asset.ID)
+		}
+		if !asset.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to send", msg.Sender))
+		}
+		assets = append(assets, asset)
+	}
+	tags := sdk.NewTags(
+		"sender", []byte(msg.Sender.String()),
+		"recipient", []byte(msg.Recipient.String()),
+	)
+	for _, asset := range assets {
+		// change ownership
+		asset.Owner = msg.Recipient
+		// clear reporter
+		asset.Reporters = nil
+		k.setAsset(ctx, asset)
+		// add asset tag
+		tags = tags.AppendTag("asset_id", []byte(asset.ID))
+	}
 	return tags, nil
 }

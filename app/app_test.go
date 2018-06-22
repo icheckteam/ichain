@@ -88,7 +88,7 @@ var (
 
 	msgCreateAsset = asset.MsgCreateAsset{
 		AssetID:  "asset1",
-		Issuer:   addr1,
+		Sender:   addr1,
 		Name:     "asset1",
 		Quantity: 10,
 	}
