@@ -16,6 +16,7 @@ type Reporters []Reporter
 // CreateReporter validates and adds a new reporter to the asset,
 // or update a reporter if there already exists one for the reporter
 func (k Keeper) CreateReporter(ctx sdk.Context, msg MsgCreateReporter) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costCreateReporter, "createReporter")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
@@ -52,6 +53,7 @@ func (k Keeper) CreateReporter(ctx sdk.Context, msg MsgCreateReporter) (sdk.Tags
 
 // RevokeReporter delete reporter
 func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costRevokeReporter, "revokeReporter")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)

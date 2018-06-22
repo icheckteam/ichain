@@ -8,19 +8,18 @@ import (
 )
 
 const (
-	costGetAsset              sdk.Gas = 10
-	costCreateAsset           sdk.Gas = 10
-	costSetAsset              sdk.Gas = 10
-	costHasAsset              sdk.Gas = 10
-	costSubtractAssetQuantity sdk.Gas = 10
-	costAddQuantity           sdk.Gas = 10
-	costUpdateProperties      sdk.Gas = 10
-	costCreateProposal        sdk.Gas = 10
-	costRevokeProposal        sdk.Gas = 10
-	costAnswerProposal        sdk.Gas = 10
-	costAddMaterials          sdk.Gas = 10
-	costFinalize              sdk.Gas = 10
-	costSend                  sdk.Gas = 10
+	costGetAsset         sdk.Gas = 10
+	costCreateAsset      sdk.Gas = 10
+	costSetAsset         sdk.Gas = 10
+	costHasAsset         sdk.Gas = 10
+	costSubtractQuantity sdk.Gas = 10
+	costAddQuantity      sdk.Gas = 10
+	costUpdateProperties sdk.Gas = 10
+	costCreateReporter   sdk.Gas = 10
+	costRevokeReporter   sdk.Gas = 10
+	costAddMaterials     sdk.Gas = 10
+	costFinalize         sdk.Gas = 10
+	costTransfer         sdk.Gas = 10
 )
 
 // Keeper ...
@@ -162,7 +161,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 
 // SubtractQuantity  subtract quantity of the asset
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costSubtractAssetQuantity, "subtractQuantity")
+	ctx.GasMeter().ConsumeGas(costSubtractQuantity, "subtractQuantity")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
@@ -213,6 +212,7 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 
 // Transfer transfer asset
 func (k Keeper) Transfer(ctx sdk.Context, msg MsgTransfer) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costTransfer, "transferAsset")
 	assets := []Asset{}
 	for _, a := range msg.Assets {
 		asset, found := k.GetAsset(ctx, a)
