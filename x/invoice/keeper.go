@@ -1,11 +1,11 @@
 package invoice
 
 import (
-	"time"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 const (
@@ -23,9 +23,9 @@ func GetKey(id string) []byte {
 }
 
 type InvoiceKeeper struct {
-	storeKey sdk.StoreKey
-	cdc      *wire.Codec
-	bank     bank.Keeper
+	storeKey    sdk.StoreKey
+	cdc         *wire.Codec
+	assetKeeper asset.Keeper
 }
 
 func (ik InvoiceKeeper) HasInvoice(ctx sdk.Context, id string) bool {
@@ -59,20 +59,24 @@ func (ik InvoiceKeeper) SetInvoice(ctx sdk.Context, invoice Invoice) {
 	store.Set(key, b)
 }
 
-func (ik InvoiceKeeper) CreateInvoice(ctx sdk.Context, msg MsgCreate) sdk.Error {
+func (ik InvoiceKeeper) CreateInvoice(ctx sdk.Context, msg MsgCreate) (sdk.Tags, sdk.Error) {
 	if ik.HasInvoice(ctx, msg.ID) {
-		return ErrorDuplicateInvoice
+		return nil, ErrorDuplicateInvoice
 	}
 
-	var coins sdk.Coins
-
+	assetItems := []asset.Asset{}
 	for _, item := range msg.Items {
-		coins = append(coins, sdk.Coin{Denom: item.AssetID, Amount: item.Quantity})
-	}
-	_, _, err := ik.bank.SubtractCoins(ctx, msg.Issuer, coins)
+		aitem, found := ik.assetKeeper.GetAsset(ctx, item.AssetID)
+		if !found {
+			return nil, asset.ErrAssetNotFound(item.AssetID)
+		}
+		if aitem.Final {
+			return nil, asset.ErrAssetAlreadyFinal(aitem.ID)
+		}
 
-	if err != nil {
-		return err
+		if !aitem.IsOwner(msg.Issuer) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
+		}
 	}
 
 	ik.SetInvoice(ctx, Invoice{
@@ -80,15 +84,29 @@ func (ik InvoiceKeeper) CreateInvoice(ctx sdk.Context, msg MsgCreate) sdk.Error 
 		Issuer:     msg.Issuer,
 		Receiver:   msg.Receiver,
 		Items:      msg.Items,
-		CreateTime: time.Now(),
+		CreateTime: ctx.BlockHeader().Time,
 	})
-	return nil
+
+	tags := sdk.NewTags(
+		"sender", []byte(msg.Receiver.String()),
+	)
+	for _, item := range assetItems {
+		item.Final = true
+		ik.assetKeeper.SetAsset(ctx, item)
+		tags = tags.AppendTag("asset_id", []byte(item.ID))
+	}
+
+	if len(msg.Receiver) > 0 {
+		tags = tags.AppendTag("recipient", []byte(msg.Receiver.String()))
+	}
+
+	return tags, nil
 }
 
-func NewInvoiceKeeper(store sdk.StoreKey, cdc *wire.Codec, bank bank.Keeper) InvoiceKeeper {
+func NewInvoiceKeeper(store sdk.StoreKey, cdc *wire.Codec, assetKeeper asset.Keeper) InvoiceKeeper {
 	return InvoiceKeeper{
-		storeKey: store,
-		cdc:      cdc,
-		bank:     bank,
+		storeKey:    store,
+		cdc:         cdc,
+		assetKeeper: assetKeeper,
 	}
 }

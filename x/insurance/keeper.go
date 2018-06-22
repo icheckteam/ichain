@@ -59,8 +59,8 @@ func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) (sdk.Tags
 
 	tags := sdk.NewTags(
 		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Issuer),
-		"recipient", []byte(msg.Recipient),
+		"sender", []byte(msg.Issuer.String()),
+		"recipient", []byte(msg.Recipient.String()),
 	)
 
 	return tags, nil

@@ -15,7 +15,7 @@ func TestMsgCreate_Type(t *testing.T) {
 func TestMsgCreate_GetSignBytes(t *testing.T) {
 	msg := NewMsgCreate("1", addrs[0], addrs[1], items)
 	res := msg.GetSignBytes()
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"receiver\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"items\":[{\"asset_id\":\"jav\",\"quantity\":1}]}")
+	assert.Equal(t, string(res), "{\"id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"receiver\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"items\":[{\"asset_id\":\"tomato\"}]}")
 }
 
 func TestMsgCreate_ValidateBasic(t *testing.T) {
