@@ -91,6 +91,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Parent:    msg.Parent,
 		Final:     false,
 		Precision: msg.Precision,
+		Height:    ctx.BlockHeight(),
 	}
 
 	if len(msg.Properties) > 0 {

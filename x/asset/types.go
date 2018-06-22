@@ -9,6 +9,7 @@ import (
 // Asset asset infomation
 type Asset struct {
 	ID         string      `json:"id"`
+	Height     int64       `json:"height"`
 	Name       string      `json:"name"`
 	Owner      sdk.Address `json:"owner"`
 	Reporters  Reporters   `json:"reporters"`
