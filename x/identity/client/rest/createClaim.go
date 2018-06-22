@@ -19,7 +19,7 @@ type createClaimBody struct {
 	ClaimID  string                 `json:"claim_id"`
 	Context  string                 `json:"context"`
 	Content  map[string]interface{} `json:"content"`
-	Metadata identity.ClaimMetadata `json:"metadata"`
+	Metadata identity.Metadata      `json:"metadata"`
 
 	ChainID  string `json:"chain_id"`
 	Sequence int64  `json:"sequence"`

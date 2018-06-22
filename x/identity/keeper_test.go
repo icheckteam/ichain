@@ -20,7 +20,7 @@ func TestKeeper(t *testing.T) {
 		ID:      "claimID",
 		Context: "claim:identity",
 		Content: []byte(`{"demo": 1}`),
-		Metadata: ClaimMetadata{
+		Metadata: Metadata{
 			Expires:    expires,
 			CreateTime: creatTime,
 			Issuer:     addr,
@@ -31,7 +31,7 @@ func TestKeeper(t *testing.T) {
 	// Test create claim
 	// -----------------------------------------
 	keeper.CreateClaim(ctx, msgCreateClaim)
-	newClaim, _ := keeper.GetClaim(ctx, msgCreateClaim.ID)
+	newClaim := keeper.GetClaim(ctx, msgCreateClaim.ID)
 	assert.True(t, newClaim.ID == msgCreateClaim.ID)
 	assert.True(t, newClaim.Context == msgCreateClaim.Context)
 	assert.True(t, bytes.Equal(newClaim.Content, msgCreateClaim.Content))
@@ -43,7 +43,7 @@ func TestKeeper(t *testing.T) {
 	// test update claims
 	msgCreateClaim.Content = []byte(`{"demo": 2}`)
 	keeper.CreateClaim(ctx, msgCreateClaim)
-	newClaim, _ = keeper.GetClaim(ctx, msgCreateClaim.ID)
+	newClaim = keeper.GetClaim(ctx, msgCreateClaim.ID)
 	assert.True(t, newClaim.ID == msgCreateClaim.ID)
 	assert.True(t, newClaim.Context == msgCreateClaim.Context)
 	assert.True(t, bytes.Equal(newClaim.Content, msgCreateClaim.Content))
@@ -57,7 +57,7 @@ func TestKeeper(t *testing.T) {
 		ID:      "claimID",
 		Context: "claim:identity",
 		Content: []byte(`{"demo": 1}`),
-		Metadata: ClaimMetadata{
+		Metadata: Metadata{
 			Expires:    expires,
 			CreateTime: creatTime,
 			Issuer:     addr1,
@@ -67,20 +67,25 @@ func TestKeeper(t *testing.T) {
 	_, err := keeper.CreateClaim(ctx, msgCreateClaim2)
 	assert.True(t, err != nil)
 
+	msgAnswerClaim := MsgAnswerClaim{ClaimID: msgCreateClaim.ID, Sender: addr}
+	keeper.AnswerClaim(ctx, msgAnswerClaim)
+	newClaim = keeper.GetClaim(ctx, msgAnswerClaim.ClaimID)
+	assert.True(t, newClaim.Paid == true)
+
 	// Test Revoke Claim
 	// ------------------------------------------------------------
-	msgRevokeClaim := MsgRevokeClaim{ClaimID: msgCreateClaim.ID, Owner: addr, Revocation: "323232"}
+	msgRevokeClaim := MsgRevokeClaim{ClaimID: msgCreateClaim.ID, Sender: addr1, Revocation: "323232"}
 	keeper.RevokeClaim(ctx, msgRevokeClaim)
-	newClaim, _ = keeper.GetClaim(ctx, msgCreateClaim.ID)
-	assert.True(t, newClaim.Metadata.Revocation == msgRevokeClaim.Revocation)
+	newClaim = keeper.GetClaim(ctx, msgCreateClaim.ID)
+	assert.True(t, newClaim.Metadata.Revocation == "323232")
 
 	// asset not found
-	msgRevokeClaim = MsgRevokeClaim{ClaimID: "12121", Owner: addr, Revocation: "323232"}
+	msgRevokeClaim = MsgRevokeClaim{ClaimID: "12121", Sender: addr, Revocation: "323232"}
 	_, err = keeper.RevokeClaim(ctx, msgRevokeClaim)
 	assert.True(t, err != nil)
 
-	// invalid owner
-	msgRevokeClaim = MsgRevokeClaim{ClaimID: "12121", Owner: addr1, Revocation: "323232"}
+	// invalid Sender
+	msgRevokeClaim = MsgRevokeClaim{ClaimID: "12121", Sender: addr1, Revocation: "323232"}
 	_, err = keeper.RevokeClaim(ctx, msgRevokeClaim)
 	assert.True(t, err != nil)
 }

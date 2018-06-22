@@ -17,7 +17,7 @@ func TestMsgCreateClaimType(t *testing.T) {
 	var msg = MsgCreateClaim{
 		Context: "claim:context",
 		Content: []byte(`{"demo": 1}`),
-		Metadata: ClaimMetadata{
+		Metadata: Metadata{
 			CreateTime: time.Now(),
 			Expires:    time.Now().Add(time.Hour * 100000),
 			Issuer:     addr,
@@ -54,21 +54,21 @@ func TestMsgCreateClaimValidation(t *testing.T) {
 			ID:      "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: ClaimMetadata{
+			Metadata: Metadata{
 				Recipient: addr,
 			}}}, // no issuer
 		{false, MsgCreateClaim{
 			ID:      "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: ClaimMetadata{
+			Metadata: Metadata{
 				Issuer: addr2,
 			}}}, // no recipient
 		{false, MsgCreateClaim{
 			ID:      "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: ClaimMetadata{
+			Metadata: Metadata{
 				Issuer:     addr2,
 				Recipient:  addr,
 				CreateTime: time.Now(),
@@ -77,7 +77,7 @@ func TestMsgCreateClaimValidation(t *testing.T) {
 			ID:      "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: ClaimMetadata{
+			Metadata: Metadata{
 				Issuer:    addr2,
 				Recipient: addr,
 				Expires:   time.Now(),
@@ -87,7 +87,7 @@ func TestMsgCreateClaimValidation(t *testing.T) {
 			ID:      "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: ClaimMetadata{
+			Metadata: Metadata{
 				Recipient:  addr,
 				Issuer:     addr2,
 				CreateTime: time.Now(),
@@ -121,7 +121,7 @@ func TestCreateMsgGetSignBytes(t *testing.T) {
 		ID:      "1",
 		Context: "1",
 		Content: []byte(`{"demo": 1}`),
-		Metadata: ClaimMetadata{
+		Metadata: Metadata{
 			Recipient:  addr,
 			Issuer:     addr1,
 			CreateTime: creatTime,
@@ -130,7 +130,7 @@ func TestCreateMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expires\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"}}")
+	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expires\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"},\"fee\":null}")
 }
 
 func TestMsgCreateClaimGetSigners(t *testing.T) {
@@ -144,7 +144,7 @@ func TestMsgCreateClaimGetSigners(t *testing.T) {
 		ID:      "1",
 		Context: "1",
 		Content: []byte(`{"demo": 1}`),
-		Metadata: ClaimMetadata{
+		Metadata: Metadata{
 			Recipient:  addr1,
 			Issuer:     addr,
 			CreateTime: creatTime,
@@ -169,9 +169,9 @@ func TestMsgRevokeClaimValidation(t *testing.T) {
 		tx    MsgRevokeClaim
 	}{
 		{false, MsgRevokeClaim{}},
-		{false, MsgRevokeClaim{ClaimID: "1"}},              // only id
-		{false, MsgRevokeClaim{ClaimID: "1", Owner: addr}}, // no revocation
-		{true, MsgRevokeClaim{ClaimID: "1", Owner: addr, Revocation: "2323"}},
+		{false, MsgRevokeClaim{ClaimID: "1"}},               // only id
+		{false, MsgRevokeClaim{ClaimID: "1", Sender: addr}}, // no revocation
+		{true, MsgRevokeClaim{ClaimID: "1", Sender: addr, Revocation: "2323"}},
 	}
 
 	for i, tc := range cases {
@@ -193,18 +193,18 @@ func TestMsgRevokeClaimGet(t *testing.T) {
 func TestMsgRevokeClaimGetSignBytes(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	var msg = MsgRevokeClaim{
-		Owner:      addr,
+		Sender:     addr,
 		Revocation: "demo",
 		ClaimID:    "1",
 	}
 	res := msg.GetSignBytes()
-	assert.Equal(t, string(res), `{"claim_id":"1","owner":"696E707574","revocation":"demo"}`)
+	assert.Equal(t, string(res), `{"claim_id":"1","sender":"696E707574","revocation":"demo"}`)
 }
 
 func TestMsgRevokeClaimGetSigners(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	var msg = MsgRevokeClaim{
-		Owner:      addr,
+		Sender:     addr,
 		Revocation: "demo",
 		ClaimID:    "1",
 	}

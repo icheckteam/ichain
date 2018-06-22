@@ -9,14 +9,16 @@ import (
 
 // Claim struct
 type Claim struct {
-	ID       string        `json:"id"`
-	Context  string        `json:"context"`
-	Content  Content       `json:"content"`
-	Metadata ClaimMetadata `json:"metadata"`
+	ID       string    `json:"id"`
+	Context  string    `json:"context"`
+	Content  Content   `json:"content"`
+	Metadata Metadata  `json:"metadata"`
+	Fee      sdk.Coins `json:"fee"`
+	Paid     bool      `json:"paid"`
 }
 
-// ClaimMetadata the claim metadata
-type ClaimMetadata struct {
+// Metadata the claim metadata
+type Metadata struct {
 	CreateTime time.Time   `json:"create_time"`
 	Issuer     sdk.Address `json:"issuer"`
 	Recipient  sdk.Address `json:"recipient"`

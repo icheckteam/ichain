@@ -5,26 +5,29 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
+
+	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/tendermint/go-crypto/keys"
 )
 
-type uPass struct {
-	LocalAccountName string `json:"account_name"`
+type answerBody struct {
+	LocalAccountName string `json:"name"`
 	Password         string `json:"password"`
 	ChainID          string `json:"chain_id"`
 	Sequence         int64  `json:"sequence"`
-	Revocation       string `json:"revocation"`
+	AccountNumber    int64  `json:"account_number"`
+	Gas              int64  `json:"gas"`
+
+	Response int `json:"response"`
 }
 
-func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func AnswerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		var m uPass
+		var m answerBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -45,17 +48,23 @@ func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 			w.Write([]byte("password is required"))
 			return
 		}
+
 		info, err := kb.Get(m.LocalAccountName)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
 			return
 		}
+
 		// build message
-		msg := buildRevokeMsg(info.PubKey.Address(), vars["id"], m.Revocation)
+		msg := identity.MsgAnswerClaim{
+			Sender:   info.Address(),
+			Response: m.Response,
+			ClaimID:  vars["id"],
+		}
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
+		ctx = ctx.WithSequence(m.Sequence)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -79,13 +88,5 @@ func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 		}
 
 		w.Write(output)
-	}
-}
-
-func buildRevokeMsg(creator sdk.Address, claimID string, revocation string) sdk.Msg {
-	return identity.MsgRevokeClaim{
-		Sender:     creator,
-		ClaimID:    claimID,
-		Revocation: revocation,
 	}
 }

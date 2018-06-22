@@ -18,16 +18,7 @@ import (
 func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assetID := vars["id"]
-		key := identity.GetClaimRecordKey(assetID)
-		res, err := ctx.Query(key, storeName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query asset. Error: %s", err.Error())))
-			return
-		}
-		var claim identity.Claim
-		err = cdc.UnmarshalBinary(res, &claim)
+		claim, err := queryClaim(storeName, ctx, cdc, vars["id"])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
@@ -45,9 +36,8 @@ func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 	}
 }
 
-// QueryClaimsOwner
-func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
-	ctx := context.NewCoreContextFromViper()
+// QueryAccountClaims
+func QueryAccountClaims(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		addr := vars["address"]
@@ -57,25 +47,30 @@ func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
 			w.Write([]byte(err.Error()))
 			return
 		}
-		key := identity.GetClaimsAccountKey(bz)
-		res, err := ctx.Query(key, storeName)
+		key := identity.GetAccountClaimsKey(bz)
+		kvs, err := ctx.QuerySubspace(cdc, key, storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query claim. Error: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf("Could't query account claims. Error: %s", err.Error())))
 			return
 		}
-		claimIDS := []string{}
-		err = cdc.UnmarshalBinary(res, &claimIDS)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
-			return
-		}
-		claims, err := getClaimsByIDS(storeName, ctx, cdc, claimIDS)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
-			return
+		claims := []identity.Claim{}
+		for _, kv := range kvs {
+			var claimID string
+			err = cdc.UnmarshalBinary(kv.Value, &claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+
+			claim, err := queryClaim(storeName, ctx, cdc, claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+			claims = append(claims, *claim)
 		}
 		output, err := cdc.MarshalJSON(claims)
 		if err != nil {
@@ -88,20 +83,17 @@ func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
 	}
 }
 
-func getClaimsByIDS(storeName string, ctx context.CoreContext, cdc *wire.Codec, ids []string) ([]identity.Claim, error) {
-	claims := []identity.Claim{}
-	for _, id := range ids {
-		claim := identity.Claim{}
-		key := identity.GetClaimRecordKey(id)
-		res, err := ctx.Query(key, storeName)
-		if err != nil {
-			return nil, err
-		}
-		err = cdc.UnmarshalBinary(res, &claim)
-		if err != nil {
-			return nil, err
-		}
-		claims = append(claims, claim)
+func queryClaim(storeName string, ctx context.CoreContext, cdc *wire.Codec, claimID string) (*identity.Claim, error) {
+	key := identity.GetClaimKey(claimID)
+	res, err := ctx.Query(key, storeName)
+	if err != nil {
+		return nil, err
 	}
-	return claims, nil
+	var claim *identity.Claim
+	err = cdc.UnmarshalBinary(res, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	return claim, nil
 }
