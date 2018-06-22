@@ -3,24 +3,27 @@ package shipping
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestKeeper(t *testing.T) {
-	ctx, _, keeper := createTestInput(t, false, 0)
+	ctx, keeper := createTestInput(t, false, 0)
 	addr := addrs[0]
 	addr2 := addrs[1]
 	addr3 := addrs[2]
 	addr4 := addrs[3]
 
-	coins := sdk.Coins{
-		{Denom: "tomato", Amount: 100},
-		{Denom: "eggs", Amount: 200},
-	}
-	coins = coins.Sort()
-
-	keeper.coinKeeper.AddCoins(ctx, addr, coins)
+	keeper.assetKeeper.CreateAsset(ctx, asset.MsgCreateAsset{
+		AssetID:  "tomato",
+		Quantity: 1,
+		Sender:   addr,
+	})
+	keeper.assetKeeper.CreateAsset(ctx, asset.MsgCreateAsset{
+		AssetID:  "eggs",
+		Quantity: 1,
+		Sender:   addr,
+	})
 
 	// -----------------------------------
 	// MARK: - Create order
@@ -28,7 +31,7 @@ func TestKeeper(t *testing.T) {
 	// Test not owning asset
 	createOrderMsg := CreateOrderMsg{
 		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"tomato", 200}},
+		TransportedAssets: []TransportedAsset{{"tomato"}},
 		Issuer:            addr2,
 		Carrier:           addr,
 		Receiver:          addr3,
@@ -36,63 +39,12 @@ func TestKeeper(t *testing.T) {
 	_, err := keeper.CreateOrder(ctx, createOrderMsg)
 	assert.NotNil(t, err)
 
-	// Test not enough asset
-	createOrderMsg = CreateOrderMsg{
-		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"tomato", 200}},
-		Issuer:            addr,
-		Carrier:           addr2,
-		Receiver:          addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"eggs", 201}},
-		Issuer:            addr,
-		Carrier:           addr2,
-		Receiver:          addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"tomato", 50}, {"eggs", 201}},
-		Issuer:            addr,
-		Carrier:           addr2,
-		Receiver:          addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"tomato", 150}, {"eggs", 50}},
-		Issuer:            addr,
-		Carrier:           addr2,
-		Receiver:          addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID:                "1",
-		TransportedAssets: []TransportedAsset{{"tomato", 200}, {"eggs", 201}},
-		Issuer:            addr,
-		Carrier:           addr2,
-		Receiver:          addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
 	// Valid order
 	createOrderMsg = CreateOrderMsg{
 		ID: "1",
 		TransportedAssets: []TransportedAsset{
-			{"tomato", 50},
-			{"eggs", 100},
+			{"tomato"},
+			{"eggs"},
 		},
 		Issuer:   addr,
 		Carrier:  addr2,
@@ -101,17 +53,14 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.CreateOrder(ctx, createOrderMsg)
 	order := keeper.getOrder(ctx, "1")
 	assert.Nil(t, err)
-	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 100}, {Denom: "tomato", Amount: 50}}))
 	assert.True(t, order.ID == "1")
 	assert.True(t, order.TransportedAssets[0].ID == "tomato")
-	assert.True(t, order.TransportedAssets[0].Quantity == 50)
 	assert.True(t, order.TransportedAssets[1].ID == "eggs")
-	assert.True(t, order.TransportedAssets[1].Quantity == 100)
 	assert.True(t, order.Issuer.String() == addr.String())
 	assert.True(t, order.Carrier.String() == addr2.String())
 	assert.True(t, order.Receiver.String() == addr3.String())
 
-	// Invalid amount
+	// Invalid asset
 	createOrderMsg = CreateOrderMsg{
 		ID:                "2",
 		TransportedAssets: []TransportedAsset{},
@@ -121,129 +70,6 @@ func TestKeeper(t *testing.T) {
 	}
 	_, err = keeper.CreateOrder(ctx, createOrderMsg)
 	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 0},
-			{"eggs", 0},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	// Create order with existing ID fails
-	createOrderMsg = CreateOrderMsg{
-		ID: "1",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 50},
-			{"eggs", 100},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	// Insufficient amount after the first order
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 51},
-			{"eggs", 0},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 0},
-			{"eggs", 101},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 51},
-			{"eggs", 101},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 50},
-			{"eggs", 101},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"tomato", 51},
-			{"eggs", 100},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.NotNil(t, err)
-
-	// Valid amount after the first order
-	createOrderMsg = CreateOrderMsg{
-		ID: "2",
-		TransportedAssets: []TransportedAsset{
-			{"eggs", 50},
-			{"tomato", 25},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.Nil(t, err)
-	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 50}, {Denom: "tomato", Amount: 25}}))
-
-	// Valid amount after the second order
-	createOrderMsg = CreateOrderMsg{
-		ID: "3",
-		TransportedAssets: []TransportedAsset{
-			{"eggs", 50},
-			{"tomato", 25},
-		},
-		Issuer:   addr,
-		Carrier:  addr2,
-		Receiver: addr3,
-	}
-	_, err = keeper.CreateOrder(ctx, createOrderMsg)
-	assert.Nil(t, err)
-	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsZero())
 
 	// -----------------------------------
 	// MARK: - Confirm order
@@ -278,15 +104,6 @@ func TestKeeper(t *testing.T) {
 	}
 	_, err = keeper.ConfirmOrder(ctx, confirmOrderMsg)
 	order = keeper.getOrder(ctx, "1")
-	assert.Nil(t, err)
-	assert.True(t, order.Status == OrderStatusConfirmed)
-
-	confirmOrderMsg = ConfirmOrderMsg{
-		OrderID: "2",
-		Carrier: addr2,
-	}
-	_, err = keeper.ConfirmOrder(ctx, confirmOrderMsg)
-	order = keeper.getOrder(ctx, "2")
 	assert.Nil(t, err)
 	assert.True(t, order.Status == OrderStatusConfirmed)
 
@@ -376,28 +193,6 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
 	assert.NotNil(t, err)
 
-	// Can cancel a confirmed order
-	cancelOrderMsg = CancelOrderMsg{
-		OrderID: "2",
-		Issuer:  addr,
-	}
-	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
-	order = keeper.getOrder(ctx, "2")
-	assert.Nil(t, err)
-	assert.True(t, order.Status == OrderStatusCancelled)
-	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 50}, {Denom: "tomato", Amount: 25}}))
-
-	// Can cancel a pending order
-	cancelOrderMsg = CancelOrderMsg{
-		OrderID: "3",
-		Issuer:  addr,
-	}
-	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
-	order = keeper.getOrder(ctx, "3")
-	assert.Nil(t, err)
-	assert.True(t, order.Status == OrderStatusCancelled)
-	assert.True(t, keeper.coinKeeper.GetCoins(ctx, addr).IsEqual(sdk.Coins{{Denom: "eggs", Amount: 100}, {Denom: "tomato", Amount: 50}}))
-
 	// Cannot cancel a completed order
 	cancelOrderMsg = CancelOrderMsg{
 		OrderID: "1",
@@ -408,22 +203,4 @@ func TestKeeper(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.True(t, order.Status == OrderStatusCompleted)
 
-	// Cannot cancel a cancelled order
-	cancelOrderMsg = CancelOrderMsg{
-		OrderID: "2",
-		Issuer:  addr,
-	}
-	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
-	order = keeper.getOrder(ctx, "2")
-	assert.NotNil(t, err)
-	assert.True(t, order.Status == OrderStatusCancelled)
-
-	cancelOrderMsg = CancelOrderMsg{
-		OrderID: "3",
-		Issuer:  addr,
-	}
-	_, err = keeper.CancelOrder(ctx, cancelOrderMsg)
-	order = keeper.getOrder(ctx, "3")
-	assert.NotNil(t, err)
-	assert.True(t, order.Status == OrderStatusCancelled)
 }

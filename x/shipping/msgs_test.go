@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	transportedAssets = []TransportedAsset{TransportedAsset{"tomato", 20}}
+	transportedAssets = []TransportedAsset{TransportedAsset{"tomato"}}
 )
 
 // ----------------------------------------
@@ -72,7 +72,7 @@ func TestCreateOrderMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"transported_assets\":[{\"id\":\"tomato\",\"quantity\":20}],\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"carrier\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"receiver\":\"A58856F0FD53BF058B4909A21AEC019107BA6162\"}")
+	assert.Equal(t, string(res), "{\"id\":\"1\",\"transported_assets\":[{\"id\":\"tomato\"}],\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"carrier\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"receiver\":\"A58856F0FD53BF058B4909A21AEC019107BA6162\"}")
 }
 
 // ----------------------------------------
