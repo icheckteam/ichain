@@ -2,8 +2,6 @@ package asset
 
 import (
 	"bytes"
-	"sort"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -23,6 +21,7 @@ type Asset struct {
 	Properties Properties  `json:"properties"`
 	Proposals  Proposals   `json:"proposals"`
 	Materials  Materials   `json:"materials"`
+	Precision  int         `json:"precision"`
 }
 
 // IsOwner check is owner of the asset
@@ -131,154 +130,3 @@ func (a Asset) ValidateProposalAnswer(recipient sdk.Address, answer ProposalStat
 	}
 	return
 }
-
-// Property property of the asset
-type Property struct {
-	Name         string       `json:"name"`
-	Type         PropertyType `json:"type"`
-	BytesValue   []byte       `json:"bytes_value"`
-	StringValue  string       `json:"string_value"`
-	BooleanValue bool         `json:"boolean_value"`
-	NumberValue  int64        `json:"number_value"`
-	EnumValue    []string     `json:"enum_value"`
-	Location     Location     `json:"location_value"`
-}
-
-type Location struct {
-	Latitude  string `json:"latitude"`
-	Longitude string `json:"longitude"`
-}
-
-// list all properties
-type Properties []Property
-
-func (propertiesA Properties) Adds(othersB ...Property) Properties {
-	sum := ([]Property)(nil)
-	indexA, indexB := 0, 0
-	lenA, lenB := len(propertiesA), len(othersB)
-	for {
-		if indexA == lenA {
-			if indexB == lenB {
-				return sum
-			}
-			return append(sum, othersB[indexB:]...)
-		} else if indexB == lenB {
-			return append(sum, propertiesA[indexA:]...)
-		}
-		propertyA, propertyB := propertiesA[indexA], othersB[indexB]
-		switch strings.Compare(propertyA.Name, propertyB.Name) {
-		case -1:
-			sum = append(sum, propertyA)
-			indexA++
-		case 0:
-			sum = append(sum, propertyB)
-			indexA++
-			indexB++
-		case 1:
-			indexB++
-			sum = append(sum, propertyB)
-		}
-	}
-}
-
-//----------------------------------------
-// Sort interface
-
-//nolint
-func (properties Properties) Len() int           { return len(properties) }
-func (properties Properties) Less(i, j int) bool { return properties[i].Name < properties[j].Name }
-func (properties Properties) Swap(i, j int) {
-	properties[i], properties[j] = properties[j], properties[i]
-}
-
-var _ sort.Interface = Properties{}
-
-// Sort is a helper function to sort the set of materials inplace
-func (properties Properties) Sort() Properties {
-	sort.Sort(properties)
-	return properties
-}
-
-//--------------------------------------------------
-
-// Proposal is an invitation to manage an asset
-type Proposal struct {
-	Role       ProposalRole   `json:"role"`       // The role assigned to the recipient
-	Status     ProposalStatus `json:"status"`     // The response of the recipient
-	Properties []string       `json:"properties"` // The asset's attributes name that the recipient is authorized to update
-	Issuer     sdk.Address    `json:"issuer"`     // The proposal issuer
-	Recipient  sdk.Address    `json:"recipient"`  // The recipient of the proposal
-}
-
-// IsAccepted returns true if the proposal was accepted
-func (p *Proposal) IsAccepted() bool {
-	return p.Status == StatusAccepted
-}
-
-// AddProperties add new properties to the proposal, filtering existing value
-func (p *Proposal) AddProperties(properties []string) {
-OuterLoop:
-	for _, addedProperty := range properties {
-		for _, currentProperty := range p.Properties {
-			if addedProperty == currentProperty {
-				continue OuterLoop
-			}
-		}
-		p.Properties = append(p.Properties, addedProperty)
-	}
-}
-
-// RemoveProperties removes the listed properties from the proposal
-func (p *Proposal) RemoveProperties(removedProperties []string) {
-	properties := []string{}
-
-OuterLoop:
-	for _, currentProperty := range p.Properties {
-		for _, removedProperty := range removedProperties {
-			if removedProperty == currentProperty {
-				continue OuterLoop
-			}
-		}
-		properties = append(properties, currentProperty)
-	}
-	p.Properties = properties
-}
-
-// Proposals is a sclice of Proposal
-type Proposals []Proposal
-
-// ProposalRole defines the authority of the proposal's recipient
-type ProposalRole int
-
-const (
-	// RoleReporter is authorized to update the asset's attributes
-	// whose name is included in the proposal's properties field
-	RoleReporter ProposalRole = iota
-
-	// RoleOwner has the same authorization as RoleReporter
-	// but also authorized to make proposal to other recipient
-	RoleOwner
-)
-
-// ProposalStatus define the status of the proposal
-type ProposalStatus int
-
-// All available status of the proposal
-const (
-	StatusPending  ProposalStatus = iota // The recipient has not answered
-	StatusAccepted                       // The recipient accepted the proposal
-	StatusRefused                        // The recipient refused the proposal
-)
-
-// PropertyType define the type of the property
-type PropertyType int
-
-// All avaliable type ò the attribute
-const (
-	PropertyTypeBytes PropertyType = iota + 1
-	PropertyTypeString
-	PropertyTypeBoolean
-	PropertyTypeNumber
-	PropertyTypeEnum
-	PropertyTypeLocation
-)

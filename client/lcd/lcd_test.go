@@ -648,36 +648,6 @@ func doFinalizeAsset(t *testing.T, port, name, password, assetID string, addr sd
 	return resultTx
 }
 
-func doSendAsset(t *testing.T, port, name, password, assetID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
-	acc := getAccount(t, port, addr)
-	accnum := acc.GetAccountNumber()
-	sequence := acc.GetSequence()
-
-	kb := client.MockKeyBase()
-	receiveInfo, _, err := kb.Create("receive_address", "1234567890", cryptoKeys.CryptoAlgo("ed25519"))
-	require.Nil(t, err)
-	receiveAddr := receiveInfo.PubKey.Address()
-	receiveAddrBech := sdk.MustBech32ifyAcc(receiveAddr)
-
-	// send
-	jsonStr := []byte(fmt.Sprintf(`{
-		"name":"%s", 
-		"password":"%s",
-		"account_number":%d, 
-		"sequence":%d, 
-		"assets": ["%s"]
-	}`, name, password, accnum, sequence, assetID))
-
-	res, body := Request(t, port, "POST", "/accounts/"+receiveAddrBech+"/send-asset", jsonStr)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-
-	return resultTx
-}
-
 func doCreateProposal(t *testing.T, port, name, password, assetID string, addr, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()

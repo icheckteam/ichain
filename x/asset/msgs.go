@@ -19,6 +19,7 @@ type MsgCreateAsset struct {
 	Parent     string      `json:"parent"` // the id of the  parent asset
 	Materials  Materials   `json:"materials"`
 	Properties Properties  `json:"properties"`
+	Precision  int         `json:"precision"`
 }
 
 // NewMsgCreateAsset new record create msg

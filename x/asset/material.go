@@ -1,8 +1,11 @@
 package asset
 
 import (
+	"fmt"
 	"sort"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Material defines the total material of new asset
@@ -76,4 +79,54 @@ var _ sort.Interface = Materials{}
 func (materials Materials) Sort() Materials {
 	sort.Sort(materials)
 	return materials
+}
+
+// AddMaterials add materials to the asset
+func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sdk.Error) {
+	ctx.GasMeter().ConsumeGas(costAddMaterials, "addMaterials")
+	asset, found := k.GetAsset(ctx, msg.AssetID)
+	if !found {
+		return nil, ErrAssetNotFound(msg.AssetID)
+	}
+
+	if asset.Final {
+		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
+	}
+
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
+	}
+	// subtract quantity
+	materialsToSave := []Asset{}
+	for _, material := range msg.Materials {
+		m, found := k.GetAsset(ctx, material.AssetID)
+		if !found {
+			return nil, ErrAssetNotFound(m.ID)
+		}
+		if m.Final {
+			return nil, ErrAssetAlreadyFinal(m.ID)
+		}
+		if !m.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
+		}
+		if m.Quantity < material.Quantity {
+			return nil, ErrInvalidAssetQuantity(m.ID)
+		}
+
+		m.Quantity -= material.Quantity
+		materialsToSave = append(materialsToSave, m)
+	}
+	msg.Materials = msg.Materials.Sort()
+	asset.Materials = asset.Materials.Plus(msg.Materials)
+	materialsToSave = append(materialsToSave, asset)
+	tags := sdk.NewTags(
+		"asset_id", []byte(asset.ID),
+		"sender", []byte(msg.Sender.String()),
+	)
+	for _, meterialToSave := range materialsToSave {
+		k.setAsset(ctx, meterialToSave)
+		tags = tags.AppendTag("asset_id", []byte(meterialToSave.ID))
+	}
+
+	return tags, nil
 }

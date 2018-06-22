@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"bytes"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -144,17 +143,6 @@ func TestKeeper(t *testing.T) {
 		AssetID: assetChild1.AssetID,
 	}
 	_, err = keeper.Finalize(ctx, msgFinalize)
-	assert.True(t, err != nil)
-
-	//-------------------------------------------------
-	// Test Send
-	msgSend := MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
-	keeper.Send(ctx, msgSend)
-	newAsset, _ = keeper.GetAsset(ctx, asset2.AssetID)
-	assert.True(t, bytes.Equal(newAsset.Owner, msgSend.Recipient))
-
-	msgSend = MsgSend{Assets: []string{asset2.AssetID}, Sender: addr, Recipient: addrs[1]}
-	_, err = keeper.Send(ctx, msgSend)
 	assert.True(t, err != nil)
 
 	//-------------------------------------------------
