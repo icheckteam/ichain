@@ -102,7 +102,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.insuranceKeeper = insurance.NewKeeper(app.keyInsurance, cdc, app.assetKeeper)
-	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.bankKeeper)
+	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.assetKeeper)
 	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.assetKeeper)
 	app.slashingKeeper = slashing.NewKeeper(app.cdc, app.keySlashing, app.stakeKeeper, app.RegisterCodespace(slashing.DefaultCodespace))
 	app.Router().
