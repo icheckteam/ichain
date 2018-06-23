@@ -14,6 +14,7 @@ const msgType = "asset"
 type MsgCreateAsset struct {
 	Sender     sdk.Address `json:"sender"`
 	AssetID    string      `json:"asset_id"`
+	AssetType  string      `json:"asset_type"`
 	Name       string      `json:"name"`
 	Quantity   int64       `json:"quantity"`
 	Parent     string      `json:"parent"` // the id of the  parent asset

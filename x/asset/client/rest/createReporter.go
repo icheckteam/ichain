@@ -73,7 +73,7 @@ func CreateReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			Properties: m.Properties,
 			AssetID:    vars["id"],
 		}
-
+		ctx = ctx.WithChainID(m.ChainID)
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)

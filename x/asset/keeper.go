@@ -84,6 +84,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	asset := Asset{
 		ID:        msg.AssetID,
+		Type:      msg.AssetType,
 		Name:      msg.Name,
 		Owner:     msg.Sender,
 		Quantity:  msg.Quantity,
@@ -92,6 +93,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Final:     false,
 		Precision: msg.Precision,
 		Height:    ctx.BlockHeight(),
+		Created:   ctx.BlockHeader().Time,
 	}
 
 	if len(msg.Properties) > 0 {

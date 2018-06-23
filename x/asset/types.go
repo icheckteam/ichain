@@ -9,6 +9,7 @@ import (
 // Asset asset infomation
 type Asset struct {
 	ID         string      `json:"id"`
+	Type       string      `json:"tyoe"`
 	Height     int64       `json:"height"`
 	Name       string      `json:"name"`
 	Owner      sdk.Address `json:"owner"`
@@ -22,6 +23,7 @@ type Asset struct {
 	Properties Properties  `json:"properties"`
 	Materials  Materials   `json:"materials"`
 	Precision  int         `json:"precision"`
+	Created    int64       `json:"created"`
 }
 
 // IsOwner check is owner of the asset

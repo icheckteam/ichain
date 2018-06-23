@@ -80,7 +80,7 @@ func TestRegisterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1212\",\"name\":\"name\",\"quantity\":1,\"parent\":\"\",\"materials\":null,\"properties\":null,\"precision\":0}")
+	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1212\",\"asset_type\":\"\",\"name\":\"name\",\"quantity\":1,\"parent\":\"\",\"materials\":null,\"properties\":null,\"precision\":0}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {

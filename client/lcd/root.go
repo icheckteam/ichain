@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tmlibs/log"
@@ -98,5 +99,5 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	insurance.RegisterRoutes(ctx, r, cdc, kb, "insurance")
 	shipping.RegisterRoutes(ctx, r, cdc, kb, "shipping")
 	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
-	return r
+	return cors.Default().Handler(r)
 }

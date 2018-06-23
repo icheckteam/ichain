@@ -69,7 +69,7 @@ func TrasferHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase)
 		ctx = ctx.WithGas(m.Gas)
 		ctx = ctx.WithAccountNumber(m.AccountNumber)
 		ctx = ctx.WithSequence(m.Sequence)
-
+		ctx = ctx.WithChainID(m.ChainID)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
