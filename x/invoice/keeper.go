@@ -15,11 +15,20 @@ const (
 
 var (
 	PrefixKey             = []byte{0x01}
+	AccountInvoiceKey     = []byte{0x02}
 	ErrorDuplicateInvoice = sdk.NewError(CodespaceDefault, CodeDuplicateInvoice, "Duplicate invoice.")
 )
 
 func GetKey(id string) []byte {
 	return append(PrefixKey, []byte(id)...)
+}
+
+func GetAccountInvoiceKey(addr sdk.Address, contractID string) []byte {
+	return append(GetAccountInvoicesKey(addr), []byte(contractID)...)
+}
+
+func GetAccountInvoicesKey(addr sdk.Address) []byte {
+	return append(AccountInvoiceKey, []byte(addr.String())...)
 }
 
 type InvoiceKeeper struct {
@@ -59,6 +68,24 @@ func (ik InvoiceKeeper) SetInvoice(ctx sdk.Context, invoice Invoice) {
 	store.Set(key, b)
 }
 
+func (ik InvoiceKeeper) setInvoiceByAccountIndex(ctx sdk.Context, invoice Invoice) {
+	store := ctx.KVStore(ik.storeKey)
+	b, _ := ik.cdc.MarshalBinary(invoice.ID)
+	store.Set(GetAccountInvoiceKey(invoice.Issuer, invoice.ID), b)
+	if len(invoice.Receiver) > 0 {
+		store.Set(GetAccountInvoiceKey(invoice.Receiver, invoice.ID), b)
+	}
+
+}
+
+func (ik InvoiceKeeper) removeInvoiceByAccountIndex(ctx sdk.Context, invoice Invoice) {
+	store := ctx.KVStore(ik.storeKey)
+	store.Delete(GetAccountInvoiceKey(invoice.Issuer, invoice.ID))
+	if len(invoice.Receiver) > 0 {
+		store.Delete(GetAccountInvoiceKey(invoice.Receiver, invoice.ID))
+	}
+}
+
 func (ik InvoiceKeeper) CreateInvoice(ctx sdk.Context, msg MsgCreate) (sdk.Tags, sdk.Error) {
 	if ik.HasInvoice(ctx, msg.ID) {
 		return nil, ErrorDuplicateInvoice
@@ -79,14 +106,16 @@ func (ik InvoiceKeeper) CreateInvoice(ctx sdk.Context, msg MsgCreate) (sdk.Tags,
 		}
 	}
 
-	ik.SetInvoice(ctx, Invoice{
+	invoice := Invoice{
 		ID:         msg.ID,
 		Issuer:     msg.Issuer,
 		Receiver:   msg.Receiver,
 		Items:      msg.Items,
 		CreateTime: ctx.BlockHeader().Time,
-	})
+	}
 
+	ik.SetInvoice(ctx, invoice)
+	ik.setInvoiceByAccountIndex(ctx, invoice)
 	tags := sdk.NewTags(
 		"sender", []byte(msg.Receiver.String()),
 	)
