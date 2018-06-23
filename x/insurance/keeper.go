@@ -27,8 +27,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, assetKeeper asset.Keeper) Keep
 
 // CreateContract create new a contract
 func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) (sdk.Tags, sdk.Error) {
-	c := k.GetContract(ctx, msg.ID)
-	if c != nil {
+	if k.hasContract(ctx, msg.ID) {
 		return nil, types.InvalidTransaction(DefaultCodespace, "Contract already exitsts")
 	}
 
@@ -44,16 +43,19 @@ func (k Keeper) CreateContract(ctx sdk.Context, msg MsgCreateContract) (sdk.Tags
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
 	}
 
-	// save contract to db
-	k.setContract(ctx, Contract{
+	c := Contract{
 		ID:        msg.ID,
 		AssetID:   msg.AssetID,
 		Expires:   msg.Expires,
 		Issuer:    msg.Issuer,
 		Serial:    msg.Serial,
 		Recipient: msg.Recipient,
-	})
+	}
 
+	// save contract to db
+	k.setContract(ctx, c)
+	k.setContractByAccountIndex(ctx, c.Issuer, c.ID)
+	k.setContractByAccountIndex(ctx, c.Recipient, c.ID)
 	a.Final = true
 	k.assetKeeper.SetAsset(ctx, a)
 
@@ -82,6 +84,7 @@ func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) sdk.Error {
 		Recipient: msg.Recipient,
 	}
 	k.setContract(ctx, *c)
+	k.setContractByAccountIndex(ctx, msg.Recipient, c.ID)
 	return nil
 }
 
@@ -101,6 +104,15 @@ func (k Keeper) ProcessClaim(ctx sdk.Context, msg MsgProcessClaim) sdk.Error {
 	}
 	c.Claim.Status = msg.Status
 	k.setContract(ctx, *c)
+
+	switch c.Claim.Status {
+	case ClaimStatusClaimRepair, ClaimStatusReimbursement, ClaimStatusRejected, ClaimStatusTheftConfirmed:
+		k.removeContractByAccountIndex(ctx, msg.Issuer, c.ID)
+		break
+	default:
+		break
+	}
+
 	return nil
 }
 
@@ -114,6 +126,21 @@ func (k Keeper) setContract(ctx sdk.Context, c Contract) {
 	store.Set(GetContractKey(c.ID), bz)
 }
 
+func (k Keeper) setContractByAccountIndex(ctx sdk.Context, addr sdk.Address, contractID string) {
+	store := ctx.KVStore(k.storeKey)
+	// marshal the record and add to the state
+	bz, err := k.cdc.MarshalBinary(contractID)
+	if err != nil {
+		panic(err)
+	}
+	store.Set(GetAccountContractKey(addr, contractID), bz)
+}
+
+func (k Keeper) removeContractByAccountIndex(ctx sdk.Context, addr sdk.Address, contractID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountContractKey(addr, contractID))
+}
+
 // GetContract get contract by ID
 func (k Keeper) GetContract(ctx sdk.Context, contractID string) *Contract {
 	store := ctx.KVStore(k.storeKey)
@@ -124,4 +151,10 @@ func (k Keeper) GetContract(ctx sdk.Context, contractID string) *Contract {
 		return nil
 	}
 	return c
+}
+
+// hasContract
+func (k Keeper) hasContract(ctx sdk.Context, contractID string) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(GetContractKey(contractID))
 }

@@ -69,6 +69,11 @@ func (k Keeper) setClaimByAddrIndex(ctx sdk.Context, claim Claim) {
 	store.Set(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID), bz)
 }
 
+func (k Keeper) removeClaimByAddrIndex(ctx sdk.Context, claim Claim) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID))
+}
+
 // GetClaim ...
 func (k Keeper) GetClaim(ctx sdk.Context, claimID string) *Claim {
 	claim := &Claim{}
@@ -113,6 +118,8 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 	if msg.Response == 0 {
 		// reject the claim
 		k.removeClaim(ctx, claim.ID)
+		// remove index by account
+		k.removeClaimByAddrIndex(ctx, *claim)
 	} else if len(claim.Fee) > 0 {
 		// approve the claim
 		_, tags, err := k.coinKeeper.SubtractCoins(ctx, msg.Sender, claim.Fee)
