@@ -45,14 +45,19 @@ func (k Keeper) getOrder(ctx sdk.Context, uid string) *Order {
 func (k Keeper) setOrder(ctx sdk.Context, order Order) {
 	store := ctx.KVStore(k.storeKey)
 	orderKey := GetOrderKey([]byte(order.ID))
-
-	// marshal the record and add to the state
-	bz, err := k.cdc.MarshalBinary(order)
-	if err != nil {
-		panic(err)
-	}
-
+	bz, _ := k.cdc.MarshalBinary(order)
 	store.Set(orderKey, bz)
+}
+
+func (k Keeper) setOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+	store := ctx.KVStore(k.storeKey)
+	bz, _ := k.cdc.MarshalBinary(orderID)
+	store.Set(GetAccountOrderKey(addr, orderID), bz)
+}
+
+func (k Keeper) removeOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountOrderKey(addr, orderID))
 }
 
 // CreateOrder validates and creates a new order
@@ -89,6 +94,9 @@ func (k Keeper) CreateOrder(ctx sdk.Context, msg CreateOrderMsg) (sdk.Tags, sdk.
 	}
 
 	k.setOrder(ctx, order)
+	k.setOrderByAccountIndex(ctx, order.Issuer, order.ID)
+	k.setOrderByAccountIndex(ctx, order.Carrier, order.ID)
+	k.setOrderByAccountIndex(ctx, order.Receiver, order.ID)
 
 	allTags := sdk.EmptyTags()
 	allTags.AppendTag("sender", types.AddrToBytes(msg.Issuer))
