@@ -501,6 +501,7 @@ func doCreateAsset(t *testing.T, port, name, password, assetName string, addr sd
 		"account_number":%d, 
 		"sequence":%d, 
 		"gas": 10000,
+		"chain_id": "tendermint_test",
 		"asset": {
 			"name": "%s",
 			"asset_id": "%s",
@@ -531,6 +532,7 @@ func doUpdateProperties(t *testing.T, port, name, password, assetID, propName st
 		"account_number":%d, 
 		"sequence":%d, 
 		"gas": 10000,
+		"chain_id": "tendermint_test",
 		"properties": [
 			{"name": "%s", "type": %d, "string_value": "%s"}
 		]
@@ -558,6 +560,7 @@ func doTransferAsset(t *testing.T, port, name, password, assetID string, addr, r
 		"password":"%s",
 		"account_number":%d, 
 		"sequence":%d, 
+		"chain_id": "tendermint_test",
 		"gas": 10000,
 		"assets": [
 			"%s"
@@ -586,6 +589,7 @@ func doAddMaterials(t *testing.T, port, name, password, fromAsset, toAsset strin
 		"password":"%s",
 		"account_number":%d, 
 		"sequence":%d, 
+		"chain_id": "tendermint_test",
 		"gas": 10000,
 		"materials": [
 			{"asset_id": "%s", "quantity": %d}
@@ -612,6 +616,7 @@ func doAddQuantity(t *testing.T, port, name, password, assetID string, addr sdk.
 		"name":"%s", 
 		"password":"%s",
 		"account_number":%d, 
+		"chain_id": "tendermint_test",
 		"sequence":%d, 
 		"gas": 10000,
 		"quantity": %d
@@ -639,6 +644,7 @@ func doSubtractQuantity(t *testing.T, port, name, password, assetID string, addr
 		"account_number":%d, 
 		"sequence":%d, 
 		"gas": 10000,
+		"chain_id": "tendermint_test",
 		"quantity": %d
 	}`, name, password, accnum, sequence, 1))
 
@@ -663,6 +669,7 @@ func doFinalizeAsset(t *testing.T, port, name, password, assetID string, addr sd
 		"password":"%s",
 		"account_number":%d, 
 		"sequence":%d, 
+		"chain_id": "tendermint_test",
 		"gas": 10000
 	}`, name, password, accnum, sequence))
 
@@ -689,6 +696,7 @@ func doCreateReporter(t *testing.T, port, name, password, assetID string, addr, 
 		"password":"%s",
 		"account_number":%d, 
 		"sequence":%d, 
+		"chain_id": "tendermint_test",
 		"gas": 10000,
 
 		"reporter": "%s",
@@ -714,6 +722,7 @@ func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr s
 	jsonStr := []byte(fmt.Sprintf(`{
 		"name":"%s", 
 		"password":"%s",
+		"chain_id": "tendermint_test",
 		"account_number":%d, 
 		"sequence": %d, 
 		"gas": 10000

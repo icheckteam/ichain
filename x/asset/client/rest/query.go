@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -19,14 +20,16 @@ import (
 func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		item, err := queryAsset(ctx, storeName, cdc, vars["id"])
+
+		a, err := queryAsset(ctx, storeName, cdc, vars["id"])
+
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(fmt.Sprintf("Couldn't get asset. Error: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
 			return
 		}
 
-		output, err := cdc.MarshalJSON(item)
+		output, err := cdc.MarshalJSON(a)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -58,17 +61,24 @@ func QueryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 }
 
 func queryAsset(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*asset.Asset, error) {
-	var a *asset.Asset
-	res, err := ctx.Query(asset.GetAssetKey(assetID), storeName)
+	key := asset.GetAssetKey(assetID)
+	res, err := ctx.Query(key, storeName)
+
+	if res == nil {
+		return nil, errors.New("asset not found")
+	}
 
 	if err != nil {
 		return nil, err
 	}
-	err = cdc.UnmarshalBinary(res, a)
+
+	var a asset.Asset
+
+	err = cdc.UnmarshalBinary(res, &a)
 	if err != nil {
 		return nil, err
 	}
-	return a, nil
+	return &a, nil
 }
 
 func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]asset.Asset, error) {
