@@ -100,6 +100,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	// update asset info
 	k.setAsset(ctx, asset)
+	k.setAssetByAccountIndex(ctx, asset)
 	return tags, nil
 }
 
@@ -110,6 +111,17 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	// set main store
 	bz := k.cdc.MustMarshalBinary(asset)
 	store.Set(GetAssetKey(asset.ID), bz)
+}
+
+func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(asset.ID)
+	store.Set(GetAccountAssetKey(asset.Owner, asset.ID), bz)
+}
+
+func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountAssetKey(asset.Owner, asset.ID))
 }
 
 // set the main record holding asset details
@@ -208,6 +220,7 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	}
 
 	asset.Final = true
+	k.removeAssetByAccountIndex(ctx, asset)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(msg.AssetID),
@@ -238,11 +251,13 @@ func (k Keeper) Transfer(ctx sdk.Context, msg MsgTransfer) (sdk.Tags, sdk.Error)
 		"recipient", []byte(msg.Recipient.String()),
 	)
 	for _, asset := range assets {
+		k.removeAssetByAccountIndex(ctx, asset)
 		// change ownership
 		asset.Owner = msg.Recipient
 		// clear reporter
 		asset.Reporters = nil
 		k.setAsset(ctx, asset)
+		k.setAssetByAccountIndex(ctx, asset)
 		// add asset tag
 		tags = tags.AppendTag("asset_id", []byte(asset.ID))
 	}

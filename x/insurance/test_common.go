@@ -80,11 +80,11 @@ func makeTestCodec() *wire.Codec {
 // hogpodge of all sorts of input required for testing
 func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, Keeper) {
 	db := dbm.NewMemDB()
-	keyWarranty := sdk.NewKVStoreKey("warranty")
+	keyInsurance := sdk.NewKVStoreKey("insurance")
 	keyAsset := sdk.NewKVStoreKey("asset")
 
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyWarranty, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyInsurance, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyAsset, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
@@ -93,7 +93,7 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	cdc := makeTestCodec()
 	assetKeeper := asset.NewKeeper(keyAsset, cdc)
 
-	keeper := NewKeeper(keyWarranty, cdc, assetKeeper)
+	keeper := NewKeeper(keyInsurance, cdc, assetKeeper)
 	return ctx, keeper
 }
 

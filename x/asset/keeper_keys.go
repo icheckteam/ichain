@@ -18,7 +18,7 @@ func GetAssetKey(assetID string) []byte {
 }
 
 // GetAccountAssetKey get the key for an account for an asset
-func GetAccountAssetKey(assetID string, addr sdk.Address) []byte {
+func GetAccountAssetKey(addr sdk.Address, assetID string) []byte {
 	return append(GetAccountAssetsKey(addr), []byte(assetID)...)
 }
 
