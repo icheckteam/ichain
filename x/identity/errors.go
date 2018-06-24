@@ -17,6 +17,10 @@ func ErrClaimNotFound(claimID string) sdk.Error {
 	return newError(DefaultCodespace, CodeInvalidClaim, fmt.Sprintf("claim {%s} not found", claimID))
 }
 
+func ErrClaimHasPaid(claimID string) sdk.Error {
+	return newError(DefaultCodespace, CodeInvalidClaim, fmt.Sprintf("claim {%s} has paid", claimID))
+}
+
 func newError(codespace sdk.CodespaceType, code sdk.CodeType, msg string) sdk.Error {
 	return sdk.NewError(codespace, code, msg)
 }

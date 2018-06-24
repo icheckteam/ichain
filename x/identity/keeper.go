@@ -111,6 +111,10 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 		return nil, ErrClaimNotFound(msg.ClaimID)
 	}
 
+	if claim.Paid == true {
+		return nil, ErrClaimHasPaid(claim.ID)
+	}
+
 	if bytes.Equal(claim.Metadata.Recipient, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
 	}
