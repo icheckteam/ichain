@@ -23,8 +23,6 @@ import (
 	ibc "github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 	"github.com/icheckteam/ichain/client/tx"
-	"github.com/icheckteam/ichain/types"
-	version "github.com/icheckteam/ichain/version"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
 	insurance "github.com/icheckteam/ichain/x/insurance/client/rest"
@@ -32,19 +30,43 @@ import (
 	shipping "github.com/icheckteam/ichain/x/shipping/client/rest"
 )
 
-const (
-	flagListenAddr = "laddr"
-	flagCORS       = "cors"
-)
-
 // ServeCommand will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
 func ServeCommand(cdc *wire.Codec) *cobra.Command {
+	flagListenAddr := "laddr"
+	flagCORS := "cors"
+
 	cmd := &cobra.Command{
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
-		RunE:  startRESTServerFn(cdc),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			listenAddr := viper.GetString(flagListenAddr)
+			allowedOrigins := viper.GetString(flagCORS)
+			handler := createHandler(cdc)
+
+			c := cors.New(cors.Options{
+				AllowedOrigins:   []string{allowedOrigins},
+				AllowCredentials: true,
+				// Enable Debugging for testing, consider disabling in production
+				Debug: true,
+			})
+
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).
+				With("module", "rest-server")
+			listener, err := tmserver.StartHTTPServer(listenAddr, c.Handler(handler), logger)
+			if err != nil {
+				return err
+			}
+			logger.Info("REST server started")
+
+			// Wait forever and cleanup
+			cmn.TrapSignal(func() {
+				err := listener.Close()
+				logger.Error("error closing listener", "err", err)
+			})
+			return nil
+		},
 	}
 	cmd.Flags().StringP(flagListenAddr, "a", "tcp://localhost:1317", "Address for server to listen on")
 	cmd.Flags().String(flagCORS, "", "Set to domains that can make CORS requests (* for all)")
@@ -53,29 +75,8 @@ func ServeCommand(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func startRESTServerFn(cdc *wire.Codec) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		listenAddr := viper.GetString(flagListenAddr)
-		handler := createHandler(cdc)
-		logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).
-			With("module", "rest-server")
-		listener, err := tmserver.StartHTTPServer(listenAddr, handler, logger)
-		if err != nil {
-			return err
-		}
-
-		// Wait forever and cleanup
-		cmn.TrapSignal(func() {
-			err := listener.Close()
-			logger.Error("Error closing listener", "err", err)
-		})
-		return nil
-	}
-}
-
 func createHandler(cdc *wire.Codec) http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/version", version.RequestHandler).Methods("GET")
 
 	kb, err := keys.GetKeyBase() //XXX
 	if err != nil {
@@ -83,7 +84,10 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	}
 
 	ctx := context.NewCoreContextFromViper()
-	ctx = ctx.WithDecoder(types.GetAccountDecoder(cdc))
+
+	// TODO make more functional? aka r = keys.RegisterRoutes(r)
+	r.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
+	r.HandleFunc("/node_version", NodeVersionRequestHandler(cdc, ctx)).Methods("GET")
 
 	// TODO make more functional? aka r = keys.RegisterRoutes(r)
 	keys.RegisterRoutes(r)
@@ -99,5 +103,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	insurance.RegisterRoutes(ctx, r, cdc, kb, "insurance")
 	shipping.RegisterRoutes(ctx, r, cdc, kb, "shipping")
 	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
-	return cors.Default().Handler(r)
+
+	return r
 }
