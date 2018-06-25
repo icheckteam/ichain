@@ -96,6 +96,7 @@ type txInfo struct {
 	Height int64                  `json:"height"`
 	Tx     sdk.Tx                 `json:"tx"`
 	Result abci.ResponseDeliverTx `json:"result"`
+	Time   int64                  `json:"time"`
 }
 
 func parseTx(cdc *wire.Codec, txBytes []byte) (sdk.Tx, error) {

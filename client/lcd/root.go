@@ -48,6 +48,7 @@ func ServeCommand(cdc *wire.Codec) *cobra.Command {
 			c := cors.New(cors.Options{
 				AllowedOrigins:   []string{allowedOrigins},
 				AllowCredentials: true,
+				AllowedMethods:   []string{"PUT", "GET", "POST", "DELETE"},
 				// Enable Debugging for testing, consider disabling in production
 				Debug: true,
 			})

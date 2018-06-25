@@ -9,6 +9,7 @@ import (
 type Reporter struct {
 	Addr       sdk.Address `json:"address"`
 	Properties []string    `json:"properties"`
+	Created    int64       `json:"created"`
 }
 
 type Reporters []Reporter
@@ -32,12 +33,14 @@ func (k Keeper) CreateReporter(ctx sdk.Context, msg MsgCreateReporter) (sdk.Tags
 	if reporter != nil {
 		// Update reporter
 		reporter.Properties = msg.Properties
+		reporter.Created = ctx.BlockHeader().Time
 		asset.Reporters[reporterIndex] = *reporter
 	} else {
 		// Add new reporter
 		reporter = &Reporter{
 			Addr:       msg.Reporter,
 			Properties: msg.Properties,
+			Created:    ctx.BlockHeader().Time,
 		}
 		asset.Reporters = append(asset.Reporters, *reporter)
 	}

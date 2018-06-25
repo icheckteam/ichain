@@ -78,6 +78,14 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]txInf
 		return nil, err
 	}
 
+	for index, _ := range info {
+		block, err := getBlock(ctx, &info[index].Height)
+		if err != nil {
+			return nil, err
+		}
+		info[index].Time = block.Block.Time.Unix()
+	}
+
 	return info, nil
 }
 
@@ -142,4 +150,18 @@ func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 
 		w.Write(output)
 	}
+}
+
+func getBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
+	// get the node
+	node, err := ctx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: actually honor the --select flag!
+	// header -> BlockchainInfo
+	// header, tx -> Block
+	// results -> BlockResults
+	return node.Block(height)
 }
