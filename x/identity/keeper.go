@@ -46,7 +46,8 @@ func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) (sdk.Tags, sdk.
 	}
 
 	k.setClaim(ctx, claim)
-	k.setClaimByAddrIndex(ctx, claim)
+	k.setClaimByRecipientIndex(ctx, claim)
+	k.setClaimByIssuerIndex(ctx, claim)
 	return nil, nil
 }
 
@@ -63,15 +64,26 @@ func (k Keeper) removeClaim(ctx sdk.Context, claimID string) {
 }
 
 // set claim
-func (k Keeper) setClaimByAddrIndex(ctx sdk.Context, claim Claim) {
+func (k Keeper) setClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(claim.ID)
 	store.Set(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID), bz)
 }
 
-func (k Keeper) removeClaimByAddrIndex(ctx sdk.Context, claim Claim) {
+func (k Keeper) removeClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID))
+}
+
+func (k Keeper) setClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(claim.ID)
+	store.Set(GetAccountClaimKey(claim.Metadata.Issuer, claim.ID), bz)
+}
+
+func (k Keeper) removeClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountClaimKey(claim.Metadata.Issuer, claim.ID))
 }
 
 // GetClaim ...
@@ -123,7 +135,8 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 		// reject the claim
 		k.removeClaim(ctx, claim.ID)
 		// remove index by account
-		k.removeClaimByAddrIndex(ctx, *claim)
+		k.removeClaimByRecipientIndex(ctx, *claim)
+		k.removeClaimByIssuerIndex(ctx, *claim)
 	} else if len(claim.Fee) > 0 {
 		// approve the claim
 		_, tags, err := k.coinKeeper.SubtractCoins(ctx, msg.Sender, claim.Fee)
