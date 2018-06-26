@@ -60,6 +60,26 @@ func QueryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 	}
 }
 
+func QueryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		items, err := queryAssetChildrens(ctx, storeName, cdc, vars["id"])
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
+			return
+		}
+		output, err := cdc.MarshalJSON(items)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
 func queryAsset(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*asset.Asset, error) {
 	key := asset.GetAssetKey(assetID)
 	res, err := ctx.Query(key, storeName)
@@ -89,6 +109,29 @@ func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Cod
 
 	items := []asset.Asset{}
 	kvs, err := ctx.QuerySubspace(cdc, asset.GetAccountAssetsKey(address), storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, kv := range kvs {
+		var itemID string
+		err = cdc.UnmarshalBinary(kv.Value, &itemID)
+		if err != nil {
+			return nil, err
+		}
+		item, err := queryAsset(ctx, storeName, cdc, itemID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *item)
+	}
+
+	return items, nil
+}
+
+func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) ([]asset.Asset, error) {
+	items := []asset.Asset{}
+	kvs, err := ctx.QuerySubspace(cdc, asset.GetAssetChildrensKey(assetID), storeName)
 	if err != nil {
 		return nil, err
 	}

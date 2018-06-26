@@ -103,6 +103,12 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	// update asset info
 	k.setAsset(ctx, asset)
 	k.setAssetByAccountIndex(ctx, asset)
+
+	if len(asset.Parent) > 0 {
+		// index by parent
+		k.setAssetByParentIndex(ctx, asset)
+	}
+
 	return tags, nil
 }
 
@@ -124,6 +130,17 @@ func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, asset Asset) {
 func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetAccountAssetKey(asset.Owner, asset.ID))
+}
+
+func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(asset.ID)
+	store.Set(GetAssetChildrenKey(asset.Parent, asset.ID), bz)
+}
+
+func (k Keeper) removeAssetByParentIndex(ctx sdk.Context, asset Asset) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAssetChildrenKey(asset.Parent, asset.ID))
 }
 
 // set the main record holding asset details
