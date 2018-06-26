@@ -11,7 +11,7 @@ import (
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc("/assets", CreateAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}", QueryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
-	r.HandleFunc("/assets/{id}/children", QueryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/children", QueryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 	r.HandleFunc("/assets/{id}/add", AddAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/subtract", SubtractQuantityBodyHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/properties", UpdateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
