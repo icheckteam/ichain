@@ -13,5 +13,6 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb 
 	r.HandleFunc("/claims/{id}/revoke", RevokeHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/claims/{id}/answer", AnswerHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/claims/{id}", QueryClaimRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
-	r.HandleFunc("/accounts/{address}/claims", QueryAccountClaims(ctx, storeName, cdc)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/claims", QueryClaimsByAccount(ctx, storeName, cdc)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/issuer/claims", QueryClaimsByIssuer(ctx, storeName, cdc)).Methods("GET")
 }

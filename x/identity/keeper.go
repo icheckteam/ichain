@@ -74,13 +74,13 @@ func (k Keeper) setClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 
 func (k Keeper) removeClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountClaimKey(claim.Recipient, claim.ID))
+	store.Delete(GetIssuerClaimKey(claim.Recipient, claim.ID))
 }
 
 func (k Keeper) setClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(claim.ID)
-	store.Set(GetAccountClaimKey(claim.Issuer, claim.ID), bz)
+	store.Set(GetIssuerClaimKey(claim.Issuer, claim.ID), bz)
 }
 
 func (k Keeper) removeClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
