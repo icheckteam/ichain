@@ -50,7 +50,12 @@ func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) (sdk.Tags, sdk.
 	k.setClaim(ctx, claim)
 	k.setClaimByRecipientIndex(ctx, claim)
 	k.setClaimByIssuerIndex(ctx, claim)
-	return nil, nil
+
+	allTags := sdk.NewTags(
+		"sender", []byte(msg.Issuer.String()),
+		"recipient", []byte(msg.Recipient.String()),
+	)
+	return allTags, nil
 }
 
 // set claim
@@ -115,7 +120,10 @@ func (k Keeper) RevokeClaim(ctx sdk.Context, msg MsgRevokeClaim) (sdk.Tags, sdk.
 
 	claim.Revocation = msg.Revocation
 	k.setClaim(ctx, *claim)
-	return nil, nil
+	allTags := sdk.NewTags(
+		"sender", []byte(msg.Sender.String()),
+	)
+	return allTags, nil
 }
 
 func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.Error) {
@@ -132,7 +140,9 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 	if !bytes.Equal(claim.Recipient, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
 	}
-	allTags := sdk.EmptyTags()
+	allTags := sdk.NewTags(
+		"sender", []byte(msg.Sender.String()),
+	)
 	if msg.Response == 0 {
 		// reject the claim
 		k.removeClaim(ctx, claim.ID)
