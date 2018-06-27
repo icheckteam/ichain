@@ -33,16 +33,18 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, coinKeeper bank.Keeper) Keeper
 // ClaimIssue ...
 func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) (sdk.Tags, sdk.Error) {
 	ctx.GasMeter().ConsumeGas(costCreateClaim, "createClaim")
-	oldClaim := k.GetClaim(ctx, msg.ID)
-	if oldClaim != nil && !oldClaim.IsOwner(msg.Metadata.Issuer) {
+	oldClaim := k.GetClaim(ctx, msg.ClaimID)
+	if oldClaim != nil && !oldClaim.IsOwner(msg.Issuer) {
 		return nil, sdk.ErrUnauthorized("")
 	}
-
 	claim := Claim{
-		ID:       msg.ID,
-		Metadata: msg.Metadata,
-		Context:  msg.Context,
-		Content:  msg.Content,
+		ID:         msg.ClaimID,
+		Issuer:     msg.Issuer,
+		Recipient:  msg.Recipient,
+		Context:    msg.Context,
+		Content:    msg.Content,
+		CreateTime: ctx.BlockHeader().Time,
+		Expires:    msg.Expires,
 	}
 
 	k.setClaim(ctx, claim)
@@ -67,23 +69,23 @@ func (k Keeper) removeClaim(ctx sdk.Context, claimID string) {
 func (k Keeper) setClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(claim.ID)
-	store.Set(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID), bz)
+	store.Set(GetAccountClaimKey(claim.Recipient, claim.ID), bz)
 }
 
 func (k Keeper) removeClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountClaimKey(claim.Metadata.Recipient, claim.ID))
+	store.Delete(GetAccountClaimKey(claim.Recipient, claim.ID))
 }
 
 func (k Keeper) setClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(claim.ID)
-	store.Set(GetAccountClaimKey(claim.Metadata.Issuer, claim.ID), bz)
+	store.Set(GetAccountClaimKey(claim.Issuer, claim.ID), bz)
 }
 
 func (k Keeper) removeClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountClaimKey(claim.Metadata.Issuer, claim.ID))
+	store.Delete(GetAccountClaimKey(claim.Issuer, claim.ID))
 }
 
 // GetClaim ...
@@ -107,11 +109,11 @@ func (k Keeper) RevokeClaim(ctx sdk.Context, msg MsgRevokeClaim) (sdk.Tags, sdk.
 		return nil, ErrClaimNotFound(msg.ClaimID)
 	}
 
-	if bytes.Equal(claim.Metadata.Issuer, msg.Sender) {
+	if bytes.Equal(claim.Issuer, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
 	}
 
-	claim.Metadata.Revocation = msg.Revocation
+	claim.Revocation = msg.Revocation
 	k.setClaim(ctx, *claim)
 	return nil, nil
 }
@@ -127,7 +129,7 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 		return nil, ErrClaimHasPaid(claim.ID)
 	}
 
-	if bytes.Equal(claim.Metadata.Recipient, msg.Sender) {
+	if bytes.Equal(claim.Recipient, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
 	}
 	allTags := sdk.EmptyTags()
@@ -143,7 +145,7 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 		if err != nil {
 			return nil, err
 		}
-		_, tags2, err := k.coinKeeper.AddCoins(ctx, claim.Metadata.Issuer, claim.Fee)
+		_, tags2, err := k.coinKeeper.AddCoins(ctx, claim.Issuer, claim.Fee)
 		if err != nil {
 			return nil, err
 		}

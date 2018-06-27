@@ -14,11 +14,8 @@ import (
 )
 
 type uPass struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
-	ChainID          string `json:"chain_id"`
-	Sequence         int64  `json:"sequence"`
-	Revocation       string `json:"revocation"`
+	baseBody
+	Revocation string `json:"revocation"`
 }
 
 func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -36,7 +33,7 @@ func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 
 		if m.LocalAccountName == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
+			w.Write([]byte("name is required"))
 			return
 		}
 
@@ -55,7 +52,10 @@ func RevokeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 		msg := buildRevokeMsg(info.PubKey.Address(), vars["id"], m.Revocation)
 
 		// sign
-		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
+		ctx = ctx.WithChainID(m.ChainID)
+		ctx = ctx.WithGas(m.Gas)
+		ctx = ctx.WithAccountNumber(m.AccountNumber)
+		ctx = ctx.WithSequence(m.Sequence)
 		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

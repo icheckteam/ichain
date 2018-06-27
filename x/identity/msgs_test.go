@@ -15,14 +15,11 @@ func TestMsgCreateClaimType(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	addr2 := sdk.Address([]byte("input2"))
 	var msg = MsgCreateClaim{
-		Context: "claim:context",
-		Content: []byte(`{"demo": 1}`),
-		Metadata: Metadata{
-			CreateTime: time.Now(),
-			Expires:    time.Now().Add(time.Hour * 100000),
-			Issuer:     addr,
-			Recipient:  addr2,
-		},
+		Context:   "claim:context",
+		Content:   []byte(`{"demo": 1}`),
+		Expires:   time.Now().Add(time.Hour * 100000).Unix(),
+		Issuer:    addr,
+		Recipient: addr2,
 	}
 	// TODO some failures for bad result
 	assert.Equal(t, msg.Type(), "identity")
@@ -38,61 +35,43 @@ func TestMsgCreateClaimValidation(t *testing.T) {
 	}{
 		{false, MsgCreateClaim{}}, // no id
 		{false, MsgCreateClaim{
-			ID: "1",
+			ClaimID: "1",
 		}}, // no context
 		{false, MsgCreateClaim{
-			ID:      "1",
+			ClaimID: "1",
 			Context: "1212",
 		}}, // no content
 		{false, MsgCreateClaim{
-			ID:      "1",
+			ClaimID: "1",
 			Context: "1212",
 			Content: []byte(`{"demo": 1}`),
 		}}, // no meta
 
 		{false, MsgCreateClaim{
-			ID:      "1",
-			Context: "1",
-			Content: []byte(`{"demo": 1}`),
-			Metadata: Metadata{
-				Recipient: addr,
-			}}}, // no issuer
+			ClaimID:   "1",
+			Context:   "1",
+			Content:   []byte(`{"demo": 1}`),
+			Recipient: addr}},
 		{false, MsgCreateClaim{
-			ID:      "1",
+			ClaimID: "1",
 			Context: "1",
 			Content: []byte(`{"demo": 1}`),
-			Metadata: Metadata{
-				Issuer: addr2,
-			}}}, // no recipient
+			Issuer:  addr2}},
 		{false, MsgCreateClaim{
-			ID:      "1",
-			Context: "1",
-			Content: []byte(`{"demo": 1}`),
-			Metadata: Metadata{
-				Issuer:     addr2,
-				Recipient:  addr,
-				CreateTime: time.Now(),
-			}}}, // no expires
-		{false, MsgCreateClaim{
-			ID:      "1",
-			Context: "1",
-			Content: []byte(`{"demo": 1}`),
-			Metadata: Metadata{
-				Issuer:    addr2,
-				Recipient: addr,
-				Expires:   time.Now(),
-			}}}, // no CreateTime
+			ClaimID:   "1",
+			Context:   "1",
+			Content:   []byte(`{"demo": 1}`),
+			Issuer:    addr2,
+			Recipient: addr}},
 
 		{true, MsgCreateClaim{
-			ID:      "1",
-			Context: "1",
-			Content: []byte(`{"demo": 1}`),
-			Metadata: Metadata{
-				Recipient:  addr,
-				Issuer:     addr2,
-				CreateTime: time.Now(),
-				Expires:    time.Now().Add(time.Hour * 100000),
-			}}},
+			ClaimID:   "1",
+			Context:   "1",
+			Content:   []byte(`{"demo": 1}`),
+			Recipient: addr,
+			Issuer:    addr2,
+			Expires:   time.Now().Add(time.Hour * 100000).Unix(),
+		}},
 	}
 	for i, tc := range cases {
 		err := tc.tx.ValidateBasic()
@@ -114,42 +93,36 @@ func TestCreateMsgGetSignBytes(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	addr1 := sdk.Address([]byte("input1"))
 
-	creatTime, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 	expires, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 
 	var msg = MsgCreateClaim{
-		ID:      "1",
-		Context: "1",
-		Content: []byte(`{"demo": 1}`),
-		Metadata: Metadata{
-			Recipient:  addr,
-			Issuer:     addr1,
-			CreateTime: creatTime,
-			Expires:    expires,
-		}}
+		ClaimID:   "1",
+		Context:   "1",
+		Content:   []byte(`{"demo": 1}`),
+		Recipient: addr,
+		Issuer:    addr1,
+		Expires:   expires.Unix(),
+	}
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"metadata\":{\"create_time\":\"2018-05-11T16:28:45.78807557+07:00\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"expires\":\"2018-05-11T16:28:45.78807557+07:00\",\"revocation\":\"\"},\"fee\":null}")
+	assert.Equal(t, string(res), "{\"claim_id\":\"1\",\"issuer\":\"696E70757431\",\"recipient\":\"696E707574\",\"context\":\"1\",\"content\":\"eyJkZW1vIjogMX0=\",\"fee\":null,\"expires\":1526030925}")
 }
 
 func TestMsgCreateClaimGetSigners(t *testing.T) {
 	addr := sdk.Address([]byte("input"))
 	addr1 := sdk.Address([]byte("input1"))
 
-	creatTime, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 	expiration, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 
 	var msg = MsgCreateClaim{
-		ID:      "1",
-		Context: "1",
-		Content: []byte(`{"demo": 1}`),
-		Metadata: Metadata{
-			Recipient:  addr1,
-			Issuer:     addr,
-			CreateTime: creatTime,
-			Expires:    expiration,
-		}}
+		ClaimID:   "1",
+		Context:   "1",
+		Content:   []byte(`{"demo": 1}`),
+		Recipient: addr1,
+		Issuer:    addr,
+		Expires:   expiration.Unix(),
+	}
 	res := msg.GetSigners()
 	// TODO bad results
 	assert.Equal(t, fmt.Sprintf("%v", res), `[696E707574]`)

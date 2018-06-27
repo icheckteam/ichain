@@ -3,6 +3,7 @@ package identity
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -11,19 +12,21 @@ const msgType = "identity"
 
 // MsgCreateClaim ...
 type MsgCreateClaim struct {
-	ID       string    `json:"id"`
-	Context  string    `json:"context"`
-	Content  Content   `json:"content"`
-	Metadata Metadata  `json:"metadata"`
-	Fee      sdk.Coins `json:"fee"`
+	ClaimID   string      `json:"claim_id"`
+	Issuer    sdk.Address `json:"issuer"`
+	Recipient sdk.Address `json:"recipient"`
+	Context   string      `json:"context"`
+	Content   Content     `json:"content"`
+	Fee       sdk.Coins   `json:"fee"`
+	Expires   int64       `json:"expires"`
 }
 
 // nolint ...
 func (msg MsgCreateClaim) Type() string                            { return msgType }
 func (msg MsgCreateClaim) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgCreateClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Metadata.Issuer} }
+func (msg MsgCreateClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
 func (msg MsgCreateClaim) String() string {
-	return fmt.Sprintf("MsgCreateClaim{Issuer: %v, Recipient: %s, Expires: %s}", msg.Metadata.Issuer, msg.Metadata.Recipient, msg.Metadata.Expires)
+	return fmt.Sprintf("MsgCreateClaim{Issuer: %v, Recipient: %s, Expires: %d}", msg.Issuer, msg.Recipient, msg.Expires)
 }
 
 // GetSignBytes Get the bytes for the message signer to sign on
@@ -37,8 +40,8 @@ func (msg MsgCreateClaim) GetSignBytes() []byte {
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgCreateClaim) ValidateBasic() sdk.Error {
-	if len(msg.ID) == 0 {
-		return sdk.ErrTxDecode("id is requried")
+	if len(msg.ClaimID) == 0 {
+		return sdk.ErrTxDecode("claim_id is requried")
 	}
 	if len(msg.Context) == 0 {
 		return sdk.ErrTxDecode("Context is requried")
@@ -47,19 +50,16 @@ func (msg MsgCreateClaim) ValidateBasic() sdk.Error {
 	if msg.Content == nil {
 		return sdk.ErrTxDecode("Content is requried")
 	}
-	if len(msg.Metadata.Issuer) == 0 {
-		return sdk.ErrTxDecode("Metadata.Issuer is requried")
-	}
-	if msg.Metadata.CreateTime.IsZero() {
-		return sdk.ErrTxDecode("Metadata.CreateTime is requried")
+	if len(msg.Issuer) == 0 {
+		return sdk.ErrTxDecode("issuer is requried")
 	}
 
-	if msg.Metadata.Expires.IsZero() {
-		return sdk.ErrTxDecode("Metadata.expires is requried")
+	if msg.Expires < time.Now().Unix() {
+		return ErrInvalidExpires(msg.Expires)
 	}
 
-	if len(msg.Metadata.Recipient) == 0 {
-		return sdk.ErrInvalidAddress("Metadata.Recipient is requried")
+	if len(msg.Recipient) == 0 {
+		return sdk.ErrInvalidAddress("recipient is requried")
 	}
 	return nil
 }

@@ -1,13 +1,15 @@
 package rest
 
 import (
-	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/icheckteam/ichain/x/identity"
 )
 
@@ -18,7 +20,7 @@ import (
 func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		claim, err := queryClaim(storeName, ctx, cdc, vars["id"])
+		claim, err := queryClaim(ctx, storeName, cdc, vars["id"])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
@@ -40,14 +42,13 @@ func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 func QueryAccountClaims(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		addr := vars["address"]
-		bz, err := hex.DecodeString(addr)
+		addr, err := sdk.GetAccAddressBech32(vars["address"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
-		key := identity.GetAccountClaimsKey(bz)
+		key := identity.GetAccountClaimsKey(addr)
 		kvs, err := ctx.QuerySubspace(cdc, key, storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -64,7 +65,7 @@ func QueryAccountClaims(ctx context.CoreContext, storeName string, cdc *wire.Cod
 				return
 			}
 
-			claim, err := queryClaim(storeName, ctx, cdc, claimID)
+			claim, err := queryClaim(ctx, storeName, cdc, claimID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
@@ -83,17 +84,51 @@ func QueryAccountClaims(ctx context.CoreContext, storeName string, cdc *wire.Cod
 	}
 }
 
-func queryClaim(storeName string, ctx context.CoreContext, cdc *wire.Codec, claimID string) (*identity.Claim, error) {
-	key := identity.GetClaimKey(claimID)
+func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*identity.Claim, error) {
+	key := identity.GetClaimKey(assetID)
 	res, err := ctx.Query(key, storeName)
-	if err != nil {
-		return nil, err
+
+	if res == nil {
+		return nil, errors.New("asset not found")
 	}
-	var claim *identity.Claim
-	err = cdc.UnmarshalBinary(res, claim)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return claim, nil
+	var a identity.Claim
+
+	err = cdc.UnmarshalBinary(res, &a)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func queryAccountClaims(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.Claim, error) {
+	address, err := sdk.GetAccAddressBech32(account)
+	if err != nil {
+		return nil, err
+	}
+
+	items := []identity.Claim{}
+	kvs, err := ctx.QuerySubspace(cdc, asset.GetAccountAssetsKey(address), storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, kv := range kvs {
+		var itemID string
+		err = cdc.UnmarshalBinary(kv.Value, &itemID)
+		if err != nil {
+			return nil, err
+		}
+		item, err := queryClaim(ctx, storeName, cdc, itemID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *item)
+	}
+
+	return items, nil
 }

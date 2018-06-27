@@ -159,6 +159,7 @@ func MakeCodec() *wire.Codec {
 	insurance.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
+	identity.RegisterWire(cdc)
 	// register custom AppAccount
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
 	return cdc
