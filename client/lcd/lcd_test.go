@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/icheckteam/ichain/x/asset"
+	"github.com/icheckteam/ichain/x/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -477,6 +478,92 @@ func TestAsset(t *testing.T) {
 
 }
 
+func TestIdentity(t *testing.T) {
+	name, password, claimID := "test", "1234567890", "tomato"
+	addr, _ := CreateAddr(t, name, password, GetKB(t))
+	recipient, _ := CreateAddr(t, "test2", password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 2, []sdk.Address{addr, recipient})
+	defer cleanup()
+
+	// Create Claim
+	// --------------------------------------
+
+	// query empty
+	res, body := Request(t, port, "GET", "/claims/"+claimID, nil)
+	require.Equal(t, http.StatusNotFound, res.StatusCode, body)
+
+	// create
+	resultTx := doCreateClaim(t, port, name, password, claimID, addr, recipient)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	claim := getClaim(t, port, claimID)
+	assert.Equal(t, claim.ID, claimID)
+
+	// get claims by account
+	claims := getClaimsByAccount(t, port, sdk.MustBech32ifyAcc(recipient))
+	assert.Equal(t, len(claims), 1)
+
+	claims = getClaimsByIssuer(t, port, sdk.MustBech32ifyAcc(addr))
+	assert.Equal(t, len(claims), 1)
+
+	// revoke claim
+	resultTx = doRevokeClaim(t, port, name, password, claimID, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	claim = getClaim(t, port, claimID)
+	assert.Equal(t, claim.Revocation, "1212")
+
+}
+
+func TestAnswer(t *testing.T) {
+	name, password, claimID := "test", "1234567890", "tomato"
+	addr, _ := CreateAddr(t, name, password, GetKB(t))
+	recipient, _ := CreateAddr(t, "test2", password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 2, []sdk.Address{addr, recipient})
+	defer cleanup()
+
+	// Create Claim
+	// --------------------------------------
+
+	// query empty
+	res, body := Request(t, port, "GET", "/claims/"+claimID, nil)
+	require.Equal(t, http.StatusNotFound, res.StatusCode, body)
+
+	// create
+	resultTx := doCreateClaim(t, port, name, password, claimID, addr, recipient)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	claim := getClaim(t, port, claimID)
+	assert.Equal(t, claim.ID, claimID)
+
+	// get claims by account
+	claims := getClaimsByAccount(t, port, sdk.MustBech32ifyAcc(recipient))
+	assert.Equal(t, len(claims), 1)
+
+	claims = getClaimsByIssuer(t, port, sdk.MustBech32ifyAcc(addr))
+	assert.Equal(t, len(claims), 1)
+
+	// revoke claim
+	resultTx = doAnswerClaim(t, port, "test2", password, claimID, recipient)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	claim = getClaim(t, port, claimID)
+	assert.Equal(t, claim.Paid, true)
+
+}
+
 //_____________________________________________________________________________
 // get the account to get the sequence
 func getAccount(t *testing.T, port string, addr sdk.Address) auth.Account {
@@ -746,6 +833,117 @@ func getAsset(t *testing.T, port string, assetID string) asset.Asset {
 	err := cdc.UnmarshalJSON([]byte(body), &asset)
 	require.Nil(t, err)
 	return asset
+}
+
+func getClaim(t *testing.T, port string, claimID string) identity.Claim {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/claims/%s", claimID), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var claim identity.Claim
+	err := cdc.UnmarshalJSON([]byte(body), &claim)
+	require.Nil(t, err)
+	return claim
+}
+
+func getClaimsByAccount(t *testing.T, port string, account string) []identity.Claim {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/claims", account), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var claims []identity.Claim
+	err := cdc.UnmarshalJSON([]byte(body), &claims)
+	require.Nil(t, err)
+	return claims
+}
+
+func getClaimsByIssuer(t *testing.T, port string, account string) []identity.Claim {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/issuer/claims", account), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var claims []identity.Claim
+	err := cdc.UnmarshalJSON([]byte(body), &claims)
+	require.Nil(t, err)
+	return claims
+}
+
+func doCreateClaim(t *testing.T, port, name, password, claimID string, addr sdk.Address, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	receiveAddrBech := sdk.MustBech32ifyAcc(recipient)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"chain_id": "tendermint_test",
+		"account_number":%d, 
+		"sequence": %d, 
+		"gas": 10000,
+
+		"claim_id": "%s",
+		"recipient": "%s",
+		"context": "realname_authentication",
+		"content": { "id": "1", "name": "1"},
+		"expires": 6530291600
+	}`, name, password, accnum, sequence, claimID, receiveAddrBech))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/claims"), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doRevokeClaim(t *testing.T, port, name, password, claimID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"chain_id": "tendermint_test",
+		"account_number":%d, 
+		"sequence": %d, 
+		"gas": 10000,
+		"revocation": "1212"
+	}`, name, password, accnum, sequence))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/claims/%s/revoke", claimID), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doAnswerClaim(t *testing.T, port, name, password, claimID string, addr sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name":"%s", 
+		"password":"%s",
+		"chain_id": "tendermint_test",
+		"account_number":%d, 
+		"sequence": %d, 
+		"gas": 10000,
+		"response": 1
+	}`, name, password, accnum, sequence))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/claims/%s/answer", claimID), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
 }
 
 func doSend(t *testing.T, port, seed, name, password string, addr sdk.Address) (receiveAddr sdk.Address, resultTx ctypes.ResultBroadcastTxCommit) {

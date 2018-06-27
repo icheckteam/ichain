@@ -21,7 +21,7 @@ func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 		vars := mux.Vars(r)
 		claim, err := queryClaim(ctx, storeName, cdc, vars["id"])
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
 			return
 		}
@@ -50,7 +50,7 @@ func QueryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.C
 		key := identity.GetAccountClaimsKey(addr)
 		kvs, err := ctx.QuerySubspace(cdc, key, storeName)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Could't query account claims. Error: %s", err.Error())))
 			return
 		}
@@ -89,7 +89,7 @@ func QueryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Co
 		vars := mux.Vars(r)
 		addr, err := sdk.GetAccAddressBech32(vars["address"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(err.Error()))
 			return
 		}

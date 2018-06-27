@@ -109,8 +109,8 @@ func (k Keeper) RevokeClaim(ctx sdk.Context, msg MsgRevokeClaim) (sdk.Tags, sdk.
 		return nil, ErrClaimNotFound(msg.ClaimID)
 	}
 
-	if bytes.Equal(claim.Issuer, msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
+	if !bytes.Equal(claim.Issuer, msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to revoke", msg.Sender))
 	}
 
 	claim.Revocation = msg.Revocation
@@ -129,7 +129,7 @@ func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.
 		return nil, ErrClaimHasPaid(claim.ID)
 	}
 
-	if bytes.Equal(claim.Recipient, msg.Sender) {
+	if !bytes.Equal(claim.Recipient, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
 	}
 	allTags := sdk.EmptyTags()

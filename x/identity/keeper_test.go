@@ -58,14 +58,26 @@ func TestKeeper(t *testing.T) {
 	_, err := keeper.CreateClaim(ctx, msgCreateClaim2)
 	assert.True(t, err != nil)
 
-	msgAnswerClaim := MsgAnswerClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr}
+	// invalid owner
+	msgAnswerClaim := MsgAnswerClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr1}
+	_, err = keeper.AnswerClaim(ctx, msgAnswerClaim)
+	assert.True(t, err == nil)
+
+	msgAnswerClaim = MsgAnswerClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr}
 	keeper.AnswerClaim(ctx, msgAnswerClaim)
 	newClaim = keeper.GetClaim(ctx, msgAnswerClaim.ClaimID)
 	assert.True(t, newClaim.Paid == true)
 
 	// Test Revoke Claim
 	// ------------------------------------------------------------
-	msgRevokeClaim := MsgRevokeClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr1, Revocation: "323232"}
+
+	// invalid issuer
+	msgRevokeClaim := MsgRevokeClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr, Revocation: "323232"}
+	_, err = keeper.RevokeClaim(ctx, msgRevokeClaim)
+	assert.True(t, err == nil)
+
+	// valid
+	msgRevokeClaim = MsgRevokeClaim{ClaimID: msgCreateClaim.ClaimID, Sender: addr1, Revocation: "323232"}
 	keeper.RevokeClaim(ctx, msgRevokeClaim)
 	newClaim = keeper.GetClaim(ctx, msgCreateClaim.ClaimID)
 	assert.True(t, newClaim.Revocation == "323232")
