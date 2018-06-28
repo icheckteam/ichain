@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/icheckteam/ichain/x/asset"
+	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	"github.com/icheckteam/ichain/x/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -462,7 +462,7 @@ func TestAsset(t *testing.T) {
 	resultTx = doCreateReporter(t, port, name, password, assetName, addr, recipient)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, asset.Reporters[0].Addr, recipient)
+	assert.Equal(t, asset.Reporters[0].Addr, sdk.MustBech32ifyAcc(recipient))
 
 	// doRevokeReporter
 	resultTx = doRevokeReporter(t, port, name, password, assetName, addr, asset.Reporters[0].Addr)
@@ -474,7 +474,7 @@ func TestAsset(t *testing.T) {
 	resultTx = doTransferAsset(t, port, name, password, assetName, addr, recipient)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	asset = getAsset(t, port, assetName)
-	assert.Equal(t, asset.Owner, recipient)
+	assert.Equal(t, asset.Owner, sdk.MustBech32ifyAcc(recipient))
 
 }
 
@@ -623,7 +623,7 @@ func doUpdateProperties(t *testing.T, port, name, password, assetID, propName st
 		"properties": [
 			{"name": "%s", "type": %d, "string_value": "%s"}
 		]
-	}`, name, password, accnum, sequence, propName, asset.PropertyTypeString, propName))
+	}`, name, password, accnum, sequence, propName, 2, propName))
 
 	res, body := Request(t, port, "POST", "/assets/"+assetID+"/properties", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -800,11 +800,10 @@ func doCreateReporter(t *testing.T, port, name, password, assetID string, addr, 
 	return resultTx
 }
 
-func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr sdk.Address, recipient sdk.Address) (resultTx ctypes.ResultBroadcastTxCommit) {
+func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr sdk.Address, recipient string) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	receiveAddrBech := sdk.MustBech32ifyAcc(recipient)
 	// send
 	jsonStr := []byte(fmt.Sprintf(`{
 		"name":"%s", 
@@ -815,7 +814,7 @@ func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr s
 		"gas": 10000
 	}`, name, password, accnum, sequence))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/reporters/%s/revoke", assetID, receiveAddrBech), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/%s/reporters/%s/revoke", assetID, recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -825,14 +824,14 @@ func doRevokeReporter(t *testing.T, port, name, password, assetID string, addr s
 	return resultTx
 }
 
-func getAsset(t *testing.T, port string, assetID string) asset.Asset {
+func getAsset(t *testing.T, port string, assetID string) asset.AssetOutput {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s", assetID), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var asset asset.Asset
-	err := cdc.UnmarshalJSON([]byte(body), &asset)
+	var a asset.AssetOutput
+	err := cdc.UnmarshalJSON([]byte(body), &a)
 	require.Nil(t, err)
-	return asset
+	return a
 }
 
 func getClaim(t *testing.T, port string, claimID string) identity.Claim {

@@ -19,6 +19,11 @@ var (
 		Sender:   addr,
 		Name:     "asset 1",
 		Quantity: 100,
+		Properties: Properties{Property{
+			Name:        "unit",
+			Type:        PropertyTypeString,
+			StringValue: "kg",
+		}},
 	}
 
 	asset2 = MsgCreateAsset{
@@ -50,6 +55,14 @@ var (
 		Quantity: 100,
 		Parent:   "asset4",
 	}
+
+	assetParentNotfound = MsgCreateAsset{
+		AssetID:  "asset5",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: 100,
+		Parent:   "asset4",
+	}
 )
 
 func TestKeeper(t *testing.T) {
@@ -64,6 +77,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Owner.String() == asset.Sender.String())
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity == asset.Quantity)
+	assert.True(t, newAsset.Unit == "kg")
 
 	keeper.CreateAsset(ctx, asset2)
 	keeper.CreateAsset(ctx, asset3)
@@ -87,6 +101,17 @@ func TestKeeper(t *testing.T) {
 	newAsset, _ = keeper.GetAsset(ctx, assetChild1.AssetID)
 	assert.True(t, newAsset.Parent == assetChild.AssetID)
 	assert.True(t, newAsset.Root == asset3.AssetID)
+
+	// invalid parent
+	msgCreateAsset := MsgCreateAsset{
+		AssetID:  "asset5",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: 100,
+		Parent:   "asset45",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
 
 	// -----------------------------------------
 	// Test Add Materials
@@ -139,11 +164,23 @@ func TestKeeper(t *testing.T) {
 	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
 	assert.True(t, newAsset.Final == true)
 
+	// invalid sender
 	msgFinalize = MsgFinalize{
 		Sender:  addrs[0],
 		AssetID: assetChild1.AssetID,
 	}
 	_, err = keeper.Finalize(ctx, msgFinalize)
+	assert.True(t, err != nil)
+
+	// create asset invalid parent
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "asset5",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: 100,
+		Parent:   assetChild1.AssetID,
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
 	assert.True(t, err != nil)
 
 	//-------------------------------------------------

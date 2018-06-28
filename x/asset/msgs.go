@@ -18,7 +18,6 @@ type MsgCreateAsset struct {
 	Name       string      `json:"name"`
 	Quantity   int64       `json:"quantity"`
 	Parent     string      `json:"parent"` // the id of the  parent asset
-	Materials  Materials   `json:"materials"`
 	Properties Properties  `json:"properties"`
 	Precision  int         `json:"precision"`
 }

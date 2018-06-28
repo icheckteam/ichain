@@ -16,13 +16,14 @@ type Asset struct {
 	Reporters  Reporters   `json:"reporters"`
 	Parent     string      `json:"parent"` // the id of the asset parent
 	Root       string      `json:"root"`   // the id of the asset root
-	Quantity   int64       `json:"quantity"`
 	Company    string      `json:"company"`
 	Email      string      `json:"email"`
 	Final      bool        `json:"final"`
 	Properties Properties  `json:"properties"`
 	Materials  Materials   `json:"materials"`
 	Precision  int         `json:"precision"`
+	Quantity   int64       `json:"quantity"`
+	Unit       string      `json:"unit"`
 	Created    int64       `json:"created"`
 }
 

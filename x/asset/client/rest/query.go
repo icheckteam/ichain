@@ -29,7 +29,7 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 			return
 		}
 
-		output, err := cdc.MarshalJSON(a)
+		output, err := cdc.MarshalJSON(ToAssetOutput(*a))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -49,7 +49,7 @@ func QueryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
-		output, err := cdc.MarshalJSON(items)
+		output, err := cdc.MarshalJSON(ToAssetsOutput(items))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -69,7 +69,7 @@ func QueryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
-		output, err := cdc.MarshalJSON(items)
+		output, err := cdc.MarshalJSON(ToAssetsOutput(items))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))

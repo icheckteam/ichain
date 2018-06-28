@@ -47,7 +47,20 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		"asset_id", []byte(msg.AssetID),
 		"sender", []byte(msg.Sender.String()),
 	)
-	var assetRoot string
+
+	newAsset := Asset{
+		ID:        msg.AssetID,
+		Type:      msg.AssetType,
+		Name:      msg.Name,
+		Owner:     msg.Sender,
+		Quantity:  msg.Quantity,
+		Parent:    msg.Parent,
+		Final:     false,
+		Precision: msg.Precision,
+		Height:    ctx.BlockHeight(),
+		Created:   ctx.BlockHeader().Time,
+	}
+
 	if len(msg.Parent) > 0 {
 		// get asset to check quantity and check authorized
 		parent, found := k.GetAsset(ctx, msg.Parent)
@@ -71,42 +84,42 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			parent.Final = true
 		}
 
+		if len(parent.Root) > 0 {
+			newAsset.Root = parent.Root
+		} else {
+			newAsset.Root = parent.ID
+		}
 		// save parent asset to store
 		k.setAsset(ctx, parent)
-		if len(parent.Root) > 0 {
-			assetRoot = parent.Root
-		} else {
-			assetRoot = parent.ID
-		}
-
 		tags = tags.AppendTag("asset_id", []byte(parent.ID))
-	}
 
-	asset := Asset{
-		ID:        msg.AssetID,
-		Type:      msg.AssetType,
-		Name:      msg.Name,
-		Owner:     msg.Sender,
-		Quantity:  msg.Quantity,
-		Root:      assetRoot,
-		Parent:    msg.Parent,
-		Final:     false,
-		Precision: msg.Precision,
-		Height:    ctx.BlockHeight(),
-		Created:   ctx.BlockHeader().Time,
+		newAsset.Properties = parent.Properties
+		newAsset.Materials = parent.Materials
+		newAsset.Unit = parent.Unit
+		newAsset.Precision = parent.Precision
 	}
 
 	if len(msg.Properties) > 0 {
-		asset.Properties = msg.Properties.Sort()
+		newAsset.Properties.Adds(msg.Properties...)
+	}
+
+	// update unix
+	if len(newAsset.Unit) == 0 {
+		for _, prop := range msg.Properties {
+			if prop.Name == "unit" {
+				newAsset.Unit = prop.StringValue
+				break
+			}
+		}
 	}
 
 	// update asset info
-	k.setAsset(ctx, asset)
-	k.setAssetByAccountIndex(ctx, asset)
+	k.setAsset(ctx, newAsset)
+	k.setAssetByAccountIndex(ctx, newAsset)
 
-	if len(asset.Parent) > 0 {
+	if len(newAsset.Parent) > 0 {
 		// index by parent
-		k.setAssetByParentIndex(ctx, asset)
+		k.setAssetByParentIndex(ctx, newAsset)
 	}
 
 	return tags, nil
