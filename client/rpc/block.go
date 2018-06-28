@@ -52,6 +52,31 @@ func getBlock(ctx context.CoreContext, cdc *wire.Codec, height *int64) ([]byte, 
 		return nil, err
 	}
 
+	// TODO move maarshalling into cmd/rest functions
+	// output, err := tmwire.MarshalJSON(res)
+	output, err := cdc.MarshalJSON(res)
+	if err != nil {
+		return nil, err
+	}
+	return output, nil
+}
+
+func getBlockWithTxs(ctx context.CoreContext, cdc *wire.Codec, height *int64) ([]byte, error) {
+	// get the node
+	node, err := ctx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: actually honor the --select flag!
+	// header -> BlockchainInfo
+	// header, tx -> Block
+	// results -> BlockResults
+	res, err := node.Block(height)
+	if err != nil {
+		return nil, err
+	}
+
 	txs := []sdk.Tx{}
 	for _, txBytes := range res.Block.Txs {
 		tx, _ := parseTx(cdc, txBytes)
@@ -143,6 +168,31 @@ func BlockRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Handle
 			return
 		}
 		output, err := getBlock(ctx, cdc, &height)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(output)
+	}
+}
+
+func BlockTxsRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		height, err := strconv.ParseInt(vars["height"], 10, 64)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte("ERROR: Couldn't parse block height. Assumed format is '/block/{height}'."))
+			return
+		}
+		chainHeight, err := GetChainHeight(ctx)
+		if height > chainHeight {
+			w.WriteHeader(404)
+			w.Write([]byte("ERROR: Requested block height is bigger then the chain length."))
+			return
+		}
+		output, err := getBlockWithTxs(ctx, cdc, &height)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))

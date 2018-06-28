@@ -50,6 +50,7 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec) {
 	r.HandleFunc("/syncing", NodeSyncingRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/blocks/latest", LatestBlockRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/blocks/{height}", BlockRequestHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc("/blocks/{height}/txs", BlockTxsRequestHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc("/validatorsets/latest", LatestValidatorSetRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/validatorsets/{height}", ValidatorSetRequestHandlerFn(ctx)).Methods("GET")
 }
