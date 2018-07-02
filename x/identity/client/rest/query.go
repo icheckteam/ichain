@@ -54,7 +54,7 @@ func QueryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.C
 			w.Write([]byte(fmt.Sprintf("Could't query account claims. Error: %s", err.Error())))
 			return
 		}
-		claims := []identity.Claim{}
+		claims := []identity.ClaimRest{}
 		for _, kv := range kvs {
 			var claimID string
 			err = cdc.UnmarshalBinary(kv.Value, &claimID)
@@ -100,7 +100,7 @@ func QueryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Co
 			w.Write([]byte(fmt.Sprintf("Could't query issuer claims. Error: %s", err.Error())))
 			return
 		}
-		claims := []identity.Claim{}
+		claims := []identity.ClaimRest{}
 		for _, kv := range kvs {
 			var claimID string
 			err = cdc.UnmarshalBinary(kv.Value, &claimID)
@@ -129,7 +129,7 @@ func QueryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Co
 	}
 }
 
-func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*identity.Claim, error) {
+func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*identity.ClaimRest, error) {
 	key := identity.GetClaimKey(assetID)
 	res, err := ctx.Query(key, storeName)
 
@@ -141,7 +141,7 @@ func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, asse
 		return nil, err
 	}
 
-	var a identity.Claim
+	var a identity.ClaimRest
 
 	err = cdc.UnmarshalBinary(res, &a)
 	if err != nil {
@@ -150,13 +150,13 @@ func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, asse
 	return &a, nil
 }
 
-func queryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.Claim, error) {
+func queryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.ClaimRest, error) {
 	address, err := sdk.GetAccAddressBech32(account)
 	if err != nil {
 		return nil, err
 	}
 
-	items := []identity.Claim{}
+	items := []identity.ClaimRest{}
 	kvs, err := ctx.QuerySubspace(cdc, identity.GetAccountClaimsKey(address), storeName)
 	if err != nil {
 		return nil, err
@@ -178,13 +178,13 @@ func queryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.C
 	return items, nil
 }
 
-func queryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.Claim, error) {
+func queryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.ClaimRest, error) {
 	address, err := sdk.GetAccAddressBech32(account)
 	if err != nil {
 		return nil, err
 	}
 
-	items := []identity.Claim{}
+	items := []identity.ClaimRest{}
 	kvs, err := ctx.QuerySubspace(cdc, identity.GetIssuerClaimsKey(address), storeName)
 	if err != nil {
 		return nil, err

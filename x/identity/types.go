@@ -50,3 +50,29 @@ func (j *Content) UnmarshalJSON(data []byte) error {
 	*j = append((*j)[0:0], data...)
 	return nil
 }
+
+type ClaimRest struct {
+	ID         string    `json:"id"`
+	Issuer     string    `json:"issuer"`
+	Recipient  string    `json:"recipient"`
+	Context    string    `json:"context"`
+	Content    Content   `json:"content"`
+	Fee        sdk.Coins `json:"fee"`
+	Paid       bool      `json:"paid"`
+	CreateTime int64     `json:"create_time"`
+	Expires    int64     `json:"expires"`
+	Revocation string    `json:"revocation"`
+}
+
+func ClaimToRest(claim Claim) ClaimRest {
+	return ClaimRest{
+		ID:         claim.ID,
+		Issuer:     sdk.MustBech32ifyAcc(claim.Issuer),
+		Recipient:  sdk.MustBech32ifyAcc(claim.Recipient),
+		Context:    claim.Context,
+		Content:    claim.Content,
+		Expires:    claim.Expires,
+		CreateTime: claim.CreateTime,
+		Revocation: claim.Revocation,
+	}
+}

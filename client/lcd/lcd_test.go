@@ -834,31 +834,31 @@ func getAsset(t *testing.T, port string, assetID string) asset.AssetOutput {
 	return a
 }
 
-func getClaim(t *testing.T, port string, claimID string) identity.Claim {
+func getClaim(t *testing.T, port string, claimID string) identity.ClaimRest {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/claims/%s", claimID), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var claim identity.Claim
+	var claim identity.ClaimRest
 	err := cdc.UnmarshalJSON([]byte(body), &claim)
 	require.Nil(t, err)
 	return claim
 }
 
-func getClaimsByAccount(t *testing.T, port string, account string) []identity.Claim {
+func getClaimsByAccount(t *testing.T, port string, account string) []identity.ClaimRest {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/claims", account), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var claims []identity.Claim
+	var claims []identity.ClaimRest
 	err := cdc.UnmarshalJSON([]byte(body), &claims)
 	require.Nil(t, err)
 	return claims
 }
 
-func getClaimsByIssuer(t *testing.T, port string, account string) []identity.Claim {
+func getClaimsByIssuer(t *testing.T, port string, account string) []identity.ClaimRest {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/issuer/claims", account), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var claims []identity.Claim
+	var claims []identity.ClaimRest
 	err := cdc.UnmarshalJSON([]byte(body), &claims)
 	require.Nil(t, err)
 	return claims
