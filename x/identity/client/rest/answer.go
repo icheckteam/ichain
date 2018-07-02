@@ -57,34 +57,6 @@ func AnswerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) 
 			Response: m.Response,
 			ClaimID:  vars["id"],
 		}
-
-		// sign
-		ctx = ctx.WithChainID(m.ChainID)
-		ctx = ctx.WithGas(m.Gas)
-		ctx = ctx.WithAccountNumber(m.AccountNumber)
-		ctx = ctx.WithSequence(m.Sequence)
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		// send
-		res, err := ctx.BroadcastTx(txBytes)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		output, err := json.MarshalIndent(res, "", "  ")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		signAndBuild(ctx, cdc, w, m.baseBody, msg)
 	}
 }
