@@ -91,6 +91,7 @@ var (
 		Sender:   addr1,
 		Name:     "asset1",
 		Quantity: 10,
+		Unit:     "kg",
 	}
 )
 
