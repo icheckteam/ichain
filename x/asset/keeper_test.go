@@ -18,6 +18,7 @@ var (
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 1",
+		Unit:     "kg",
 		Quantity: 100,
 		Properties: Properties{Property{
 			Name:        "unit",

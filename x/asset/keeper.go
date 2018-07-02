@@ -59,6 +59,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Precision: msg.Precision,
 		Height:    ctx.BlockHeight(),
 		Created:   ctx.BlockHeader().Time,
+		Unit:      msg.Unit,
 	}
 
 	if len(msg.Parent) > 0 {
@@ -101,16 +102,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	if len(msg.Properties) > 0 {
 		newAsset.Properties.Adds(msg.Properties...)
-	}
-
-	// update unix
-	if len(newAsset.Unit) == 0 {
-		for _, prop := range msg.Properties {
-			if prop.Name == "unit" {
-				newAsset.Unit = prop.StringValue
-				break
-			}
-		}
 	}
 
 	// update asset info

@@ -20,6 +20,7 @@ type MsgCreateAsset struct {
 	Parent     string      `json:"parent"` // the id of the  parent asset
 	Properties Properties  `json:"properties"`
 	Precision  int         `json:"precision"`
+	Unit       string      `json:"unit"`
 }
 
 // NewMsgCreateAsset new record create msg
@@ -60,6 +61,10 @@ func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
 
 	if msg.Quantity == 0 {
 		return ErrMissingField("asset_quantity")
+	}
+
+	if msg.Unit == "" {
+		return ErrMissingField("unit")
 	}
 
 	return nil

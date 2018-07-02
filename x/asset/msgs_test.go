@@ -53,10 +53,11 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 		valid bool
 		tx    MsgCreateAsset
 	}{
-		{false, MsgCreateAsset{}},                                                       // no asset info
-		{false, MsgCreateAsset{Sender: addr1, Quantity: 0, Name: "name", AssetID: "1"}}, // missing quantity
-		{false, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name"}},               // missing id
-		{true, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name", AssetID: "1"}},  //
+		{false, MsgCreateAsset{}},                                                                  // no asset info
+		{false, MsgCreateAsset{Sender: addr1, Quantity: 0, Name: "name", AssetID: "1"}},            // missing quantity
+		{false, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name"}},                          // missing id
+		{false, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name", AssetID: "1"}},            //
+		{true, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name", AssetID: "1", Unit: "kg"}}, //
 	}
 
 	for i, tc := range cases {
@@ -88,7 +89,7 @@ func TestRegisterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1212","asset_type":"","name":"name","quantity":1,"parent":"","properties":null,"precision":0}`)
+	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1212","asset_type":"","name":"name","quantity":1,"parent":"","properties":null,"precision":0,"unit":""}`)
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {

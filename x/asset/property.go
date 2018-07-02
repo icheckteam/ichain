@@ -107,13 +107,6 @@ func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.
 		if !authorized {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 		}
-		// Update unit
-		if asset.Unit == "" {
-			if attr.Name == "unit" {
-				asset.Unit = attr.StringValue
-				break
-			}
-		}
 	}
 
 	// update all Properties
