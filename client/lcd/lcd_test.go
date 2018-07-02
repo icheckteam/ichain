@@ -592,7 +592,8 @@ func doCreateAsset(t *testing.T, port, name, password, assetName string, addr sd
 		"asset": {
 			"name": "%s",
 			"asset_id": "%s",
-			"quantity": %d
+			"quantity": %d,
+			"unit": "kg"
 		}
 	}`, name, password, accnum, sequence, assetName, assetName, 100))
 
