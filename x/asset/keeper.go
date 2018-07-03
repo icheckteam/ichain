@@ -188,8 +188,9 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 		return nil, ErrInvalidAssetRoot(asset.ID)
 	}
 
-	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
+	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 	asset.Quantity += msg.Quantity
 	k.setAsset(ctx, asset)
@@ -211,8 +212,9 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 		return nil, ErrAssetAlreadyFinal(asset.ID)
 	}
 
-	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to sbutract", msg.Sender))
+	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
 	}
 
 	if asset.Quantity < msg.Quantity {
