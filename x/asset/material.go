@@ -93,8 +93,9 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
 	}
 
-	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
+	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "materials"})
+	if !authorized {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
 	}
 	// subtract quantity
 	materialsToSave := []Asset{}
