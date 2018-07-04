@@ -94,8 +94,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		k.setAsset(ctx, parent)
 		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 
-		newAsset.Properties = parent.Properties
-		newAsset.Materials = parent.Materials
 		newAsset.Unit = parent.Unit
 		newAsset.Precision = parent.Precision
 	}
