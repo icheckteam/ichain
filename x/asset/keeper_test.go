@@ -346,6 +346,108 @@ func TestFinalize(t *testing.T) {
 
 }
 
+func TestSubtractQuantity(t *testing.T) {
+	ctx, _, keeper := createTestInput(t, false, 0)
+
+	// create asset
+	msgCreateAsset := MsgCreateAsset{
+		AssetID:  "asset1",
+		Sender:   addr,
+		Name:     "asset 1",
+		Unit:     "kg",
+		Quantity: 100,
+	}
+	keeper.CreateAsset(ctx, msgCreateAsset)
+
+	// invalid asset
+	msgSubtractQuantity := MsgSubtractQuantity{
+		AssetID:  "45345",
+		Sender:   addr,
+		Quantity: 102,
+	}
+	_, err := keeper.SubtractQuantity(ctx, msgSubtractQuantity)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgSubtractQuantity = MsgSubtractQuantity{
+		AssetID:  msgCreateAsset.AssetID,
+		Sender:   addr2,
+		Quantity: 102,
+	}
+	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgSubtractQuantity = MsgSubtractQuantity{
+		AssetID:  msgCreateAsset.AssetID,
+		Sender:   addr2,
+		Quantity: 102,
+	}
+	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
+	assert.True(t, err != nil)
+
+	msgFinalize := MsgFinalize{
+		Sender:  addr,
+		AssetID: msgCreateAsset.AssetID,
+	}
+	keeper.Finalize(ctx, msgFinalize)
+
+	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
+	assert.True(t, err != nil)
+
+}
+
+func TestAddQuantity(t *testing.T) {
+	ctx, _, keeper := createTestInput(t, false, 0)
+
+	// create asset
+	msgCreateAsset := MsgCreateAsset{
+		AssetID:  "asset1",
+		Sender:   addr,
+		Name:     "asset 1",
+		Unit:     "kg",
+		Quantity: 100,
+	}
+	keeper.CreateAsset(ctx, msgCreateAsset)
+
+	// invalid asset
+	msgAddQuantity := MsgAddQuantity{
+		AssetID:  "45345",
+		Sender:   addr,
+		Quantity: 102,
+	}
+	_, err := keeper.AddQuantity(ctx, msgAddQuantity)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddQuantity = MsgAddQuantity{
+		AssetID:  msgCreateAsset.AssetID,
+		Sender:   addr2,
+		Quantity: 102,
+	}
+	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddQuantity = MsgAddQuantity{
+		AssetID:  msgCreateAsset.AssetID,
+		Sender:   addr2,
+		Quantity: 102,
+	}
+	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
+	assert.True(t, err != nil)
+
+	msgFinalize := MsgFinalize{
+		Sender:  addr,
+		AssetID: msgCreateAsset.AssetID,
+	}
+	keeper.Finalize(ctx, msgFinalize)
+
+	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
+	assert.True(t, err != nil)
+
+}
+
 func TestCreateReporter(t *testing.T) {
 	ctx, _, keeper := createTestInput(t, false, 0)
 

@@ -105,7 +105,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	}
 
 	// update asset info
-	k.setAsset(ctx, newAsset)
+	k.SetAsset(ctx, newAsset)
 	k.setAssetByAccountIndex(ctx, newAsset)
 
 	if len(newAsset.Parent) > 0 {
@@ -140,11 +140,6 @@ func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(asset.ID)
 	store.Set(GetAssetChildrenKey(asset.Parent, asset.ID), bz)
-}
-
-func (k Keeper) removeAssetByParentIndex(ctx sdk.Context, asset Asset) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAssetChildrenKey(asset.Parent, asset.ID))
 }
 
 // set the main record holding asset details
