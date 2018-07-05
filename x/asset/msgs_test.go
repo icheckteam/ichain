@@ -170,7 +170,7 @@ func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1\",\"properties\":[{\"name\":\"weight\",\"type\":3,\"bytes_value\":null,\"string_value\":\"\",\"boolean_value\":false,\"number_value\":100,\"enum_value\":null,\"location_value\":{\"latitude\":\"\",\"longitude\":\"\"},\"precision\":0}]}")
+	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1","properties":[{"name":"weight","type":3,"number_value":100,"location_value":{"latitude":0,"longitude":0}}]}`)
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {

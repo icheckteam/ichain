@@ -12,18 +12,17 @@ import (
 type Property struct {
 	Name         string       `json:"name"`
 	Type         PropertyType `json:"type"`
-	BytesValue   []byte       `json:"bytes_value"`
-	StringValue  string       `json:"string_value"`
-	BooleanValue bool         `json:"boolean_value"`
-	NumberValue  int64        `json:"number_value"`
-	EnumValue    []string     `json:"enum_value"`
-	Location     Location     `json:"location_value"`
-	Precision    int          `json:"precision"`
+	BytesValue   []byte       `json:"bytes_value,omitempty"`
+	StringValue  string       `json:"string_value,omitempty"`
+	BooleanValue bool         `json:"boolean_value,omitempty"`
+	NumberValue  int64        `json:"number_value,omitempty"`
+	EnumValue    []string     `json:"enum_value,omitempty"`
+	Location     Location     `json:"location_value,omitempty"`
 }
 
 type Location struct {
-	Latitude  string `json:"latitude"`
-	Longitude string `json:"longitude"`
+	Latitude  int64 `json:"latitude"`
+	Longitude int64 `json:"longitude"`
 }
 
 // list all properties
