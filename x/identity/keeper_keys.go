@@ -1,23 +1,35 @@
 package identity
 
+import sdk "github.com/cosmos/cosmos-sdk/types"
+
 var (
-	// ClaimRecordKeyPrefix for store prefixes
-	ClaimRecordKeyPrefix   = []byte{0x00} // prefix for each key to a candidate
-	ClaimsAccountKeyPrefix = []byte{0x01}
-	ClaimsOwnerKeyPrefix   = []byte{0x02}
+	// AccountClaimsKey for store prefixes
+	AccountClaimsKey = []byte{0x00}
+	IssuerClaimsKey  = []byte{0x02}
+	ClaimKey         = []byte{0x01}
 )
 
-// GetClaimRecordKey ...
-func GetClaimRecordKey(uuid string) []byte {
-	return append(ClaimRecordKeyPrefix, []byte(uuid)...)
+// GetAccoGetClaimKeyuntClaimKey get the key for an account for a claim
+func GetClaimKey(claimID string) []byte {
+	return append(ClaimKey, []byte(claimID)...)
 }
 
-// GetClaimRecordKey ...
-func GetClaimsAccountKey(addr []byte) []byte {
-	return append(ClaimsAccountKeyPrefix, addr...)
+// GetAccountClaimKey get the key for an account for a claim
+func GetAccountClaimKey(addr sdk.Address, claimID string) []byte {
+	return append(GetAccountClaimsKey(addr), []byte(claimID)...)
 }
 
-// GetClaimRecordKey ...
-func GetClaimsOwnerKey(addr []byte) []byte {
-	return append(ClaimsOwnerKeyPrefix, addr...)
+// GetAccountClaimsKey get the key for an account for all claims
+func GetAccountClaimsKey(addr sdk.Address) []byte {
+	return append(AccountClaimsKey, []byte(addr.String())...)
+}
+
+// GetIssuerClaimKey
+func GetIssuerClaimKey(addr sdk.Address, claimID string) []byte {
+	return append(GetIssuerClaimsKey(addr), []byte(claimID)...)
+}
+
+// GetIssuerClaimsKey
+func GetIssuerClaimsKey(addr sdk.Address) []byte {
+	return append(IssuerClaimsKey, []byte(addr.String())...)
 }

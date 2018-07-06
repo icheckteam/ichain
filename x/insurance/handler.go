@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 import (
 	"fmt"
@@ -32,10 +32,13 @@ func handleCreateClaim(ctx sdk.Context, k Keeper, msg MsgCreateClaim) sdk.Result
 }
 
 func handleCreateContract(ctx sdk.Context, k Keeper, msg MsgCreateContract) sdk.Result {
-	if err := k.CreateContract(ctx, msg); err != nil {
+	tags, err := k.CreateContract(ctx, msg)
+	if err != nil {
 		return err.Result()
 	}
-	return sdk.Result{}
+	return sdk.Result{
+		Tags: tags,
+	}
 }
 
 func handleProcessClaim(ctx sdk.Context, k Keeper, msg MsgProcessClaim) sdk.Result {

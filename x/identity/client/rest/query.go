@@ -1,11 +1,12 @@
 package rest
 
 import (
-	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
@@ -18,18 +19,9 @@ import (
 func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assetID := vars["id"]
-		key := identity.GetClaimRecordKey(assetID)
-		res, err := ctx.Query(key, storeName)
+		claim, err := queryClaim(ctx, storeName, cdc, vars["id"])
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query asset. Error: %s", err.Error())))
-			return
-		}
-		var claim identity.Claim
-		err = cdc.UnmarshalBinary(res, &claim)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
 			return
 		}
@@ -45,37 +37,40 @@ func QueryClaimRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 	}
 }
 
-// QueryClaimsOwner
-func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
-	ctx := context.NewCoreContextFromViper()
+// QueryClaimsByAccount
+func QueryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		addr := vars["address"]
-		bz, err := hex.DecodeString(addr)
+		addr, err := sdk.GetAccAddressBech32(vars["address"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
-		key := identity.GetClaimsAccountKey(bz)
-		res, err := ctx.Query(key, storeName)
+		key := identity.GetAccountClaimsKey(addr)
+		kvs, err := ctx.QuerySubspace(cdc, key, storeName)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Could't query claim. Error: %s", err.Error())))
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Could't query account claims. Error: %s", err.Error())))
 			return
 		}
-		claimIDS := []string{}
-		err = cdc.UnmarshalBinary(res, &claimIDS)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
-			return
-		}
-		claims, err := getClaimsByIDS(storeName, ctx, cdc, claimIDS)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
-			return
+		claims := []identity.ClaimRest{}
+		for _, kv := range kvs {
+			var claimID string
+			err = cdc.UnmarshalBinary(kv.Value, &claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+
+			claim, err := queryClaim(ctx, storeName, cdc, claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+			claims = append(claims, *claim)
 		}
 		output, err := cdc.MarshalJSON(claims)
 		if err != nil {
@@ -88,20 +83,125 @@ func QueryClaimsAccount(storeName string, cdc *wire.Codec) http.HandlerFunc {
 	}
 }
 
-func getClaimsByIDS(storeName string, ctx context.CoreContext, cdc *wire.Codec, ids []string) ([]identity.Claim, error) {
-	claims := []identity.Claim{}
-	for _, id := range ids {
-		claim := identity.Claim{}
-		key := identity.GetClaimRecordKey(id)
-		res, err := ctx.Query(key, storeName)
+// QueryClaimsByIssuer
+func QueryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		addr, err := sdk.GetAccAddressBech32(vars["address"])
 		if err != nil {
-			return nil, err
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(err.Error()))
+			return
 		}
-		err = cdc.UnmarshalBinary(res, &claim)
+		key := identity.GetIssuerClaimsKey(addr)
+		kvs, err := ctx.QuerySubspace(cdc, key, storeName)
 		if err != nil {
-			return nil, err
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Could't query issuer claims. Error: %s", err.Error())))
+			return
 		}
-		claims = append(claims, claim)
+		claims := []identity.ClaimRest{}
+		for _, kv := range kvs {
+			var claimID string
+			err = cdc.UnmarshalBinary(kv.Value, &claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+
+			claim, err := queryClaim(ctx, storeName, cdc, claimID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode claim. Error: %s", err.Error())))
+				return
+			}
+			claims = append(claims, *claim)
+		}
+		output, err := cdc.MarshalJSON(claims)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
 	}
-	return claims, nil
+}
+
+func queryClaim(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*identity.ClaimRest, error) {
+	key := identity.GetClaimKey(assetID)
+	res, err := ctx.Query(key, storeName)
+
+	if res == nil {
+		return nil, errors.New("asset not found")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var a identity.ClaimRest
+
+	err = cdc.UnmarshalBinary(res, &a)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func queryClaimsByAccount(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.ClaimRest, error) {
+	address, err := sdk.GetAccAddressBech32(account)
+	if err != nil {
+		return nil, err
+	}
+
+	items := []identity.ClaimRest{}
+	kvs, err := ctx.QuerySubspace(cdc, identity.GetAccountClaimsKey(address), storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, kv := range kvs {
+		var itemID string
+		err = cdc.UnmarshalBinary(kv.Value, &itemID)
+		if err != nil {
+			return nil, err
+		}
+		item, err := queryClaim(ctx, storeName, cdc, itemID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *item)
+	}
+
+	return items, nil
+}
+
+func queryClaimsByIssuer(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]identity.ClaimRest, error) {
+	address, err := sdk.GetAccAddressBech32(account)
+	if err != nil {
+		return nil, err
+	}
+
+	items := []identity.ClaimRest{}
+	kvs, err := ctx.QuerySubspace(cdc, identity.GetIssuerClaimsKey(address), storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, kv := range kvs {
+		var itemID string
+		err = cdc.UnmarshalBinary(kv.Value, &itemID)
+		if err != nil {
+			return nil, err
+		}
+		item, err := queryClaim(ctx, storeName, cdc, itemID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *item)
+	}
+
+	return items, nil
 }

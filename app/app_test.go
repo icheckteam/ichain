@@ -88,9 +88,10 @@ var (
 
 	msgCreateAsset = asset.MsgCreateAsset{
 		AssetID:  "asset1",
-		Issuer:   addr1,
+		Sender:   addr1,
 		Name:     "asset1",
 		Quantity: 10,
+		Unit:     "kg",
 	}
 )
 
@@ -122,7 +123,7 @@ func TestMsgCreateAsset(t *testing.T) {
 	// Run a CheckDeliver
 	SignCheckDeliver(t, gapp, msgCreateAsset, []int64{0}, []int64{0}, true, priv1)
 
-	newAsset := gapp.assetKeeper.GetAsset(ctxCheck, msgCreateAsset.AssetID)
+	newAsset, _ := gapp.assetKeeper.GetAsset(ctxCheck, msgCreateAsset.AssetID)
 	assert.Equal(t, newAsset.ID, newAsset.ID)
 
 }

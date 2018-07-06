@@ -7,17 +7,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/icheckteam/ichain/x/warranty"
+	"github.com/icheckteam/ichain/x/insurance"
 	"github.com/tendermint/go-crypto/keys"
 )
 
 type processClaimBody struct {
-	AccountName string               `json:"name"`
-	Password    string               `json:"password"`
-	ChainID     string               `json:"chain_id"`
-	Sequence    int64                `json:"sequence"`
-	ContractID  string               `json:"contract_id"`
-	Status      warranty.ClaimStatus `json:"status"`
+	AccountName string                `json:"name"`
+	Password    string                `json:"password"`
+	ChainID     string                `json:"chain_id"`
+	Sequence    int64                 `json:"sequence"`
+	ContractID  string                `json:"contract_id"`
+	Status      insurance.ClaimStatus `json:"status"`
 }
 
 // ProcessClaimHandlerFn
@@ -43,7 +43,7 @@ func ProcessClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		if b.Status == warranty.ClaimStatusPending {
+		if b.Status == insurance.ClaimStatusPending {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("status is required"))
 			return
@@ -96,6 +96,6 @@ func ProcessClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 	}
 }
 
-func buildMsgProcessClaim(issuer sdk.Address, contractID string, status warranty.ClaimStatus) warranty.MsgProcessClaim {
-	return warranty.MsgProcessClaim{ContractID: contractID, Issuer: issuer, Status: status}
+func buildMsgProcessClaim(issuer sdk.Address, contractID string, status insurance.ClaimStatus) insurance.MsgProcessClaim {
+	return insurance.MsgProcessClaim{ContractID: contractID, Issuer: issuer, Status: status}
 }

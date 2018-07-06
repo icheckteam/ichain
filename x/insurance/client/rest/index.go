@@ -9,8 +9,8 @@ import (
 
 // resgister REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
-	r.HandleFunc("/warranties", CreateContractHandlerFn(ctx, cdc, kb))
-	r.HandleFunc("/warranties", CreateClaimHandlerFn(ctx, cdc, kb))
-	r.HandleFunc("/warranties/{id}/process", ProcessClaimHandlerFn(ctx, cdc, kb))
-	r.HandleFunc("/warranties/{id}", QueryContractHandlerFn(ctx, storeName, cdc))
+	r.HandleFunc("/insurances", CreateContractHandlerFn(ctx, cdc, kb))
+	r.HandleFunc("/insurances", CreateClaimHandlerFn(ctx, cdc, kb))
+	r.HandleFunc("/insurances/{id}/process", ProcessClaimHandlerFn(ctx, cdc, kb))
+	r.HandleFunc("/insurances/{id}", QueryContractHandlerFn(ctx, storeName, cdc))
 }

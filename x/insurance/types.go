@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 import (
 	"bytes"
@@ -64,7 +64,7 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 // Claim the claim of the contract
 type Claim struct {
 	Status    ClaimStatus
-	Recipient sdk.Address // warranty address
+	Recipient sdk.Address // insurance address
 }
 
 // ClaimStatus status of a claim

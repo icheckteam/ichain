@@ -13,16 +13,15 @@ import (
 )
 
 type createClaimBody struct {
-	LocalAccountName string `json:"account_name"`
-	Password         string `json:"password"`
+	baseBody
 
-	ClaimID  string                 `json:"claim_id"`
-	Context  string                 `json:"context"`
-	Content  map[string]interface{} `json:"content"`
-	Metadata identity.ClaimMetadata `json:"metadata"`
-
-	ChainID  string `json:"chain_id"`
-	Sequence int64  `json:"sequence"`
+	// claim ...
+	ClaimID   string           `json:"claim_id"`
+	Context   string           `json:"context"`
+	Content   identity.Content `json:"content"`
+	Recipient string           `json:"recipient"`
+	Expires   int64            `json:"expires"`
+	Fee       sdk.Coins        `json:"fee"`
 }
 
 func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -39,13 +38,43 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 
 		if m.LocalAccountName == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
+			w.Write([]byte("name is required"))
 			return
 		}
 
 		if m.Password == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("password is required"))
+			return
+		}
+
+		if m.ClaimID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("claim_id is required"))
+			return
+		}
+
+		if len(m.Context) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("context is required"))
+			return
+		}
+
+		if len(m.Content) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("content is required"))
+			return
+		}
+
+		if len(m.Recipient) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("metadata.recipient is required"))
+			return
+		}
+
+		if m.Expires == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("metadata.expires is required"))
 			return
 		}
 
@@ -56,51 +85,23 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 
+		recipient, err := sdk.GetAccAddressBech32(m.Recipient)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		// build message
-		msg, err := buildCreateClaimMsg(info.PubKey.Address(), m)
-		if err != nil { // XXX rechecking same error ?
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
+		msg := identity.MsgCreateClaim{
+			ClaimID:   m.ClaimID,
+			Issuer:    info.PubKey.Address(),
+			Recipient: recipient,
+			Context:   m.Context,
+			Content:   m.Content,
+			Fee:       m.Fee,
+			Expires:   m.Expires,
 		}
-
-		// sign
-		ctx = ctx.WithSequence(m.Sequence)
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		// send
-		res, err := ctx.BroadcastTx(txBytes)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		output, err := json.MarshalIndent(res, "", "  ")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		signAndBuild(ctx, cdc, w, m.baseBody, msg)
 	}
-}
-
-func buildCreateClaimMsg(creator sdk.Address, body createClaimBody) (sdk.Msg, error) {
-	b, err := json.Marshal(body.Content)
-	if err != nil {
-		return nil, err
-	}
-	return identity.MsgCreateClaim{
-		ID:       body.ClaimID,
-		Context:  body.Context,
-		Content:  identity.Content(b),
-		Metadata: body.Metadata,
-	}, nil
 }

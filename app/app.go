@@ -22,9 +22,9 @@ import (
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/icheckteam/ichain/x/identity"
+	"github.com/icheckteam/ichain/x/insurance"
 	"github.com/icheckteam/ichain/x/invoice"
 	"github.com/icheckteam/ichain/x/shipping"
-	"github.com/icheckteam/ichain/x/warranty"
 )
 
 const (
@@ -43,16 +43,16 @@ type IchainApp struct {
 	cdc *wire.Codec
 
 	// keys to access the substores
-	keyMain     *sdk.KVStoreKey
-	keyAccount  *sdk.KVStoreKey
-	keyIBC      *sdk.KVStoreKey
-	keyIdentity *sdk.KVStoreKey
-	keyStake    *sdk.KVStoreKey
-	keyAsset    *sdk.KVStoreKey
-	keyWarranty *sdk.KVStoreKey
-	keyShipping *sdk.KVStoreKey
-	keyInvoice  *sdk.KVStoreKey
-	keySlashing *sdk.KVStoreKey
+	keyMain      *sdk.KVStoreKey
+	keyAccount   *sdk.KVStoreKey
+	keyIBC       *sdk.KVStoreKey
+	keyIdentity  *sdk.KVStoreKey
+	keyStake     *sdk.KVStoreKey
+	keyAsset     *sdk.KVStoreKey
+	keyInsurance *sdk.KVStoreKey
+	keyShipping  *sdk.KVStoreKey
+	keyInvoice   *sdk.KVStoreKey
+	keySlashing  *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountMapper       auth.AccountMapper
@@ -63,7 +63,7 @@ type IchainApp struct {
 	feeCollectionKeeper auth.FeeCollectionKeeper
 	assetKeeper         asset.Keeper
 	identityKeeper      identity.Keeper
-	warrantyKeeper      warranty.Keeper
+	insuranceKeeper     insurance.Keeper
 	shippingKeeper      shipping.Keeper
 	invoiceKeeper       invoice.InvoiceKeeper
 }
@@ -74,18 +74,18 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	var cdc = MakeCodec()
 	// create your application object
 	var app = &IchainApp{
-		BaseApp:     bam.NewBaseApp(appName, cdc, logger, db),
-		cdc:         cdc,
-		keyMain:     sdk.NewKVStoreKey("main"),
-		keyAccount:  sdk.NewKVStoreKey("acc"),
-		keyIBC:      sdk.NewKVStoreKey("ibc"),
-		keyIdentity: sdk.NewKVStoreKey("identity"),
-		keyAsset:    sdk.NewKVStoreKey("asset"),
-		keyWarranty: sdk.NewKVStoreKey("warranty"),
-		keyShipping: sdk.NewKVStoreKey("shipping"),
-		keyInvoice:  sdk.NewKVStoreKey("invoice"),
-		keySlashing: sdk.NewKVStoreKey("slashing"),
-		keyStake:    sdk.NewKVStoreKey("stake"),
+		BaseApp:      bam.NewBaseApp(appName, cdc, logger, db),
+		cdc:          cdc,
+		keyMain:      sdk.NewKVStoreKey("main"),
+		keyAccount:   sdk.NewKVStoreKey("acc"),
+		keyIBC:       sdk.NewKVStoreKey("ibc"),
+		keyIdentity:  sdk.NewKVStoreKey("identity"),
+		keyAsset:     sdk.NewKVStoreKey("asset"),
+		keyInsurance: sdk.NewKVStoreKey("insurance"),
+		keyShipping:  sdk.NewKVStoreKey("shipping"),
+		keyInvoice:   sdk.NewKVStoreKey("invoice"),
+		keySlashing:  sdk.NewKVStoreKey("slashing"),
+		keyStake:     sdk.NewKVStoreKey("stake"),
 	}
 
 	// define the accountMapper
@@ -98,12 +98,12 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	// add handlers
 	app.bankKeeper = bank.NewKeeper(app.accountMapper)
 	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc)
-	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc)
+	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc, app.bankKeeper)
 	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
-	app.warrantyKeeper = warranty.NewKeeper(app.keyWarranty, cdc, app.bankKeeper)
-	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.bankKeeper)
-	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.bankKeeper)
+	app.insuranceKeeper = insurance.NewKeeper(app.keyInsurance, cdc, app.assetKeeper)
+	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.assetKeeper)
+	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.assetKeeper)
 	app.slashingKeeper = slashing.NewKeeper(app.cdc, app.keySlashing, app.stakeKeeper, app.RegisterCodespace(slashing.DefaultCodespace))
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
@@ -111,7 +111,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		AddRoute("asset", asset.NewHandler(app.assetKeeper)).
 		AddRoute("identity", identity.NewHandler(app.identityKeeper)).
 		AddRoute("stake", stake.NewHandler(app.stakeKeeper)).
-		AddRoute("warranty", warranty.NewHandler(app.warrantyKeeper)).
+		AddRoute("insurance", insurance.NewHandler(app.insuranceKeeper)).
 		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper)).
 		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper)).
 		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper))
@@ -131,7 +131,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		app.keyAsset,
 		app.keyIdentity,
 		app.keyShipping,
-		app.keyWarranty,
+		app.keyInsurance,
 		app.keyInvoice,
 	)
 	err := app.LoadLatestVersion(app.keyMain)
@@ -156,9 +156,10 @@ func MakeCodec() *wire.Codec {
 	wire.RegisterCrypto(cdc)
 
 	asset.RegisterWire(cdc)
-	warranty.RegisterWire(cdc)
+	insurance.RegisterWire(cdc)
 	shipping.RegisterWire(cdc)
 	invoice.RegisterWire(cdc)
+	identity.RegisterWire(cdc)
 	// register custom AppAccount
 	cdc.RegisterConcrete(&types.AppAccount{}, "ichain/Account", nil)
 	return cdc

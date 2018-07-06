@@ -28,6 +28,5 @@ const (
 // TransportedAsset contains the id of the asset
 // and the quantity to be transported
 type TransportedAsset struct {
-	ID       string `json:"id"`       // ID of the asset (coin) to be transported
-	Quantity int64  `json:"quantity"` // Quanity to be transported
+	ID string `json:"id"` // ID of the asset (coin) to be transported
 }

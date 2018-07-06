@@ -5,20 +5,20 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	coin "github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 // Keeper manages shipping orders
 type Keeper struct {
-	storeKey   sdk.StoreKey // The (unexposed) key used to access the store from the Context.
-	cdc        *wire.Codec
-	coinKeeper coin.Keeper
+	storeKey    sdk.StoreKey // The (unexposed) key used to access the store from the Context.
+	cdc         *wire.Codec
+	assetKeeper asset.Keeper
 }
 
 // NewKeeper constructs a new keeper
-func NewKeeper(storeKey sdk.StoreKey, cdc *wire.Codec, coinKeeper coin.Keeper) Keeper {
-	return Keeper{storeKey, cdc, coinKeeper}
+func NewKeeper(storeKey sdk.StoreKey, cdc *wire.Codec, assetKeeper asset.Keeper) Keeper {
+	return Keeper{storeKey, cdc, assetKeeper}
 }
 
 // HasOrder checks if an order with the provided ID exists
@@ -45,14 +45,19 @@ func (k Keeper) getOrder(ctx sdk.Context, uid string) *Order {
 func (k Keeper) setOrder(ctx sdk.Context, order Order) {
 	store := ctx.KVStore(k.storeKey)
 	orderKey := GetOrderKey([]byte(order.ID))
-
-	// marshal the record and add to the state
-	bz, err := k.cdc.MarshalBinary(order)
-	if err != nil {
-		panic(err)
-	}
-
+	bz, _ := k.cdc.MarshalBinary(order)
 	store.Set(orderKey, bz)
+}
+
+func (k Keeper) setOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+	store := ctx.KVStore(k.storeKey)
+	bz, _ := k.cdc.MarshalBinary(orderID)
+	store.Set(GetAccountOrderKey(addr, orderID), bz)
+}
+
+func (k Keeper) removeOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetAccountOrderKey(addr, orderID))
 }
 
 // CreateOrder validates and creates a new order
@@ -60,22 +65,23 @@ func (k Keeper) CreateOrder(ctx sdk.Context, msg CreateOrderMsg) (sdk.Tags, sdk.
 	if k.hasOrder(ctx, msg.ID) {
 		return nil, ErrDuplicateOrder(msg.ID)
 	}
-
-	var coins sdk.Coins
-	for _, asset := range msg.TransportedAssets {
-		coin := sdk.Coin{Denom: asset.ID, Amount: asset.Quantity}
-		coins = append(coins, coin)
+	if len(msg.TransportedAssets) == 0 {
+		return nil, ErrInvalidAsset()
 	}
 
-	coins = coins.Sort()
-	if len(coins) == 0 || !coins.IsValid() {
-		return nil, ErrInavlidAssetAmount()
-	}
+	assetItems := []asset.Asset{}
+	for _, item := range msg.TransportedAssets {
+		aitem, found := k.assetKeeper.GetAsset(ctx, item.ID)
+		if !found {
+			return nil, asset.ErrAssetNotFound(item.ID)
+		}
+		if aitem.Final {
+			return nil, asset.ErrAssetAlreadyFinal(aitem.ID)
+		}
 
-	// The check for insufficient amount is built-in the subtract coins function
-	_, tags, err := k.coinKeeper.SubtractCoins(ctx, msg.Issuer, coins)
-	if err != nil {
-		return tags, err
+		if !aitem.IsOwner(msg.Issuer) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Issuer))
+		}
 	}
 
 	order := Order{
@@ -88,12 +94,21 @@ func (k Keeper) CreateOrder(ctx sdk.Context, msg CreateOrderMsg) (sdk.Tags, sdk.
 	}
 
 	k.setOrder(ctx, order)
+	k.setOrderByAccountIndex(ctx, order.Issuer, order.ID)
+	k.setOrderByAccountIndex(ctx, order.Carrier, order.ID)
+	k.setOrderByAccountIndex(ctx, order.Receiver, order.ID)
 
 	allTags := sdk.EmptyTags()
-	allTags.AppendTag("issuer", types.AddrToBytes(msg.Issuer))
-	allTags.AppendTag("carrier", types.AddrToBytes(msg.Carrier))
-	allTags.AppendTag("receiver", types.AddrToBytes(msg.Receiver))
+	allTags.AppendTag("sender", types.AddrToBytes(msg.Issuer))
+	allTags.AppendTag("recipient", types.AddrToBytes(msg.Carrier))
 	allTags.AppendTag("order_id", []byte(msg.ID))
+
+	for _, item := range assetItems {
+		item.Final = true
+		k.assetKeeper.SetAsset(ctx, item)
+		allTags = allTags.AppendTag("asset_id", []byte(item.ID))
+	}
+
 	return allTags, nil
 }
 
@@ -161,15 +176,10 @@ func (k Keeper) CancelOrder(ctx sdk.Context, msg CancelOrderMsg) (sdk.Tags, sdk.
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("order id %s cannot be cancelled", msg.OrderID))
 	}
 
-	var coins sdk.Coins
 	for _, asset := range order.TransportedAssets {
-		coin := sdk.Coin{Denom: asset.ID, Amount: asset.Quantity}
-		coins = append(coins, coin)
-	}
-
-	_, tags, err := k.coinKeeper.AddCoins(ctx, msg.Issuer, coins)
-	if err != nil {
-		return tags, err
+		a, _ := k.assetKeeper.GetAsset(ctx, asset.ID)
+		a.Final = false
+		k.assetKeeper.SetAsset(ctx, a)
 	}
 
 	order.Status = OrderStatusCancelled

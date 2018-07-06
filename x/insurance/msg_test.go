@@ -1,4 +1,4 @@
-package warranty
+package insurance
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func TestMsgCreateContractType(t *testing.T) {
 	}
 
 	// TODO some failures for bad result
-	assert.Equal(t, msg.Type(), "warranty")
+	assert.Equal(t, msg.Type(), "insurance")
 }
 
 func TestMsgCreateContractValidation(t *testing.T) {
@@ -103,7 +103,7 @@ func TestMsgCreateClaimType(t *testing.T) {
 	}
 
 	// TODO some failures for bad result
-	assert.Equal(t, msg.Type(), "warranty")
+	assert.Equal(t, msg.Type(), "insurance")
 }
 
 func TestMsgCreateClaimValidation(t *testing.T) {
@@ -167,7 +167,7 @@ func TestMsgProcessClaimType(t *testing.T) {
 	}
 
 	// TODO some failures for bad result
-	assert.Equal(t, msg.Type(), "warranty")
+	assert.Equal(t, msg.Type(), "insurance")
 }
 
 func TestMsgProcessClaimValidation(t *testing.T) {

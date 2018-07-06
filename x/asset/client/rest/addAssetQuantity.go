@@ -64,40 +64,13 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 		}
 		// build message
 		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m.Quantity)
-
-		ctx = ctx.WithGas(m.Gas)
-		ctx = ctx.WithAccountNumber(m.AccountNumber)
-		ctx = ctx.WithSequence(m.Sequence)
-
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		// send
-		res, err := ctx.BroadcastTx(txBytes)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		output, err := json.MarshalIndent(res, "", "  ")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		signAndBuild(ctx, cdc, w, m.baseBody, msg)
 	}
 }
 
 func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty int64) sdk.Msg {
-	return asset.AddQuantityMsg{
-		Issuer:   creator,
+	return asset.MsgAddQuantity{
+		Sender:   creator,
 		AssetID:  assetID,
 		Quantity: qty,
 	}

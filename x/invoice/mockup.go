@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/icheckteam/ichain/types"
+	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tmlibs/log"
 
@@ -48,7 +49,7 @@ var (
 		newPubKey("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AFB59"),
 	}
 
-	items = []Item{Item{"jav", 1}}
+	items = []Item{Item{"tomato"}}
 
 	emptyAddr   sdk.Address
 	emptyPubkey crypto.PubKey
@@ -82,21 +83,16 @@ func makeTestCodec() *wire.Codec {
 func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, InvoiceKeeper) {
 	db := dbm.NewMemDB()
 	keyStake := sdk.NewKVStoreKey("shipping")
-	keyMain := keyStake //sdk.NewKVStoreKey("main") //TODO fix multistore
-
+	keyAsset := sdk.NewKVStoreKey("asset")
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyStake, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyAsset, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
 	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil, log.NewNopLogger())
 	cdc := makeTestCodec()
-	accountMapper := auth.NewAccountMapper(
-		cdc,                 // amino codec
-		keyMain,             // target store
-		&types.AppAccount{}, // prototype
-	)
-	bank := bank.NewKeeper(accountMapper)
+	bank := asset.NewKeeper(keyAsset, cdc)
 	shippingKeeper := NewInvoiceKeeper(keyStake, cdc, bank)
 	return ctx, shippingKeeper
 }

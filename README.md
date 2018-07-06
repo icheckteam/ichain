@@ -36,7 +36,7 @@ NOTE: The code is alpha version, but is in the process of rapid development. The
 1. [Identity](https://github.com/icheckteam/documentation/blob/master/Identity.md)
 2. [Asset](https://github.com/icheckteam/documentation/blob/master/Asset.md)
 3. Shipping
-4. Warranty
+4. Insurance
 5. Invoice
 
 ### Minimum requirements

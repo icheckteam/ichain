@@ -12,7 +12,7 @@ const (
 	CodeDuplicateOrderID sdk.CodeType = iota + 600
 	CodeUnknownOrder
 	CodeDuplicateAddress
-	CodeInvalidAssetAmount
+	CodeInvalidAsset
 	DefaultCodespace sdk.CodespaceType = 10
 )
 
@@ -31,9 +31,9 @@ func ErrDuplicateAddress() sdk.Error {
 	return newError(DefaultCodespace, CodeDuplicateAddress, "issuer, carrier or receiver address is duplicated")
 }
 
-// ErrInavlidAssetAmount ...
-func ErrInavlidAssetAmount() sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidAssetAmount, "asset amount cannot be zero")
+// ErrInvalidAsset ...
+func ErrInvalidAsset() sdk.Error {
+	return newError(DefaultCodespace, CodeInvalidAsset, "asset cannot be zero")
 }
 
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.

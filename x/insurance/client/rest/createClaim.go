@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/icheckteam/ichain/x/warranty"
+	"github.com/icheckteam/ichain/x/insurance"
 	"github.com/tendermint/go-crypto/keys"
 )
 
@@ -100,6 +100,6 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	}
 }
 
-func buildMsgCreateClaim(issuer sdk.Address, recipient sdk.Address, contractID string) warranty.MsgCreateClaim {
-	return warranty.NewMsgCreateClaim(issuer, recipient, contractID)
+func buildMsgCreateClaim(issuer sdk.Address, recipient sdk.Address, contractID string) insurance.MsgCreateClaim {
+	return insurance.NewMsgCreateClaim(issuer, recipient, contractID)
 }

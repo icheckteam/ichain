@@ -27,7 +27,6 @@
     "client/context",
     "client/keys",
     "client/rpc",
-    "cmd/gaia/app",
     "server",
     "store",
     "tests",
@@ -224,6 +223,12 @@
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+
+[[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "ca016a06a5753f8ba03029c0aa5e54afb1bf713f"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -497,6 +502,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a9dcb1ff1d367cdfec3eaf439a424ede30ad544379da14b49948657134890ceb"
+  inputs-digest = "2185dd08b51ffab99ebebbb77911a2b42f11384f98906bf5e17289ac9f7b4ff9"
   solver-name = "gps-cdcl"
   solver-version = 1
