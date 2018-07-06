@@ -103,19 +103,18 @@ func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
 	store.Set(KeyTrust(trustor, trusting), bz)
-	store.Set(KeyTrusting(trustor, trusting), bz)
+}
+
+// Get Identity from store by identityID
+func (k Keeper) HasTrust(ctx sdk.Context, trustor, trusting sdk.Address) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(KeyTrust(trustor, trusting))
 }
 
 // delete cert from the store
 func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyTrust(trustor, trusting))
-	store.Delete(KeyTrusting(trustor, trusting))
-}
-
-func (k Keeper) HasTrusting(ctx sdk.Context, trustor, trusting sdk.Address) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(KeyTrusting(trustor, trusting))
 }
 
 // add a trusting
@@ -126,10 +125,14 @@ func (k Keeper) AddTrust(ctx sdk.Context, msg MsgAddTrust) sdk.Error {
 
 func (k Keeper) IsTrust(ctx sdk.Context, certifier sdk.Address) bool {
 	validator := k.vs.Validator(ctx, certifier)
+	trust := validator != nil
 	if validator == nil {
-		return k.HasTrusting(ctx, validator.GetOwner(), certifier)
+		k.vs.IterateValidators(ctx, func(index int64, validator sdk.Validator) (stop bool) {
+			trust = k.HasTrust(ctx, validator.GetOwner(), certifier)
+			return trust
+		})
 	}
-	return true
+	return trust
 }
 
 // add a trusting
