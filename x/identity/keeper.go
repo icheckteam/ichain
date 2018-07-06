@@ -27,6 +27,17 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store.Set(KeyIdentity(identity.ID), bz)
 }
 
+func (k Keeper) DeleteIdentity(ctx sdk.Context, identityID int64) {
+	// delete identity
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyIdentity(identityID))
+	// delete all certs
+	certs := k.GetCerts(ctx, identityID)
+	for _, cert := range certs {
+		k.DeleteCert(ctx, identityID, cert.Certifier)
+	}
+}
+
 // Get Identity from store by identityID
 func (k Keeper) GetIdentity(ctx sdk.Context, identityID int64) (Identity, bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -53,6 +64,25 @@ func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(cert)
 	store.Set(KeyCert(identity, cert.Certifier), bz)
+}
+
+func (k Keeper) GetCerts(ctx sdk.Context, identity int64) (certs []Cert) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, KeyCerts(identity))
+
+	i := 0
+	for ; ; i++ {
+		if !iterator.Valid() {
+			iterator.Close()
+			break
+		}
+		bz := iterator.Value()
+		var cert Cert
+		k.cdc.MustUnmarshalBinary(bz, &cert)
+		certs = append(certs, cert)
+		iterator.Next()
+	}
+	return certs
 }
 
 // delete cert from the store
