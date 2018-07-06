@@ -1,35 +1,46 @@
 package identity
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"fmt"
 
-var (
-	// AccountClaimsKey for store prefixes
-	AccountClaimsKey = []byte{0x00}
-	IssuerClaimsKey  = []byte{0x02}
-	ClaimKey         = []byte{0x01}
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GetAccoGetClaimKeyuntClaimKey get the key for an account for a claim
-func GetClaimKey(claimID string) []byte {
-	return append(ClaimKey, []byte(claimID)...)
+var (
+	KeyNextIdentityID = []byte("keyNextIdentityID")
+)
+
+// Key for getting a identity from the store
+func KeyIdentity(identityID int64) []byte {
+	return []byte(fmt.Sprintf("identities:%d", identityID))
 }
 
-// GetAccountClaimKey get the key for an account for a claim
-func GetAccountClaimKey(addr sdk.Address, claimID string) []byte {
-	return append(GetAccountClaimsKey(addr), []byte(claimID)...)
+// Key for getting all identities from the store
+func KeyIdentities() []byte {
+	return []byte(fmt.Sprintf("identities:"))
 }
 
-// GetAccountClaimsKey get the key for an account for all claims
-func GetAccountClaimsKey(addr sdk.Address) []byte {
-	return append(AccountClaimsKey, []byte(addr.String())...)
+// Key for getting a identity id  of the account from the store
+func KeyIdentityByOwnerIndex(owner sdk.Address, identityID int64) []byte {
+	return []byte(fmt.Sprintf("accounts:%s:%d", owner.String(), identityID))
 }
 
-// GetIssuerClaimKey
-func GetIssuerClaimKey(addr sdk.Address, claimID string) []byte {
-	return append(GetIssuerClaimsKey(addr), []byte(claimID)...)
+// Key for getting all identity id  of the account from the store
+func KeyIdentitiesByOwnerIndex(owner sdk.Address, identityID int64) []byte {
+	return []byte(fmt.Sprintf("accounts:%s:", owner.String()))
 }
 
-// GetIssuerClaimsKey
-func GetIssuerClaimsKey(addr sdk.Address) []byte {
-	return append(IssuerClaimsKey, []byte(addr.String())...)
+// Key for getting all trusting from the store
+func KeyTrust(trustor, trusting sdk.Address) []byte {
+	return []byte(fmt.Sprintf("trusts:%s:%s", trustor.String(), trusting.String()))
+}
+
+// Key for getting a cert from the store
+func KeyCert(identityID int64, certifier sdk.Address) []byte {
+	return []byte(fmt.Sprintf("certs:%d:%s", identityID, certifier.String()))
+}
+
+// Key for getting all certs from the store
+func KeyCerts(identityID int64) []byte {
+	return []byte(fmt.Sprintf("certs:%d", identityID))
 }
