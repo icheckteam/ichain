@@ -1,167 +1,175 @@
 package identity
 
 import (
-	"bytes"
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
-const (
-	costCreateClaim sdk.Gas = 100
-	costRevokeClaim sdk.Gas = 10
-)
-
-// Keeper manages identity claims
 type Keeper struct {
-	storeKey   sdk.StoreKey // The (unexposed) key used to access the store from the Context.
-	cdc        *wire.Codec
-	coinKeeper bank.Keeper
+	storeKey  sdk.StoreKey
+	cdc       *wire.Codec
+	codespace sdk.CodespaceType
+	// The ValidatorSet to get information about validators
+	vs sdk.ValidatorSet
 }
 
-// NewKeeper - Returns the Keeper
-func NewKeeper(key sdk.StoreKey, cdc *wire.Codec, coinKeeper bank.Keeper) Keeper {
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	return Keeper{
-		storeKey:   key,
-		cdc:        cdc,
-		coinKeeper: coinKeeper,
+		storeKey: key,
+		cdc:      cdc,
 	}
 }
 
-// ClaimIssue ...
-func (k Keeper) CreateClaim(ctx sdk.Context, msg MsgCreateClaim) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costCreateClaim, "createClaim")
-	oldClaim := k.GetClaim(ctx, msg.ClaimID)
-	if oldClaim != nil && !oldClaim.IsOwner(msg.Issuer) {
-		return nil, sdk.ErrUnauthorized("")
+func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.Address) Identity {
+	return Identity{
+		ID:    k.getNewIdentityID(ctx),
+		Owner: owner,
 	}
-	claim := Claim{
-		ID:         msg.ClaimID,
-		Issuer:     msg.Issuer,
-		Recipient:  msg.Recipient,
-		Context:    msg.Context,
-		Content:    msg.Content,
-		CreateTime: ctx.BlockHeader().Time,
-		Expires:    msg.Expires,
-	}
-
-	k.setClaim(ctx, claim)
-	k.setClaimByRecipientIndex(ctx, claim)
-	k.setClaimByIssuerIndex(ctx, claim)
-
-	allTags := sdk.NewTags(
-		"sender", []byte(msg.Issuer.String()),
-		"recipient", []byte(msg.Recipient.String()),
-	)
-	return allTags, nil
 }
 
-// set claim
-func (k Keeper) setClaim(ctx sdk.Context, claim Claim) {
+// set the main record holding identity details
+func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(claim)
-	store.Set(GetClaimKey(claim.ID), bz)
+	bz := k.cdc.MustMarshalBinary(identity)
+	store.Set(KeyIdentity(identity.ID), bz)
 }
 
-func (k Keeper) removeClaim(ctx sdk.Context, claimID string) {
+func (k Keeper) DeleteIdentity(ctx sdk.Context, identityID int64) {
+	// delete identity
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetClaimKey(claimID))
-}
-
-// set claim
-func (k Keeper) setClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(claim.ID)
-	store.Set(GetAccountClaimKey(claim.Recipient, claim.ID), bz)
-}
-
-func (k Keeper) removeClaimByRecipientIndex(ctx sdk.Context, claim Claim) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetIssuerClaimKey(claim.Recipient, claim.ID))
-}
-
-func (k Keeper) setClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(claim.ID)
-	store.Set(GetIssuerClaimKey(claim.Issuer, claim.ID), bz)
-}
-
-func (k Keeper) removeClaimByIssuerIndex(ctx sdk.Context, claim Claim) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountClaimKey(claim.Issuer, claim.ID))
-}
-
-// GetClaim ...
-func (k Keeper) GetClaim(ctx sdk.Context, claimID string) *Claim {
-	claim := &Claim{}
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(GetClaimKey(claimID))
-	if b == nil {
-		return nil
+	store.Delete(KeyIdentity(identityID))
+	// delete all certs
+	certs := k.GetCerts(ctx, identityID)
+	for _, cert := range certs {
+		k.DeleteCert(ctx, identityID, cert.Certifier)
 	}
-	k.cdc.MustUnmarshalBinary(b, claim)
-	return claim
 }
 
-// Revoke ...
-func (k Keeper) RevokeClaim(ctx sdk.Context, msg MsgRevokeClaim) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costRevokeClaim, "revokeClaim")
-	claim := k.GetClaim(ctx, msg.ClaimID)
-
-	if claim == nil {
-		return nil, ErrClaimNotFound(msg.ClaimID)
+// Get Identity from store by identityID
+func (k Keeper) GetIdentity(ctx sdk.Context, identityID int64) (Identity, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(KeyIdentity(identityID))
+	if bz == nil {
+		return Identity{}, false
 	}
 
-	if !bytes.Equal(claim.Issuer, msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to revoke", msg.Sender))
-	}
+	var identity Identity
+	k.cdc.MustUnmarshalBinary(bz, &identity)
 
-	claim.Revocation = msg.Revocation
-	k.setClaim(ctx, *claim)
-	allTags := sdk.NewTags(
-		"sender", []byte(msg.Sender.String()),
-	)
-	return allTags, nil
+	return identity, true
 }
 
-func (k Keeper) AnswerClaim(ctx sdk.Context, msg MsgAnswerClaim) (sdk.Tags, sdk.Error) {
-	claim := k.GetClaim(ctx, msg.ClaimID)
+// set the main record holding
+func (k Keeper) SetIdentityByOwnerIndex(ctx sdk.Context, identity Identity) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(identity.ID)
+	store.Set(KeyIdentitiesByOwnerIndex(identity.Owner, identity.ID), bz)
+}
 
-	if claim == nil {
-		return nil, ErrClaimNotFound(msg.ClaimID)
-	}
+// set the main record holding cert details
+func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(cert)
+	store.Set(KeyCert(identity, cert.Certifier), bz)
+}
 
-	if claim.Paid == true {
-		return nil, ErrClaimHasPaid(claim.ID)
-	}
+func (k Keeper) GetCerts(ctx sdk.Context, identity int64) (certs []Cert) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, KeyCerts(identity))
 
-	if !bytes.Equal(claim.Recipient, msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("address %s not unauthorized to answer", msg.Sender))
-	}
-	allTags := sdk.NewTags(
-		"sender", []byte(msg.Sender.String()),
-	)
-	if msg.Response == 0 {
-		// reject the claim
-		k.removeClaim(ctx, claim.ID)
-		// remove index by account
-		k.removeClaimByRecipientIndex(ctx, *claim)
-		k.removeClaimByIssuerIndex(ctx, *claim)
-	} else if len(claim.Fee) > 0 {
-		// approve the claim
-		_, tags, err := k.coinKeeper.SubtractCoins(ctx, msg.Sender, claim.Fee)
-		if err != nil {
-			return nil, err
+	i := 0
+	for ; ; i++ {
+		if !iterator.Valid() {
+			iterator.Close()
+			break
 		}
-		_, tags2, err := k.coinKeeper.AddCoins(ctx, claim.Issuer, claim.Fee)
-		if err != nil {
-			return nil, err
-		}
-		allTags = allTags.AppendTags(tags).AppendTags(tags2)
+		bz := iterator.Value()
+		var cert Cert
+		k.cdc.MustUnmarshalBinary(bz, &cert)
+		certs = append(certs, cert)
+		iterator.Next()
 	}
-	claim.Paid = true
-	k.setClaim(ctx, *claim)
-	return allTags, nil
+	return certs
+}
+
+// delete cert from the store
+func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, certifier sdk.Address) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyCert(identity, certifier))
+}
+
+// set the main record holding trust details
+func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
+	store.Set(KeyTrust(trustor, trusting), bz)
+	store.Set(KeyTrusting(trustor, trusting), bz)
+}
+
+// delete cert from the store
+func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyTrust(trustor, trusting))
+	store.Delete(KeyTrusting(trustor, trusting))
+}
+
+func (k Keeper) HasTrusting(ctx sdk.Context, trustor, trusting sdk.Address) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(KeyTrusting(trustor, trusting))
+}
+
+// add a trusting
+func (k Keeper) AddTrust(ctx sdk.Context, msg MsgAddTrust) sdk.Error {
+	k.SetTrust(ctx, msg.Trustor, msg.Trusting)
+	return nil
+}
+
+func (k Keeper) IsTrust(ctx sdk.Context, certifier sdk.Address) bool {
+	validator := k.vs.Validator(ctx, certifier)
+	if validator == nil {
+		return k.HasTrusting(ctx, validator.GetOwner(), certifier)
+	}
+	return true
+}
+
+// add a trusting
+func (k Keeper) AddCerts(ctx sdk.Context, msg MsgAddCerts) sdk.Error {
+	_, found := k.GetIdentity(ctx, msg.IdentityID)
+	if !found {
+		return ErrUnknownIdentity(k.codespace, msg.IdentityID)
+	}
+	trust := k.IsTrust(ctx, msg.Certifier)
+	for _, value := range msg.Values {
+		if value.Confidence == true {
+			// add cert
+			k.SetCert(ctx, msg.IdentityID, Cert{
+				Certifier:  msg.Certifier,
+				Confidence: value.Confidence,
+				Data:       value.Data,
+				Type:       value.Type,
+				Trust:      trust,
+			})
+		} else {
+			// delete cert
+			k.DeleteCert(ctx, msg.IdentityID, msg.Certifier)
+		}
+	}
+	return nil
+}
+
+func (k Keeper) getNewIdentityID(ctx sdk.Context) (identityID int64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(KeyNextIdentityID)
+	if bz == nil {
+		return 1
+	}
+	k.cdc.MustUnmarshalBinary(bz, &identityID)
+	bz = k.cdc.MustMarshalBinary(identityID + 1)
+	store.Set(KeyNextIdentityID, bz)
+	return identityID
+}
+
+func (k Keeper) AddIdentity(ctx sdk.Context, msg MsgCreateIdent) sdk.Error {
+	k.SetIdentity(ctx, k.NewIdentity(ctx, msg.Sender))
+	return nil
 }

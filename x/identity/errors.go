@@ -6,26 +6,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ABCI Response Codes
-// Base SDK reserves 600-700.
-const (
-	CodeInvalidClaim   sdk.CodeType      = 600
-	CodeInvalidExpires sdk.CodeType      = 601
-	DefaultCodespace   sdk.CodespaceType = 11
+var (
+	DefaultCodespace sdk.CodespaceType = 12
+
+	CodeUnknownIdentity sdk.CodeType = 1
+	CodeInvalidGenesis  sdk.CodeType = 2
 )
 
-func ErrClaimNotFound(claimID string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidClaim, fmt.Sprintf("claim {%s} not found", claimID))
+//----------------------------------------
+// Error constructors
+
+func ErrUnknownIdentity(codespace sdk.CodespaceType, identityID int64) sdk.Error {
+	return sdk.NewError(codespace, CodeUnknownIdentity, fmt.Sprintf("Unknown proposal - %d", identityID))
 }
 
-func ErrClaimHasPaid(claimID string) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidClaim, fmt.Sprintf("claim {%s} has paid", claimID))
-}
-
-func ErrInvalidExpires(expires int64) sdk.Error {
-	return newError(DefaultCodespace, CodeInvalidExpires, fmt.Sprintf("invalid expires time: %d", expires))
-}
-
-func newError(codespace sdk.CodespaceType, code sdk.CodeType, msg string) sdk.Error {
-	return sdk.NewError(codespace, code, msg)
+func ErrInvalidGenesis(codespace sdk.CodespaceType, msg string) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidGenesis, msg)
 }
