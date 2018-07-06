@@ -13,6 +13,13 @@ type Keeper struct {
 	vs sdk.ValidatorSet
 }
 
+func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
+	return Keeper{
+		storeKey: key,
+		cdc:      cdc,
+	}
+}
+
 func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.Address) Identity {
 	return Identity{
 		ID:    k.getNewIdentityID(ctx),
@@ -94,14 +101,21 @@ func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, certifier sdk.Addres
 // set the main record holding trust details
 func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting})
+	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
 	store.Set(KeyTrust(trustor, trusting), bz)
-	store.Set(KeyTrust(trusting, trustor), bz)
+	store.Set(KeyTrusting(trustor, trusting), bz)
+}
+
+// delete cert from the store
+func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyTrust(trustor, trusting))
+	store.Delete(KeyTrusting(trustor, trusting))
 }
 
 func (k Keeper) HasTrusting(ctx sdk.Context, trustor, trusting sdk.Address) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(KeyTrust(trusting, trustor))
+	return store.Has(KeyTrusting(trustor, trusting))
 }
 
 // add a trusting

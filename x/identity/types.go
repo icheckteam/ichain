@@ -50,5 +50,6 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 }
 
 type Trust struct {
+	Trustor  sdk.Address `json:"trustor"`
 	Trusting sdk.Address `json:"trusting"`
 }

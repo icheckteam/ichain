@@ -35,6 +35,11 @@ func KeyTrust(trustor, trusting sdk.Address) []byte {
 	return []byte(fmt.Sprintf("trusts:%s:%s", trustor.String(), trusting.String()))
 }
 
+// Key for getting all trusting from the store
+func KeyTrusting(trustor, trusting sdk.Address) []byte {
+	return []byte(fmt.Sprintf("trustings:%s:%s", trusting.String(), trustor.String()))
+}
+
 // Key for getting a cert from the store
 func KeyCert(identityID int64, certifier sdk.Address) []byte {
 	return []byte(fmt.Sprintf("certs:%d:%s", identityID, certifier.String()))
