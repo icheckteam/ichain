@@ -11,14 +11,13 @@ type Keeper struct {
 	storeKey  sdk.StoreKey
 	cdc       *wire.Codec
 	codespace sdk.CodespaceType
-	// The ValidatorSet to get information about validators
-	vs sdk.ValidatorSet
 }
 
 func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	return Keeper{
-		storeKey: key,
-		cdc:      cdc,
+		storeKey:  key,
+		cdc:       cdc,
+		codespace: DefaultCodespace,
 	}
 }
 

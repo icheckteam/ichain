@@ -7,17 +7,13 @@ import (
 )
 
 var (
-	KeyNextIdentityID = []byte("keyNextIdentityID")
+	KeyNextIdentityID = []byte{0x01}
+	IdentitiesKey     = []byte{0x02}
 )
 
 // Key for getting a identity from the store
 func KeyIdentity(identityID int64) []byte {
-	return []byte(fmt.Sprintf("identity:%d", identityID))
-}
-
-// Key for getting all identities from the store
-func KeyIdentities() []byte {
-	return []byte(fmt.Sprintf("identity:"))
+	return append(IdentitiesKey, []byte(fmt.Sprintf("%d", identityID))...)
 }
 
 // Key for getting a identity id  of the account from the store
@@ -44,8 +40,8 @@ func KeyTrust(trustor, trusting sdk.Address) []byte {
 }
 
 // Key for getting all trusting from the store
-func KeyTrusting(trustor, trusting sdk.Address) []byte {
-	return []byte(fmt.Sprintf("trusting:%s:%s", trusting.String(), trustor.String()))
+func KeyTrusted(trustor sdk.Address) []byte {
+	return []byte(fmt.Sprintf("trust:%s", trustor.String()))
 }
 
 // Key for getting a cert from the store

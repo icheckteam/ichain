@@ -6,7 +6,9 @@ import (
 
 // Register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
-
+	cdc.RegisterConcrete(MsgCreateIdentity{}, "identity/CreateIdentity", nil)
+	cdc.RegisterConcrete(MsgSetCerts{}, "identity/SetCerts", nil)
+	cdc.RegisterConcrete(MsgSetTrust{}, "identity/SetTrust", nil)
 }
 
 // generic sealed codec to be used throughout sdk
