@@ -87,9 +87,13 @@ func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store.Delete(KeyTrust(trustor, trusting))
 }
 
-// add a trusting
+// add a trust
 func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) sdk.Error {
-	k.SetTrust(ctx, msg.Trustor, msg.Trusting)
+	if msg.Trust == true {
+		k.SetTrust(ctx, msg.Trustor, msg.Trusting)
+	} else {
+		k.DeleteTrust(ctx, msg.Trustor, msg.Trusting)
+	}
 	return nil
 }
 
@@ -109,13 +113,13 @@ func (k Keeper) IsTrust(ctx sdk.Context, certifier sdk.Address) bool {
 func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(cert)
-	store.Set(KeyCert(identity, cert.Certifier), bz)
+	store.Set(KeyCert(identity, cert.Property, cert.Certifier), bz)
 }
 
 // delete cert from the store
-func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, certifier sdk.Address) {
+func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property, certifier sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(KeyCert(identity, certifier))
+	store.Delete(KeyCert(identity, property, certifier))
 }
 
 // add a trusting
@@ -142,7 +146,7 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 			}
 		} else {
 			// delete cert
-			k.DeleteCert(ctx, msg.IdentityID, msg.Certifier)
+			k.DeleteCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
 			if bytes.Equal(value.Property, msg.Certifier) {
 				k.DeleteClaimedIdentity(ctx, msg.Certifier, msg.IdentityID)
 			}

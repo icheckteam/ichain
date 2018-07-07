@@ -30,6 +30,14 @@ type CertValue struct {
 	Confidence bool        `json:"confidence"`
 }
 
+// quick validity check
+func (msg CertValue) ValidateBasic() sdk.Error {
+	if msg.Property == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
+	}
+	return nil
+}
+
 type Certs []Cert
 
 type Metadata []byte

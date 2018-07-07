@@ -11,6 +11,9 @@ var (
 
 	CodeUnknownIdentity sdk.CodeType = 1
 	CodeInvalidGenesis  sdk.CodeType = 2
+	CodeInvalidTrustor  sdk.CodeType = 3
+	CodeInvalidTrusting sdk.CodeType = 4
+	CodeInvalidInput    sdk.CodeType = 5
 )
 
 //----------------------------------------
@@ -22,4 +25,13 @@ func ErrUnknownIdentity(codespace sdk.CodespaceType, identityID int64) sdk.Error
 
 func ErrInvalidGenesis(codespace sdk.CodespaceType, msg string) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidGenesis, msg)
+}
+
+//validator
+func ErrNilTrustorAddr(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidTrustor, "trustor address is nil")
+}
+
+func ErrNilTrustingAddr(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidTrusting, "trusting address is nil")
 }
