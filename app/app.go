@@ -98,7 +98,7 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	// add handlers
 	app.bankKeeper = bank.NewKeeper(app.accountMapper)
 	app.assetKeeper = asset.NewKeeper(app.keyAsset, cdc)
-	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc, app.bankKeeper)
+	app.identityKeeper = identity.NewKeeper(app.keyIdentity, cdc)
 	app.ibcMapper = ibc.NewMapper(cdc, app.keyIBC, ibc.DefaultCodespace)
 	app.stakeKeeper = stake.NewKeeper(app.cdc, app.keyStake, app.bankKeeper, app.RegisterCodespace(stake.DefaultCodespace))
 	app.insuranceKeeper = insurance.NewKeeper(app.keyInsurance, cdc, app.assetKeeper)
