@@ -15,6 +15,7 @@ type Identity struct {
 
 type Cert struct {
 	ID         string      `json:"id"`
+	Property   sdk.Address `json:"property"`
 	Certifier  sdk.Address `json:"certifier"`
 	Type       string      `json:"type"`
 	Trust      bool        `json:"trust"`
@@ -23,9 +24,10 @@ type Cert struct {
 }
 
 type CertValue struct {
-	Type       string   `json:"type"`
-	Data       Metadata `json:"data"`
-	Confidence bool     `json:"confidence"`
+	Property   sdk.Address `json:"property"`
+	Type       string      `json:"type"`
+	Data       Metadata    `json:"data"`
+	Confidence bool        `json:"confidence"`
 }
 
 type Certs []Cert
