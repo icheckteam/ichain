@@ -34,6 +34,7 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identity)
 	store.Set(KeyIdentity(identity.ID), bz)
+	k.SetIdentityByOwnerIndex(ctx, identity)
 }
 
 func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
@@ -45,6 +46,11 @@ func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.Address, identit
 func (k Keeper) DeleteClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyClaimedIdentity(account, identityID))
+}
+
+func (k Keeper) HasClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(KeyClaimedIdentity(account, identityID))
 }
 
 // Get Identity from store by identityID
@@ -75,12 +81,6 @@ func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store.Set(KeyTrust(trustor, trusting), bz)
 }
 
-// Get Identity from store by identityID
-func (k Keeper) HasTrust(ctx sdk.Context, trustor, trusting sdk.Address) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(KeyTrust(trustor, trusting))
-}
-
 // delete cert from the store
 func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
@@ -97,16 +97,15 @@ func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) sdk.Error {
 	return nil
 }
 
-func (k Keeper) IsTrust(ctx sdk.Context, certifier sdk.Address) bool {
-	validator := k.vs.Validator(ctx, certifier)
-	trust := validator != nil
-	if validator == nil {
-		k.vs.IterateValidators(ctx, func(index int64, validator sdk.Validator) (stop bool) {
-			trust = k.HasTrust(ctx, validator.GetOwner(), certifier)
-			return trust
-		})
+func (k Keeper) GetTrust(ctx sdk.Context, trustor, trusting sdk.Address) (trust Trust, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(KeyTrust(trustor, trusting))
+	if bz == nil {
+		return
 	}
-	return trust
+	k.cdc.MustUnmarshalBinary(bz, &trust)
+	found = true
+	return
 }
 
 // set the main record holding cert details
@@ -114,6 +113,18 @@ func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(cert)
 	store.Set(KeyCert(identity, cert.Property, cert.Certifier), bz)
+}
+
+// set the main record holding cert details
+func (k Keeper) GetCert(ctx sdk.Context, identity int64, property, certifier sdk.Address) (cert Cert, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(KeyCert(identity, property, certifier))
+	if bz == nil {
+		return
+	}
+	k.cdc.MustUnmarshalBinary(bz, &cert)
+	found = true
+	return
 }
 
 // delete cert from the store
@@ -128,7 +139,6 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 	if !found {
 		return ErrUnknownIdentity(k.codespace, msg.IdentityID)
 	}
-	trust := k.IsTrust(ctx, msg.Certifier)
 	for _, value := range msg.Values {
 		if value.Confidence == true {
 			// add cert
@@ -138,7 +148,6 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 				Confidence: value.Confidence,
 				Data:       value.Data,
 				Type:       value.Type,
-				Trust:      trust,
 			})
 			// handle by owner
 			if bytes.Equal(value.Property, msg.Certifier) {
@@ -159,9 +168,10 @@ func (k Keeper) getNewIdentityID(ctx sdk.Context) (identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(KeyNextIdentityID)
 	if bz == nil {
-		return 1
+		identityID = 1
+	} else {
+		k.cdc.MustUnmarshalBinary(bz, &identityID)
 	}
-	k.cdc.MustUnmarshalBinary(bz, &identityID)
 	bz = k.cdc.MustMarshalBinary(identityID + 1)
 	store.Set(KeyNextIdentityID, bz)
 	return identityID
