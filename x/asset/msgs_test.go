@@ -500,10 +500,10 @@ func TestCreateProposalMsgValidation(t *testing.T) {
 		{false, MsgCreateProposal{AssetID: "1"}},
 		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0]}},
 		{false, MsgCreateProposal{AssetID: "1", Recipient: addrs[0]}},
-		{false, MsgCreateProposal{AssetID: "1", Propertipes: []string{"location"}}},
+		{false, MsgCreateProposal{AssetID: "1", Properties: []string{"location"}}},
 		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1]}},
-		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 0, Propertipes: []string{"location"}}},
-		{true, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 1, Propertipes: []string{"location"}}},
+		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 0, Properties: []string{"location"}}},
+		{true, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 1, Properties: []string{"location"}}},
 	}
 
 	for i, tc := range cases {
@@ -532,14 +532,14 @@ func TestCreateProposalMsgGetSigners(t *testing.T) {
 
 func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	msg := MsgCreateProposal{
-		AssetID:     "1",
-		Propertipes: []string{"location"},
-		Sender:      addrs[0],
-		Recipient:   addrs[1],
+		AssetID:    "1",
+		Properties: []string{"location"},
+		Sender:     addrs[0],
+		Recipient:  addrs[1],
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","sender":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","propertipes":["location"],"role":0}`)
+	assert.Equal(t, string(res), `{"asset_id":"1","sender":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","properties":["location"],"role":0}`)
 }
 
 // AnswerProposal  Tests

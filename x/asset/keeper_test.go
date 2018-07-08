@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"bytes"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -368,6 +369,110 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
 	assert.True(t, err != nil)
 
+	// CreateProposal Tests
+	// -------------------------------------------------------
+	msgCreateProposal := MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr2,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+	proposal, found := keeper.GetProposal(ctx, msgCreateProposal.AssetID, msgCreateProposal.Recipient)
+	assert.True(t, found == true)
+	assert.True(t, bytes.Equal(proposal.Issuer, msgCreateProposal.Sender))
+	assert.True(t, bytes.Equal(proposal.Recipient, msgCreateProposal.Recipient))
+	assert.True(t, proposal.Properties[0] == msgCreateProposal.Properties[0])
+	assert.True(t, proposal.Role == msgCreateProposal.Role)
+
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr3,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+
+	// invalid sender
+	msgCreateProposal = MsgCreateProposal{
+		Sender:  addr2,
+		AssetID: asset.AssetID,
+	}
+	_, err = keeper.AddProposal(ctx, msgCreateProposal)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgCreateProposal = MsgCreateProposal{
+		Sender:  addr2,
+		AssetID: "adad",
+	}
+	_, err = keeper.AddProposal(ctx, msgCreateProposal)
+	assert.True(t, err != nil)
+
+	// AnswerProposal Tests
+	// -------------------------------------------------------
+	msgAnswerProposal := MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Recipient: addr2,
+		Response:  StatusAccepted,
+	}
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, bytes.Equal(newAsset.Reporters[0].Addr, msgAnswerProposal.Recipient))
+	assert.True(t, newAsset.Reporters[0].Properties[0] == "size")
+
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr2,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+
+	// valid
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, bytes.Equal(newAsset.Reporters[0].Addr, msgAnswerProposal.Recipient))
+	assert.True(t, newAsset.Reporters[0].Properties[0] == "size")
+
+	// invalid proposal
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Recipient: addr2,
+		Response:  1,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr2,
+		Role:       RoleOwner,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr3,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, bytes.Equal(newAsset.Owner, msgAnswerProposal.Recipient))
+
+	keeper.AnswerProposal(ctx, MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Recipient: addr3,
+		Response:  1,
+	})
 }
 
 func TestFinalize(t *testing.T) {

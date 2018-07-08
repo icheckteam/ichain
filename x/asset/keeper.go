@@ -279,7 +279,7 @@ func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, s
 	proposal := Proposal{
 		Role:       msg.Role,
 		Status:     StatusPending,
-		Properties: msg.Propertipes,
+		Properties: msg.Properties,
 		Issuer:     msg.Sender,
 		Recipient:  msg.Recipient,
 	}
@@ -320,6 +320,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 			k.setAssetByAccountIndex(ctx, asset.ID, proposal.Recipient)
 			break
 		case RoleReporter:
+
 			// add reporter
 			reporter, reporterIndex := asset.GetReporter(msg.Recipient)
 			if reporter != nil {

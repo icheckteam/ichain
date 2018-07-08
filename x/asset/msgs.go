@@ -325,11 +325,11 @@ func (msg MsgRevokeReporter) GetSignBytes() []byte {
 
 // CreateProposalMsg ...
 type MsgCreateProposal struct {
-	AssetID     string       `json:"asset_id"`
-	Sender      sdk.Address  `json:"sender"`
-	Recipient   sdk.Address  `json:"recipient"`
-	Propertipes []string     `json:"propertipes"`
-	Role        ProposalRole `json:"role"`
+	AssetID    string       `json:"asset_id"`
+	Sender     sdk.Address  `json:"sender"`
+	Recipient  sdk.Address  `json:"recipient"`
+	Properties []string     `json:"properties"`
+	Role       ProposalRole `json:"role"`
 }
 
 func (msg MsgCreateProposal) Type() string                            { return msgType }
@@ -343,9 +343,6 @@ func (msg MsgCreateProposal) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Recipient) == 0 {
 		return ErrMissingField("recipient")
-	}
-	if len(msg.Propertipes) == 0 {
-		return ErrMissingField("propertipes")
 	}
 	switch msg.Role {
 	case 1, 2:
