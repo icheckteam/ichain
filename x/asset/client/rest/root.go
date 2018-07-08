@@ -17,8 +17,6 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb 
 	r.HandleFunc("/assets/{id}/properties", UpdateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/materials", AddMaterialsHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/finalize", FinalizeHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/reporters", CreateReporterHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}/reporters/{address}/revoke", RevokeReporterHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/accounts/{address}/transfer-asset", TrasferHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/accounts/{address}/assets", QueryAccountAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 }

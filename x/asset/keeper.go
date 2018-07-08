@@ -239,37 +239,93 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	return tags, nil
 }
 
-// Transfer transfer asset
-func (k Keeper) Transfer(ctx sdk.Context, msg MsgTransfer) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costTransfer, "transferAsset")
-	assets := []Asset{}
-	for _, a := range msg.Assets {
-		asset, found := k.GetAsset(ctx, a)
-		if !found {
-			return nil, ErrAssetNotFound(a)
-		}
-		if asset.Final {
-			return nil, ErrAssetAlreadyFinal(asset.ID)
-		}
-		if !asset.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to send", msg.Sender))
-		}
-		assets = append(assets, asset)
+func (k Keeper) SetProposal(ctx sdk.Context, assetID string, proposal Proposal) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(proposal)
+	store.Set(GetProposalKey(assetID, proposal.Recipient), bz)
+}
+
+func (k Keeper) DeleteProposal(ctx sdk.Context, assetID string, recipient sdk.Address) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetProposalKey(assetID, recipient))
+}
+
+func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.Address) (proposal Proposal, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(GetProposalKey(assetID, recipient))
+	if b == nil {
+		return
 	}
+	k.cdc.MustUnmarshalBinary(b, &proposal)
+	found = true
+	return
+}
+
+func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, sdk.Error) {
+	asset, found := k.GetAsset(ctx, msg.AssetID)
+	if !found {
+		return nil, ErrAssetNotFound(asset.ID)
+	}
+
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
+	}
+
+	proposal := Proposal{
+		Role:       msg.Role,
+		Status:     StatusPending,
+		Properties: msg.Propertipes,
+		Issuer:     msg.Sender,
+		Recipient:  msg.Recipient,
+	}
+	k.SetProposal(ctx, asset.ID, proposal)
+
 	tags := sdk.NewTags(
-		"sender", []byte(msg.Sender.String()),
+		"asset_id", []byte(asset.ID),
 		"recipient", []byte(msg.Recipient.String()),
+		"sender", []byte(msg.Sender.String()),
 	)
-	for _, asset := range assets {
-		k.removeAssetByAccountIndex(ctx, asset)
-		// change ownership
-		asset.Owner = msg.Recipient
-		// clear reporter
-		asset.Reporters = nil
-		k.setAsset(ctx, asset)
-		k.setAssetByAccountIndex(ctx, asset)
-		// add asset tag
-		tags = tags.AppendTag("asset_id", []byte(asset.ID))
+
+	return tags, nil
+}
+
+func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags, sdk.Error) {
+	proposal, found := k.GetProposal(ctx, msg.AssetID, msg.Recipient)
+	if !found {
+		return nil, ErrProposalNotFound(msg.Recipient)
 	}
+	// delete proposal
+	k.DeleteProposal(ctx, msg.AssetID, proposal.Recipient)
+
+	asset, _ := k.GetAsset(ctx, msg.AssetID)
+
+	if !asset.IsOwner(proposal.Issuer) {
+		return nil, nil
+	}
+
+	if msg.Response == StatusAccepted {
+		switch proposal.Role {
+		case RoleOwner:
+			// update owner
+			asset.Owner = proposal.Recipient
+			break
+		case RoleReporter:
+			// add reporter
+			asset.Reporters = append(asset.Reporters, Reporter{
+				Addr:       proposal.Recipient,
+				Properties: proposal.Properties,
+				Created:    ctx.BlockHeader().Time,
+			})
+			break
+		default:
+			break
+		}
+		k.setAsset(ctx, asset)
+	}
+
+	tags := sdk.NewTags(
+		"asset_id", []byte(msg.AssetID),
+		"sender", []byte(msg.Recipient.String()),
+	)
 	return tags, nil
 }

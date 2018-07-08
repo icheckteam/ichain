@@ -11,8 +11,6 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgTransfer:
-			return handleTransfer(ctx, k, msg)
 		case MsgCreateAsset:
 			return handleCreateAsset(ctx, k, msg)
 		case MsgSubtractQuantity:
@@ -27,22 +25,14 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleFinalize(ctx, k, msg)
 		case MsgRevokeReporter:
 			return handleRevokeReporter(ctx, k, msg)
-		case MsgCreateReporter:
-			return handleCreateReporter(ctx, k, msg)
+		case MsgCreateProposal:
+			return handleCreateProposal(ctx, k, msg)
+		case MsgAnswerProposal:
+			return handleAnswerProposal(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("Unrecognized trace Msg type: %v", reflect.TypeOf(msg).Name())
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
-	}
-}
-
-func handleTransfer(ctx sdk.Context, k Keeper, msg MsgTransfer) sdk.Result {
-	tags, err := k.Transfer(ctx, msg)
-	if err != nil {
-		return err.Result()
-	}
-	return sdk.Result{
-		Tags: tags,
 	}
 }
 
@@ -106,8 +96,18 @@ func handleSubtractQuantity(ctx sdk.Context, k Keeper, msg MsgSubtractQuantity) 
 	}
 }
 
-func handleCreateReporter(ctx sdk.Context, k Keeper, msg MsgCreateReporter) sdk.Result {
-	tags, err := k.CreateReporter(ctx, msg)
+func handleCreateProposal(ctx sdk.Context, k Keeper, msg MsgCreateProposal) sdk.Result {
+	tags, err := k.AddProposal(ctx, msg)
+	if err != nil {
+		return err.Result()
+	}
+	return sdk.Result{
+		Tags: tags,
+	}
+}
+
+func handleAnswerProposal(ctx sdk.Context, k Keeper, msg MsgAnswerProposal) sdk.Result {
+	tags, err := k.AnswerProposal(ctx, msg)
 	if err != nil {
 		return err.Result()
 	}

@@ -7,10 +7,11 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 //nolint
 var (
 	// Keys for store prefixes
-	AssetKey             = []byte{0x00} // prefix for each key to an asset
-	AccountAssetKey      = []byte{0x01} // prefix for each key to an account
-	ProposalRecipientKey = []byte{0x02} // prefix for each key to an account a proposal
-	AssetChildrenKey     = []byte{0x03} // prefix for each key to an asset parent a an asset child
+	AssetKey            = []byte{0x00} // prefix for each key to an asset
+	AccountAssetKey     = []byte{0x01} // prefix for each key to an account
+	ProposalsKey        = []byte{0x02} // prefix for each key to an account a proposal
+	AssetChildrenKey    = []byte{0x03} // prefix for each key to an asset parent a an asset child
+	AccountProposalsKey = []byte{0x04} // prefix for each key to an account a proposal
 )
 
 // GetAssetKey get the key for the record with address
@@ -35,4 +36,20 @@ func GetAssetChildrenKey(parent, children string) []byte {
 
 func GetAssetChildrensKey(parent string) []byte {
 	return append(AssetChildrenKey, []byte(parent)...)
+}
+
+func GetProposalKey(assetID string, recipient sdk.Address) []byte {
+	return append(GetProposalsKey(assetID), []byte(recipient.String())...)
+}
+
+func GetProposalsKey(assetID string) []byte {
+	return append(ProposalsKey, []byte(assetID)...)
+}
+
+func GetAccountProposalKey(addr sdk.Address, assetID string) []byte {
+	return append(GetAccountProposalsKey(addr), []byte(assetID)...)
+}
+
+func GetAccountProposalsKey(address sdk.Address) []byte {
+	return append(AccountProposalsKey, []byte(address.String())...)
 }

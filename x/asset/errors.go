@@ -19,6 +19,7 @@ const (
 	CodeInvalidRevokeReporter sdk.CodeType      = 507
 	CodeInvalidAssetQuantity  sdk.CodeType      = 508
 	CodeAssetAlreadyFinal     sdk.CodeType      = 509
+	CodeProposalNotFound      sdk.CodeType      = 510
 	DefaultCodespace          sdk.CodespaceType = 10
 )
 
@@ -63,6 +64,10 @@ func ErrInvalidRevokeReporter(addr sdk.Address) sdk.Error {
 // InvalidTransaction ...
 func ErrInvalidTransaction(msg string) sdk.Error {
 	return newError(DefaultCodespace, CodeInvalidTransaction, msg)
+}
+
+func ErrProposalNotFound(recipient sdk.Address) sdk.Error {
+	return newError(DefaultCodespace, CodeProposalNotFound, fmt.Sprintf("proposal %s not found", sdk.MustBech32ifyAcc(recipient)))
 }
 
 // CodeToDefaultMsg NOTE: Don't stringer this, we'll put better messages in later.

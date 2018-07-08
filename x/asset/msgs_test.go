@@ -368,67 +368,6 @@ func TestMsgGetSigners(t *testing.T) {
 }
 
 // ------------------------------------------------------------
-// TestMsgTransfer Tests
-func TestMsgTransfer(t *testing.T) {
-
-}
-
-func TestMsgTransferType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
-	var msg = MsgTransfer{
-		Sender:    addr,
-		Recipient: addr2,
-		Assets:    []string{"1212"},
-	}
-	// TODO some failures for bad result
-	assert.Equal(t, msg.Type(), "asset")
-}
-
-func TestMsgTransferValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
-	cases := []struct {
-		valid bool
-		tx    MsgTransfer
-	}{
-		{false, MsgTransfer{}},                                                      // no asset info
-		{false, MsgTransfer{Sender: addr1, Recipient: addr2}},                       // missing quantity
-		{false, MsgTransfer{Sender: addr1}},                                         // missing id
-		{true, MsgTransfer{Sender: addr1, Recipient: addr2, Assets: []string{"1"}}}, //
-	}
-
-	for i, tc := range cases {
-		err := tc.tx.ValidateBasic()
-		if tc.valid {
-			assert.Nil(t, err, "%d: %+v", i, err)
-		} else {
-			assert.NotNil(t, err, "%d", i)
-		}
-	}
-}
-
-func TestMsgTransferGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgTransfer{
-		Sender:    addr1,
-		Recipient: addr2,
-		Assets:    []string{"asset"},
-	}
-	res := msg.GetSignBytes()
-	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","recipient":"6164647232","assets":["asset"]}`)
-}
-
-func TestMsgTransferGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgTransfer{
-		Sender: addr1,
-	}
-	res := msg.GetSigners()
-	// TODO bad results
-	assert.Equal(t, fmt.Sprintf("%v", res), `[696E707574]`)
-}
-
-// ------------------------------------------------------------
 // TestMsgFinalize Tests
 func TestMsgFinalize(t *testing.T) {
 
@@ -479,68 +418,6 @@ func TestMsgFinalizeGetSignBytes(t *testing.T) {
 func TestMsgFinalizeGetSigners(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = MsgFinalize{
-		Sender: addr1,
-	}
-	res := msg.GetSigners()
-	// TODO bad results
-	assert.Equal(t, fmt.Sprintf("%v", res), `[696E707574]`)
-}
-
-// ------------------------------------------------------------
-// TestMsgCreateReporter Tests
-func TestMsgCreateReporter(t *testing.T) {
-
-}
-
-func TestMsgCreateReporterType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
-	var msg = MsgCreateReporter{
-		Sender:  addr,
-		AssetID: "121",
-	}
-	// TODO some failures for bad result
-	assert.Equal(t, msg.Type(), "asset")
-}
-
-func TestMsgCreateReporterValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
-	cases := []struct {
-		valid bool
-		tx    MsgCreateReporter
-	}{
-		{false, MsgCreateReporter{}},              // no asset info
-		{false, MsgCreateReporter{Sender: addr1}}, // missing id
-		{false, MsgCreateReporter{Sender: addr1, Reporter: addr3}},
-		{false, MsgCreateReporter{Sender: addr1, Reporter: addr3, AssetID: "1"}},
-		{true, MsgCreateReporter{Sender: addr1, Reporter: addr3, AssetID: "1", Properties: []string{"size"}}},
-	}
-
-	for i, tc := range cases {
-		err := tc.tx.ValidateBasic()
-		if tc.valid {
-			assert.Nil(t, err, "%d: %+v", i, err)
-		} else {
-			assert.NotNil(t, err, "%d", i)
-		}
-	}
-}
-
-func TestMsgCreateReporterGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgCreateReporter{
-		Sender:     addr1,
-		Reporter:   addr2,
-		AssetID:    "3434",
-		Properties: []string{"size"},
-	}
-	res := msg.GetSignBytes()
-	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","reporter":"6164647232","asset_id":"3434","properties":["size"]}`)
-}
-
-func TestMsgCreateReporterGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
-	var msg = MsgCreateReporter{
 		Sender: addr1,
 	}
 	res := msg.GetSigners()

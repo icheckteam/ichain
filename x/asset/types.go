@@ -10,9 +10,10 @@ import (
 type Asset struct {
 	ID         string      `json:"id"`
 	Type       string      `json:"type"`
-	Height     int64       `json:"height"`
+	Subtype    string      `json:"subtype"`
 	Name       string      `json:"name"`
 	Owner      sdk.Address `json:"owner"`
+	Custodian  sdk.Address `json:"custodian"`
 	Reporters  Reporters   `json:"reporters"`
 	Parent     string      `json:"parent"` // the id of the asset parent
 	Root       string      `json:"root"`   // the id of the asset root
@@ -24,6 +25,7 @@ type Asset struct {
 	Quantity   sdk.Int     `json:"quantity"`
 	Unit       string      `json:"unit"`
 	Created    int64       `json:"created"`
+	Height     int64       `json:"height"`
 }
 
 // IsOwner check is owner of the asset
