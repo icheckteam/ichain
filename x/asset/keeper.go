@@ -96,7 +96,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	}
 	// update asset info
 	k.SetAsset(ctx, newAsset)
-	k.setAssetByAccountIndex(ctx, newAsset)
+	k.setAssetByAccountIndex(ctx, newAsset.ID, newAsset.Owner)
 
 	if len(newAsset.Parent) > 0 {
 		// index by parent
@@ -115,15 +115,15 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	store.Set(GetAssetKey(asset.ID), bz)
 }
 
-func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(asset.ID)
-	store.Set(GetAccountAssetKey(asset.Owner, asset.ID), bz)
+	bz := k.cdc.MustMarshalBinary(assetID)
+	store.Set(GetAccountAssetKey(recipient, assetID), bz)
 }
 
-func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountAssetKey(asset.Owner, asset.ID))
+	store.Delete(GetAccountAssetKey(recipient, assetID))
 }
 
 func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
@@ -230,7 +230,7 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	}
 
 	asset.Final = true
-	k.removeAssetByAccountIndex(ctx, asset)
+	k.removeAssetByAccountIndex(ctx, asset.ID, asset.Owner)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(msg.AssetID),
@@ -308,6 +308,11 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 		case RoleOwner:
 			// update owner
 			asset.Owner = proposal.Recipient
+			asset.Reporters = Reporters{}
+			for _, reporter := range asset.Reporters {
+				k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+			}
+			k.setAssetByAccountIndex(ctx, asset.ID, proposal.Recipient)
 			break
 		case RoleReporter:
 			// add reporter
@@ -325,6 +330,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 					Created:    ctx.BlockHeader().Time,
 				}
 				asset.Reporters = append(asset.Reporters, *reporter)
+				k.setAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
 			}
 			break
 		default:
