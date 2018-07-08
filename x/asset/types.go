@@ -13,12 +13,9 @@ type Asset struct {
 	Subtype    string      `json:"subtype"`
 	Name       string      `json:"name"`
 	Owner      sdk.Address `json:"owner"`
-	Custodian  sdk.Address `json:"custodian"`
 	Reporters  Reporters   `json:"reporters"`
 	Parent     string      `json:"parent"` // the id of the asset parent
 	Root       string      `json:"root"`   // the id of the asset root
-	Company    string      `json:"company"`
-	Email      string      `json:"email"`
 	Final      bool        `json:"final"`
 	Properties Properties  `json:"properties"`
 	Materials  Materials   `json:"materials"`
