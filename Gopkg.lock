@@ -45,7 +45,10 @@
     "client",
     "client/context",
     "client/keys",
+    "client/lcd",
     "client/rpc",
+    "client/tx",
+    "cmd/gaia/app",
     "crypto",
     "crypto/keys",
     "crypto/keys/bcrypt",
@@ -66,6 +69,7 @@
     "x/bank/client/cli",
     "x/bank/client/rest",
     "x/gov",
+    "x/gov/client/cli",
     "x/gov/client/rest",
     "x/ibc",
     "x/ibc/client/cli",
@@ -368,12 +372,6 @@
   revision = "e2150783cd35f5b607daca48afd8c57ec54cc995"
 
 [[projects]]
-  name = "github.com/tendermint/abci"
-  packages = ["types"]
-  revision = "68592f4d8ee34e97db94b7a7976b1309efdb7eb9"
-  version = "v0.10.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/tendermint/ed25519"
   packages = [
@@ -474,9 +472,7 @@
   branch = "develop"
   name = "github.com/tendermint/tmlibs"
   packages = [
-    "cli",
     "common",
-    "db",
     "log"
   ]
   revision = "0c98d10b4ffbd87978d79c160e835b3d3df241ec"
@@ -589,6 +585,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5b7051ab2618c9a7a6809d2e13048edf274c80bb3e075faa264ef9759ae3a92e"
+  inputs-digest = "e0ffde2abca528901555f29fd98d1bc26b1cd76a5ff5780c1fb1ed2c830c1f6e"
   solver-name = "gps-cdcl"
   solver-version = 1

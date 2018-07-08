@@ -3,6 +3,7 @@ package invoice
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +12,7 @@ func TestInvoiceKeeper(t *testing.T) {
 	ctx, invoiceKeeper := createTestInput(t, false, 0)
 	invoiceKeeper.assetKeeper.CreateAsset(ctx, asset.MsgCreateAsset{
 		AssetID:  "tomato",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 		Sender:   addrs[0],
 	})
 
