@@ -82,15 +82,16 @@ func TestRegisterMsgGet(t *testing.T) {
 func TestRegisterGetSignBytes(t *testing.T) {
 	addr1 := sdk.Address([]byte("input"))
 	var msg = MsgCreateAsset{
-		Sender:   addr1,
-		AssetID:  "1212",
-		Name:     "name",
-		Quantity: sdk.NewInt(1),
-		Unit:     "kg",
+		Sender:     addr1,
+		AssetID:    "1212",
+		Name:       "name",
+		Quantity:   sdk.NewInt(1),
+		Unit:       "kg",
+		Properties: Properties{Property{Name: "size", StringValue: "50"}},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1212","asset_type":"","name":"name","parent":"","quantity":"1","sender":"cosmosaccaddr1d9h8qat5e4ehc5","unit":"kg"}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"1212\",\"name\":\"name\",\"parent\":\"\",\"properties\":[{\"location_value\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"name\":\"size\",\"string_value\":\"50\",\"type\":\"0\"}],\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"unit\":\"kg\"}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
@@ -171,7 +172,7 @@ func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1","properties":[{"name":"weight","type":3,"number_value":100,"location_value":{"latitude":0,"longitude":0}}]}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"properties\":[{\"location_value\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"name\":\"weight\",\"number_value\":\"100\",\"type\":\"3\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {
@@ -293,7 +294,7 @@ func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1","quantity":"1"}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
 }
 
 func TestSubtractQuantityMsgGetSigners(t *testing.T) {
@@ -354,7 +355,7 @@ func TestMsgAddMaterialsGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","sender":"696E707574","materials":[{"asset_id":"1","quantity":"1"}]}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"materials\":[{\"asset_id\":\"1\",\"quantity\":\"1\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
 }
 
 func TestMsgGetSigners(t *testing.T) {
@@ -472,7 +473,7 @@ func TestMsgRevokeReporterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","reporter":"6164647232","asset_id":"3434"}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"3434\",\"reporter\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
 }
 
 func TestMsgRevokeReporterGetSigners(t *testing.T) {
@@ -539,7 +540,7 @@ func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","sender":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","properties":["location"],"role":0}`)
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"properties\":[\"location\"],\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\",\"role\":\"0\",\"sender\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\"}")
 }
 
 // AnswerProposal  Tests
@@ -592,5 +593,5 @@ func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"response\":0}")
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\"}")
 }

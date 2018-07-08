@@ -16,13 +16,13 @@ var _, _, _ sdk.Msg = &MsgSubtractQuantity{}, &MsgAnswerProposal{}, &MsgUpdatePr
 // MsgCreateAsset A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
 type MsgCreateAsset struct {
-	Sender    sdk.Address `json:"sender"`
-	AssetID   string      `json:"asset_id"`
-	AssetType string      `json:"asset_type"`
-	Name      string      `json:"name"`
-	Quantity  sdk.Int     `json:"quantity"`
-	Parent    string      `json:"parent"` // the id of the  parent asset
-	Unit      string      `json:"unit"`
+	Sender     sdk.Address `json:"sender"`
+	AssetID    string      `json:"asset_id"`
+	Name       string      `json:"name"`
+	Quantity   sdk.Int     `json:"quantity"`
+	Parent     string      `json:"parent"` // the id of the  parent asset
+	Unit       string      `json:"unit"`
+	Properties Properties  `json:"properties"`
 }
 
 // NewMsgCreateAsset new record create msg
@@ -75,21 +75,21 @@ func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgCreateAsset) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(struct {
-		Sender    string  `json:"sender"`
-		AssetID   string  `json:"asset_id"`
-		AssetType string  `json:"asset_type"`
-		Name      string  `json:"name"`
-		Quantity  sdk.Int `json:"quantity"`
-		Parent    string  `json:"parent"`
-		Unit      string  `json:"unit"`
+		Sender     string            `json:"sender"`
+		AssetID    string            `json:"asset_id"`
+		Name       string            `json:"name"`
+		Quantity   sdk.Int           `json:"quantity"`
+		Parent     string            `json:"parent"`
+		Unit       string            `json:"unit"`
+		Properties []json.RawMessage `json:"properties"`
 	}{
-		Sender:    sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:   msg.AssetID,
-		AssetType: msg.AssetType,
-		Name:      msg.Name,
-		Quantity:  msg.Quantity,
-		Parent:    msg.Parent,
-		Unit:      msg.Unit,
+		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
+		AssetID:    msg.AssetID,
+		Name:       msg.Name,
+		Quantity:   msg.Quantity,
+		Parent:     msg.Parent,
+		Unit:       msg.Unit,
+		Properties: msg.Properties.GetSignBytes(),
 	})
 	if err != nil {
 		panic(err)
@@ -138,11 +138,19 @@ func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgUpdateProperties) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(struct {
+		Sender     string            `json:"sender"`
+		AssetID    string            `json:"asset_id"`
+		Properties []json.RawMessage `json:"properties"`
+	}{
+		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
+		AssetID:    msg.AssetID,
+		Properties: msg.Properties.GetSignBytes(),
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgAddQuantity ...
@@ -208,11 +216,19 @@ func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgSubtractQuantity) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(struct {
+		Sender   string  `json:"sender"`
+		AssetID  string  `json:"asset_id"`
+		Quantity sdk.Int `json:"quantity"`
+	}{
+		Sender:   sdk.MustBech32ifyAcc(msg.Sender),
+		AssetID:  msg.AssetID,
+		Quantity: msg.Quantity,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgAddMaterials ...
@@ -251,11 +267,23 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAddMaterials) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	materials := []json.RawMessage{}
+	for _, material := range msg.Materials {
+		materials = append(materials, material.GetSignBytes())
+	}
+	b, err := msgCdc.MarshalJSON(struct {
+		Sender    string            `json:"sender"`
+		AssetID   string            `json:"asset_id"`
+		Materials []json.RawMessage `json:"materials"`
+	}{
+		Sender:    sdk.MustBech32ifyAcc(msg.Sender),
+		AssetID:   msg.AssetID,
+		Materials: materials,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgSend ...
@@ -316,11 +344,19 @@ func (msg MsgRevokeReporter) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgRevokeReporter) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(struct {
+		Sender   string `json:"sender"`
+		Reporter string `json:"reporter"`
+		AssetID  string `json:"asset_id"`
+	}{
+		Sender:   sdk.MustBech32ifyAcc(msg.Sender),
+		Reporter: sdk.MustBech32ifyAcc(msg.Reporter),
+		AssetID:  msg.AssetID,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // CreateProposalMsg ...
@@ -355,11 +391,23 @@ func (msg MsgCreateProposal) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgCreateProposal) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(struct {
+		AssetID    string       `json:"asset_id"`
+		Sender     string       `json:"sender"`
+		Recipient  string       `json:"recipient"`
+		Properties []string     `json:"properties"`
+		Role       ProposalRole `json:"role"`
+	}{
+		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
+		Recipient:  sdk.MustBech32ifyAcc(msg.Recipient),
+		AssetID:    msg.AssetID,
+		Properties: msg.Properties,
+		Role:       msg.Role,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgAnswerProposal ...
@@ -389,9 +437,17 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAnswerProposal) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(struct {
+		AssetID   string         `json:"asset_id"`
+		Recipient string         `json:"recipient"`
+		Response  ProposalStatus `json:"response"`
+	}{
+		Recipient: sdk.MustBech32ifyAcc(msg.Recipient),
+		AssetID:   msg.AssetID,
+		Response:  msg.Response,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }

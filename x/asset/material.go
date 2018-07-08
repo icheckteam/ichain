@@ -14,6 +14,20 @@ type Material struct {
 	Quantity sdk.Int `json:"quantity"`
 }
 
+func (msg Material) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(struct {
+		AssetID  string  `json:"asset_id"`
+		Quantity sdk.Int `json:"quantity"`
+	}{
+		AssetID:  msg.AssetID,
+		Quantity: msg.Quantity,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
 // Materials - list of materials
 type Materials []Material
 

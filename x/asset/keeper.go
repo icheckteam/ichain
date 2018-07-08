@@ -50,7 +50,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	newAsset := Asset{
 		ID:       msg.AssetID,
-		Type:     msg.AssetType,
 		Name:     msg.Name,
 		Owner:    msg.Sender,
 		Quantity: msg.Quantity,
