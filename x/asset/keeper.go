@@ -74,8 +74,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		if !parent.IsOwner(msg.Sender) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Sender))
 		}
-
-		if parent.Quantity.GT(msg.Quantity) {
+		if parent.Quantity.LT(msg.Quantity) {
 			return nil, ErrInvalidAssetQuantity(parent.ID)
 		}
 		parent.Quantity = parent.Quantity.Sub(msg.Quantity)

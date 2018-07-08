@@ -36,6 +36,20 @@ var (
 		Quantity: sdk.NewInt(100),
 	}
 
+	asset10 = MsgCreateAsset{
+		AssetID:  "asset10",
+		Sender:   addr,
+		Name:     "asset10",
+		Quantity: sdk.NewInt(100),
+	}
+
+	asset11 = MsgCreateAsset{
+		AssetID:  "asset11",
+		Sender:   addr2,
+		Name:     "asset11",
+		Quantity: sdk.NewInt(100),
+	}
+
 	assetChild = MsgCreateAsset{
 		AssetID:  "asset4",
 		Sender:   addr,
@@ -77,6 +91,8 @@ func TestKeeper(t *testing.T) {
 
 	keeper.CreateAsset(ctx, asset2)
 	keeper.CreateAsset(ctx, asset3)
+	keeper.CreateAsset(ctx, asset10)
+	keeper.CreateAsset(ctx, asset11)
 
 	// asset already exists
 	_, err := keeper.CreateAsset(ctx, asset)
@@ -98,19 +114,63 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Parent == assetChild.AssetID)
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
+	// valid
+	msgFinalize := MsgFinalize{
+		Sender:  addr,
+		AssetID: asset10.AssetID,
+	}
+	keeper.Finalize(ctx, msgFinalize)
+	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
+	assert.True(t, newAsset.Final == true)
+
 	// invalid parent
 	msgCreateAsset := MsgCreateAsset{
-		AssetID:  "asset5",
+		AssetID:  "asset575765",
 		Sender:   addr,
 		Name:     "asset 5",
 		Quantity: sdk.NewInt(100),
-		Parent:   "asset45",
+		Parent:   "asset10",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	// invalid owner
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "asset575765",
+		Sender:   addr3,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100),
+		Parent:   "asset1",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	// invalid quantity
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "6456546",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100000),
+		Parent:   "asset2",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "asset575765",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100),
+		Parent:   "asset6456456",
 	}
 	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
 	assert.True(t, err != nil)
 
 	// -----------------------------------------
 	// Test Add Materials
+	// -----------------------------------------------
+
+	// test valid
 	msgAddMaterials := MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
@@ -139,6 +199,7 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	assert.True(t, err != nil)
 
+	// invalid sender
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
@@ -150,11 +211,71 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	assert.True(t, err != nil)
 
+	//  invalid asset id
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: "445",
+		Sender:  addr4,
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset final
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset10.AssetID,
+		Sender:  addr4,
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: "12121", Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset10.AssetID, Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid owner
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset11.AssetID, Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid quantity
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(100000)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
 	//-------------------------------------------
 	// Test Finalize
 
 	// invalid sender
-	msgFinalize := MsgFinalize{
+	msgFinalize = MsgFinalize{
 		Sender:  addrs[0],
 		AssetID: assetChild1.AssetID,
 	}
@@ -176,15 +297,6 @@ func TestKeeper(t *testing.T) {
 	}
 	_, err = keeper.Finalize(ctx, msgFinalize)
 	assert.True(t, err != nil)
-
-	// valid
-	msgFinalize = MsgFinalize{
-		Sender:  addr,
-		AssetID: assetChild1.AssetID,
-	}
-	keeper.Finalize(ctx, msgFinalize)
-	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
-	assert.True(t, newAsset.Final == true)
 
 	// create asset invalid parent
 	msgCreateAsset = MsgCreateAsset{
@@ -245,6 +357,14 @@ func TestKeeper(t *testing.T) {
 	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
 	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
 
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset10.AssetID, Sender: addr, Properties: props})
+
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: "adasdas", Sender: addr, Properties: props})
+
 	// invalid issuer
 	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
 	assert.True(t, err != nil)
@@ -284,6 +404,14 @@ func TestKeeper(t *testing.T) {
 
 	msgTransfer = MsgTransfer{
 		Assets:    []string{"adasd"},
+		Sender:    addr,
+		Recipient: addr3,
+	}
+	_, err = keeper.Transfer(ctx, msgTransfer)
+	assert.True(t, err != nil)
+
+	msgTransfer = MsgTransfer{
+		Assets:    []string{"asset10"},
 		Sender:    addr,
 		Recipient: addr3,
 	}
