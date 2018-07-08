@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type updateAttributeBody struct {
@@ -59,7 +59,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		msg := asset.MsgUpdateProperties{
 			AssetID:    vars["id"],
 			Properties: m.Properties,
-			Sender:     info.PubKey.Address(),
+			Sender:     info.GetPubKey().Address(),
 		}
 
 		signAndBuild(ctx, cdc, w, m.baseBody, msg)

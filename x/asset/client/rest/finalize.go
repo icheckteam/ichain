@@ -9,8 +9,8 @@ import (
 	"github.com/icheckteam/ichain/x/asset"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type finalizeBody struct {
@@ -51,7 +51,7 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		}
 		// build message
 		msg := asset.MsgFinalize{
-			Sender:  info.PubKey.Address(),
+			Sender:  info.GetPubKey().Address(),
 			AssetID: vars["id"],
 		}
 		signAndBuild(ctx, cdc, w, m.baseBody, msg)

@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type createAssetBody struct {
@@ -66,7 +66,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 		}
 
 		// build message
-		m.Asset.Sender = info.PubKey.Address()
+		m.Asset.Sender = info.GetPubKey().Address()
 		msg := m.Asset
 		signAndBuild(ctx, cdc, w, m.baseBody, msg)
 	}

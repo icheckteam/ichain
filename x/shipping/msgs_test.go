@@ -22,27 +22,24 @@ func TestCreateOrderMsgType(t *testing.T) {
 
 func TestCreateOrderMsgValidation(t *testing.T) {
 	cases := []struct {
+		name  string
 		valid bool
 		tx    CreateOrderMsg
 	}{
-		{false, CreateOrderMsg{ID: "1"}},
-		{false, CreateOrderMsg{TransportedAssets: transportedAssets}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[1]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[0], Receiver: addrs[1]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[1], Receiver: addrs[0]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[1], Carrier: addrs[0], Receiver: addrs[1]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[0], Receiver: addrs[0]}},
-		{false, CreateOrderMsg{ID: "1", TransportedAssets: []TransportedAsset{}, Issuer: addrs[0], Carrier: addrs[1], Receiver: addrs[2]}},
-		{true, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[1], Receiver: addrs[2]}},
+		{"only 1", false, CreateOrderMsg{ID: "1"}},
+		{"only 2", false, CreateOrderMsg{TransportedAssets: transportedAssets}},
+		{"only 3", false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0]}},
+		{"only 4", false, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[1]}},
+		{"only 9", false, CreateOrderMsg{ID: "1", TransportedAssets: []TransportedAsset{}, Issuer: addrs[0], Carrier: addrs[1], Receiver: addrs[2]}},
+		{"only 10", true, CreateOrderMsg{ID: "1", TransportedAssets: transportedAssets, Issuer: addrs[0], Carrier: addrs[1], Receiver: addrs[2]}},
 	}
 
 	for i, tc := range cases {
 		err := tc.tx.ValidateBasic()
 		if tc.valid {
-			assert.Nil(t, err, "%d: %+v", i, err)
+			assert.Nil(t, err, "%s : %d: %+v", tc.name, i, err)
 		} else {
-			assert.NotNil(t, err, "%d", i)
+			assert.NotNil(t, err, "%s : %d", tc.name, i)
 		}
 	}
 }
@@ -102,12 +99,6 @@ func TestConfirmOrderMsgValidation(t *testing.T) {
 			assert.NotNil(t, err, "%d", i)
 		}
 	}
-}
-
-func TestConfirmOrderMsgGet(t *testing.T) {
-	msg := ConfirmOrderMsg{}
-	res := msg.Get(nil)
-	assert.Nil(t, res)
 }
 
 func TestConfirmOrderMsgGetSigners(t *testing.T) {

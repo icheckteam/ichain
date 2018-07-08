@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type subtractAssetQuantityBody struct {
@@ -56,7 +56,7 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 		// build message
 
 		msg := asset.MsgSubtractQuantity{
-			Sender:   info.PubKey.Address(),
+			Sender:   info.GetPubKey().Address(),
 			AssetID:  vars["id"],
 			Quantity: m.Quantity,
 		}

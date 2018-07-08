@@ -38,6 +38,24 @@ func (msg CertValue) ValidateBasic() sdk.Error {
 	return nil
 }
 
+func (msg CertValue) GetSignBytes() []byte {
+	b, err := MsgCdc.MarshalJSON(struct {
+		Property   string   `json:"property"`
+		Type       string   `json:"type"`
+		Data       Metadata `json:"data"`
+		Confidence bool     `json:"confidence"`
+	}{
+		Property:   sdk.MustBech32ifyAcc(msg.Property),
+		Type:       msg.Type,
+		Data:       msg.Data,
+		Confidence: msg.Confidence,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 type Certs []Cert
 
 type Metadata []byte

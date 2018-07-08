@@ -9,6 +9,10 @@ import (
 
 const msgType = "asset"
 
+var _, _, _ sdk.Msg = &MsgCreateAsset{}, &MsgAddMaterials{}, &MsgAddQuantity{}
+var _, _, _ sdk.Msg = &MsgCreateReporter{}, &MsgRevokeReporter{}, &MsgFinalize{}
+var _, _, _ sdk.Msg = &MsgSubtractQuantity{}, &MsgTransfer{}, &MsgUpdateProperties{}
+
 // MsgCreateAsset A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
 type MsgCreateAsset struct {
@@ -97,7 +101,7 @@ func (msg MsgUpdateProperties) String() string {
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
-		return sdk.ErrInvalidAddress(msg.Sender.String()).Trace("")
+		return sdk.ErrInvalidAddress(msg.Sender.String())
 	}
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")

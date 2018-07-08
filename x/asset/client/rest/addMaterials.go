@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type addMaterialsBody struct {
@@ -58,7 +58,7 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 
 		msg := asset.MsgAddMaterials{
 			AssetID:   vars["id"],
-			Sender:    info.PubKey.Address(),
+			Sender:    info.GetPubKey().Address(),
 			Materials: m.Materials,
 		}
 

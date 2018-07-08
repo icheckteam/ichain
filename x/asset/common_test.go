@@ -3,16 +3,17 @@ package asset
 import (
 	"bytes"
 	"encoding/hex"
+	"os"
 	"strconv"
 	"testing"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tmlibs/log"
 
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
-	dbm "github.com/tendermint/tmlibs/db"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -56,22 +57,22 @@ func makeTestCodec() *wire.Codec {
 // hogpodge of all sorts of input required for testing
 func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context, auth.AccountMapper, Keeper) {
 	db := dbm.NewMemDB()
-	keyStake := sdk.NewKVStoreKey("asset")
-	keyMain := keyStake //sdk.NewKVStoreKey("main") //TODO fix multistore
+	keyAsset := sdk.NewKVStoreKey("asset")
+	keyMain := keyAsset //sdk.NewKVStoreKey("main") //TODO fix multistore
 
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyStake, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyAsset, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
 	cdc := makeTestCodec()
 	accountMapper := auth.NewAccountMapper(
 		cdc,                 // amino codec
 		keyMain,             // target store
 		&types.AppAccount{}, // prototype
 	)
-	assetKeeper := NewKeeper(keyStake, cdc)
+	assetKeeper := NewKeeper(keyAsset, cdc)
 	return ctx, accountMapper, assetKeeper
 }
 

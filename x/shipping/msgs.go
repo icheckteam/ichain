@@ -10,6 +10,9 @@ import (
 
 const msgType = "shipping"
 
+// enforce the Msg type at compile time
+var _, _, _ sdk.Msg = ConfirmOrderMsg{}, CreateOrderMsg{}, CancelOrderMsg{}
+
 // ------------------------------------ Create Order
 
 // CreateOrderMsg is sent by the issuer to construct a new order,
@@ -56,19 +59,14 @@ func (msg CreateOrderMsg) GetSignBytes() []byte {
 // ValidateBasic ...
 func (msg CreateOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil issuer address")
 	}
-
 	if len(msg.Carrier) == 0 {
-		return sdk.ErrUnknownAddress(msg.Carrier.String()).Trace("")
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil carrier address")
 	}
 
 	if len(msg.Receiver) == 0 {
-		return sdk.ErrUnknownAddress(msg.Receiver.String()).Trace("")
-	}
-
-	if msg.Issuer.String() == msg.Carrier.String() || msg.Carrier.String() == msg.Receiver.String() || msg.Receiver.String() == msg.Issuer.String() {
-		return ErrDuplicateAddress()
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil receiver address")
 	}
 
 	if len(msg.ID) == 0 {
@@ -91,23 +89,9 @@ type ConfirmOrderMsg struct {
 	Carrier sdk.Address `json:"carrier_id"` // the carrier, who confirms the order
 }
 
-// enforce the Msg type at compile time
-var _ sdk.Msg = ConfirmOrderMsg{}
-
 // nolint ...
-func (msg ConfirmOrderMsg) Type() string                            { return msgType }
-func (msg ConfirmOrderMsg) Get(key interface{}) (value interface{}) { return nil }
-func (msg ConfirmOrderMsg) GetSigners() []sdk.Address               { return []sdk.Address{msg.Carrier} }
-func (msg ConfirmOrderMsg) String() string {
-	return fmt.Sprintf(`
-		ConfirmOrderMsg{
-			OrderID: %s, 
-			Carrier: %s,
-		}	
-	`,
-		msg.OrderID, msg.Carrier,
-	)
-}
+func (msg ConfirmOrderMsg) Type() string              { return msgType }
+func (msg ConfirmOrderMsg) GetSigners() []sdk.Address { return []sdk.Address{msg.Carrier} }
 
 // GetSignBytes ...
 func (msg ConfirmOrderMsg) GetSignBytes() []byte {
@@ -121,7 +105,7 @@ func (msg ConfirmOrderMsg) GetSignBytes() []byte {
 // ValidateBasic ...
 func (msg ConfirmOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Carrier) == 0 {
-		return sdk.ErrUnknownAddress(msg.Carrier.String()).Trace("")
+		return sdk.ErrUnknownAddress(msg.Carrier.String())
 	}
 
 	if len(msg.OrderID) == 0 {
@@ -170,7 +154,7 @@ func (msg CompleteOrderMsg) GetSignBytes() []byte {
 // ValidateBasic ...
 func (msg CompleteOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Receiver) == 0 {
-		return sdk.ErrUnknownAddress(msg.Receiver.String()).Trace("")
+		return sdk.ErrUnknownAddress(msg.Receiver.String())
 	}
 
 	if len(msg.OrderID) == 0 {
@@ -219,7 +203,7 @@ func (msg CancelOrderMsg) GetSignBytes() []byte {
 // ValidateBasic ...
 func (msg CancelOrderMsg) ValidateBasic() sdk.Error {
 	if len(msg.Issuer) == 0 {
-		return sdk.ErrUnknownAddress(msg.Issuer.String()).Trace("")
+		return sdk.ErrUnknownAddress(msg.Issuer.String())
 	}
 
 	if len(msg.OrderID) == 0 {

@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type createReporterBody struct {
@@ -68,7 +68,7 @@ func CreateReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		// build message
 
 		msg := asset.MsgCreateReporter{
-			Sender:     info.PubKey.Address(),
+			Sender:     info.GetPubKey().Address(),
 			Reporter:   address,
 			Properties: m.Properties,
 			AssetID:    vars["id"],

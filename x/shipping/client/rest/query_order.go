@@ -20,7 +20,7 @@ func QueryOrderRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 		orderID := vars["id"]
 
 		key := shipping.GetOrderKey([]byte(orderID))
-		res, err := ctx.Query(key, storeName)
+		res, err := ctx.QueryStore(key, storeName)
 		var order shipping.Order
 		err = cdc.UnmarshalBinary(res, &order)
 		if err != nil {

@@ -5,13 +5,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type addAssetQuantityBody struct {
@@ -63,7 +63,11 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			return
 		}
 		// build message
-		msg := buildAdAssetQuantityMsg(info.PubKey.Address(), vars["id"], m.Quantity)
+		msg := asset.MsgAddQuantity{
+			Sender:   info.GetPubKey().Address(),
+			AssetID:  vars["asset_id"],
+			Quantity: m.Quantity,
+		}
 		signAndBuild(ctx, cdc, w, m.baseBody, msg)
 	}
 }

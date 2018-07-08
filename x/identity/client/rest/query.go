@@ -48,6 +48,18 @@ func bech32CertOutput(cert identity.Cert) CertOutput {
 	}
 }
 
+type TrustOutput struct {
+	Trustor  string
+	Trusting string
+}
+
+func bech32TrustOutput(trust identity.Trust) TrustOutput {
+	return TrustOutput{
+		Trustor:  sdk.MustBech32ifyAcc(trust.Trustor),
+		Trusting: sdk.MustBech32ifyAcc(trust.Trusting),
+	}
+}
+
 func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		kvs, err := ctx.QuerySubspace(cdc, identity.IdentitiesKey, storeName)
@@ -118,6 +130,55 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 		}
 
 		output, err := cdc.MarshalJSON(certs)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		address, err := sdk.GetAccAddressBech32(vars["address"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't decode address. Error: %s", err.Error())))
+			return
+		}
+		kvs, err := ctx.QuerySubspace(cdc, identity.KeyTrusted(address), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't query trusts. Error: %s", err.Error())))
+			return
+		}
+
+		trusts := make([]TrustOutput, len(kvs))
+		for i, kv := range kvs {
+
+			addr := kv.Key[1:]
+			trust := identity.Trust{}
+			err = cdc.UnmarshalBinary(addr, &trust)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode trust. Error: %s", err.Error())))
+				return
+			}
+
+			bech32Trust := bech32TrustOutput(trust)
+			trusts[i] = bech32Trust
+		}
+
+		output, err := cdc.MarshalJSON(trusts)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

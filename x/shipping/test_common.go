@@ -2,16 +2,17 @@ package shipping
 
 import (
 	"encoding/hex"
+	"os"
 	"testing"
 
 	"github.com/icheckteam/ichain/types"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tmlibs/log"
 
-	abci "github.com/tendermint/abci/types"
-	crypto "github.com/tendermint/go-crypto"
-	dbm "github.com/tendermint/tmlibs/db"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,7 +90,7 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	ctx := sdk.NewContext(ms, abci.Header{ChainID: "foochainid"}, isCheckTx, nil, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
 	cdc := makeTestCodec()
 
 	assetKeeper := asset.NewKeeper(keyAsset, cdc)

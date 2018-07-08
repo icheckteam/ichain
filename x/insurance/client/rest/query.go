@@ -14,7 +14,7 @@ func QueryContractHandlerFn(ctx context.CoreContext, storeName string, cdc *wire
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		key := insurance.GetContractKey(vars["id"])
-		res, err := ctx.Query(key, storeName)
+		res, err := ctx.QueryStore(key, storeName)
 		var c insurance.Contract
 		err = cdc.UnmarshalBinary(res, &c)
 		if err != nil {

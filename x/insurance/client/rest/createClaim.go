@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/icheckteam/ichain/x/insurance"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type createClaimBody struct {
@@ -68,14 +68,14 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 
 		// build message
 		msg := buildMsgCreateClaim(
-			info.PubKey.Address(),
+			info.GetPubKey().Address(),
 			b.Claim.Recipient,
 			b.Claim.ContractID,
 		)
 
 		// sign
 		ctx = ctx.WithSequence(b.Sequence)
-		txBytes, err := ctx.SignAndBuild(b.AccountName, b.Password, msg, cdc)
+		txBytes, err := ctx.SignAndBuild(b.AccountName, b.Password, []sdk.Msg{msg}, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

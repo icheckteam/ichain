@@ -1,6 +1,10 @@
 package identity
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"encoding/json"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // name to idetify transaction types
 const MsgType = "identity"
@@ -35,8 +39,8 @@ func (msg MsgSetTrust) GetSignBytes() []byte {
 		Trusting string `json:"trusting"`
 		Trust    bool   `json:"trust"`
 	}{
-		Trustor:  sdk.MustBech32ifyVal(msg.Trustor),
-		Trusting: sdk.MustBech32ifyVal(msg.Trusting),
+		Trustor:  sdk.MustBech32ifyAcc(msg.Trustor),
+		Trusting: sdk.MustBech32ifyAcc(msg.Trusting),
 		Trust:    msg.Trust,
 	})
 	if err != nil {
@@ -79,7 +83,7 @@ func (msg MsgCreateIdentity) GetSignBytes() []byte {
 	b, err := MsgCdc.MarshalJSON(struct {
 		Sender string `json:"sender"`
 	}{
-		Sender: sdk.MustBech32ifyVal(msg.Sender),
+		Sender: sdk.MustBech32ifyAcc(msg.Sender),
 	})
 	if err != nil {
 		panic(err)
@@ -119,14 +123,20 @@ func (msg MsgSetCerts) GetSigners() []sdk.Address {
 
 // get the bytes for the message signer to sign on
 func (msg MsgSetCerts) GetSignBytes() []byte {
+	var values []json.RawMessage
+
+	for _, value := range msg.Values {
+		values = append(values, value.GetSignBytes())
+	}
+
 	b, err := MsgCdc.MarshalJSON(struct {
-		Certifier  string      `json:"certifier"`
-		IdentityID int64       `json:"identity_id"`
-		Values     []CertValue `json:"values"`
+		Certifier  string            `json:"certifier"`
+		IdentityID int64             `json:"identity_id"`
+		Values     []json.RawMessage `json:"values"`
 	}{
-		Certifier:  sdk.MustBech32ifyVal(msg.Certifier),
+		Certifier:  sdk.MustBech32ifyAcc(msg.Certifier),
 		IdentityID: msg.IdentityID,
-		Values:     msg.Values,
+		Values:     values,
 	})
 	if err != nil {
 		panic(err)

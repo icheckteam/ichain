@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 ///////////////////////////
@@ -82,7 +82,7 @@ func QueryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 
 func queryAsset(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*asset.Asset, error) {
 	key := asset.GetAssetKey(assetID)
-	res, err := ctx.Query(key, storeName)
+	res, err := ctx.QueryStore(key, storeName)
 
 	if res == nil {
 		return nil, errors.New("asset not found")

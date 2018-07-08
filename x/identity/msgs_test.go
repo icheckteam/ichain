@@ -44,7 +44,7 @@ func TestMsgCreateIdentityGetSignBytes(t *testing.T) {
 	signBytes := MsgCreateIdentity{
 		Sender: addr1,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"sender":"cosmosvaladdr1v9jxgu33r3ngwt"}`)
+	assert.Equal(t, string(signBytes), `{"sender":"cosmosaccaddr1v9jxgu333rmgrm"}`)
 }
 
 func TestMsgCreateIdentityGetSigner(t *testing.T) {
@@ -86,7 +86,7 @@ func TestMsgSetTrustGetSignBytes(t *testing.T) {
 		Trusting: addr2,
 		Trust:    true,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"trustor":"cosmosvaladdr1v9jxgu33r3ngwt","trusting":"cosmosvaladdr1v9jxgu3jdzx7q5","trust":true}`)
+	assert.Equal(t, string(signBytes), `{"trustor":"cosmosaccaddr1v9jxgu333rmgrm","trusting":"cosmosaccaddr1v9jxgu3jlsw7dy","trust":true}`)
 }
 
 func TestMsgSetTrustGetSigner(t *testing.T) {
@@ -130,8 +130,9 @@ func TestMsgSetCertsGetSigner(t *testing.T) {
 
 func TestMsgSetCertsGetSignBytes(t *testing.T) {
 	signBytes := MsgSetCerts{
-		Certifier: addr1,
-		Values:    []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}},
+		Certifier:  addr1,
+		IdentityID: 1,
+		Values:     []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}},
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"certifier":"cosmosvaladdr1v9jxgu33r3ngwt","identity_id":0,"values":[{"property":"6164647232","type":"realname","data":null,"confidence":true}]}`)
+	assert.Equal(t, string(signBytes), `{"certifier":"cosmosaccaddr1v9jxgu333rmgrm","identity_id":"1","values":[{"property":"cosmosaccaddr1v9jxgu3jlsw7dy","type":"realname","data":null,"confidence":true}]}`)
 }
