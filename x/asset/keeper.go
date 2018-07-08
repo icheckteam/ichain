@@ -311,11 +311,21 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 			break
 		case RoleReporter:
 			// add reporter
-			asset.Reporters = append(asset.Reporters, Reporter{
-				Addr:       proposal.Recipient,
-				Properties: proposal.Properties,
-				Created:    ctx.BlockHeader().Time,
-			})
+			reporter, reporterIndex := asset.GetReporter(msg.Recipient)
+			if reporter != nil {
+				// Update reporter
+				reporter.Properties = proposal.Properties
+				reporter.Created = ctx.BlockHeader().Time
+				asset.Reporters[reporterIndex] = *reporter
+			} else {
+				// Add new reporter
+				reporter = &Reporter{
+					Addr:       proposal.Recipient,
+					Properties: proposal.Properties,
+					Created:    ctx.BlockHeader().Time,
+				}
+				asset.Reporters = append(asset.Reporters, *reporter)
+			}
 			break
 		default:
 			break
