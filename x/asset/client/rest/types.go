@@ -35,7 +35,7 @@ type AssetOutput struct {
 	Height     int64            `json:"height"`
 	Name       string           `json:"name"`
 	Owner      string           `json:"owner"`
-	Quantity   int64            `json:"quantity"`
+	Quantity   sdk.Int          `json:"quantity"`
 	Reporters  []ReporterOutput `json:"reporters"`
 	Parent     string           `json:"parent"` // the id of the asset parent
 	Root       string           `json:"root"`   // the id of the asset root
@@ -74,7 +74,6 @@ func ToAssetOutput(a asset.Asset) AssetOutput {
 		Final:      a.Final,
 		Properties: a.Properties,
 		Materials:  a.Materials,
-		Precision:  a.Precision,
 		Created:    a.Created,
 	}
 }

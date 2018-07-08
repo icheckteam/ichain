@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
@@ -14,7 +15,7 @@ import (
 
 type subtractAssetQuantityBody struct {
 	baseBody
-	Quantity int64 `json:"quantity"`
+	Quantity sdk.Int `json:"quantity"`
 }
 
 func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -42,7 +43,7 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			return
 		}
 
-		if m.Quantity == 0 {
+		if m.Quantity.IsZero() {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("quantity is required"))
 			return

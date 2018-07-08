@@ -16,7 +16,7 @@ import (
 
 type addAssetQuantityBody struct {
 	baseBody
-	Quantity int64 `json:"quantity"`
+	Quantity sdk.Int `json:"quantity"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -44,13 +44,7 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			return
 		}
 
-		if m.Quantity == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Quantity is required"))
-			return
-		}
-
-		if m.Quantity == 0 {
+		if m.Quantity.IsZero() {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("Quantity is required"))
 			return
@@ -72,7 +66,7 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 	}
 }
 
-func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty int64) sdk.Msg {
+func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty sdk.Int) sdk.Msg {
 	return asset.MsgAddQuantity{
 		Sender:   creator,
 		AssetID:  assetID,

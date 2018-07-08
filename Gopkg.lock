@@ -65,12 +65,15 @@
     "x/bank/client",
     "x/bank/client/cli",
     "x/bank/client/rest",
+    "x/gov",
+    "x/gov/client/rest",
     "x/ibc",
     "x/ibc/client/cli",
     "x/ibc/client/rest",
     "x/mock",
     "x/slashing",
     "x/slashing/client/cli",
+    "x/slashing/client/rest",
     "x/stake",
     "x/stake/client/cli",
     "x/stake/client/rest",
@@ -188,12 +191,6 @@
     "json/token"
   ]
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/howeyc/crc16"
-  packages = ["."]
-  revision = "2b2a61e366a66d3efb279e46176e7291001e0354"
 
 [[projects]]
   name = "github.com/inconshreveable/mousetrap"
@@ -394,13 +391,7 @@
 
 [[projects]]
   name = "github.com/tendermint/go-crypto"
-  packages = [
-    ".",
-    "keys",
-    "keys/bcrypt",
-    "keys/words",
-    "keys/words/wordlist"
-  ]
+  packages = ["."]
   revision = "c3e19f3ea26f5c3357e0bcbb799b0761ef923755"
   version = "v0.5.0"
 
@@ -598,6 +589,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "43b532462019f8c11242581bb6bc32c6cec92c1fe4f3612b50594298e822cce4"
+  inputs-digest = "5b7051ab2618c9a7a6809d2e13048edf274c80bb3e075faa264ef9759ae3a92e"
   solver-name = "gps-cdcl"
   solver-version = 1

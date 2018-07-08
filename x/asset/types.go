@@ -21,8 +21,7 @@ type Asset struct {
 	Final      bool        `json:"final"`
 	Properties Properties  `json:"properties"`
 	Materials  Materials   `json:"materials"`
-	Precision  int         `json:"precision"`
-	Quantity   int64       `json:"quantity"`
+	Quantity   sdk.Int     `json:"quantity"`
 	Unit       string      `json:"unit"`
 	Created    int64       `json:"created"`
 }

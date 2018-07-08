@@ -19,33 +19,28 @@ var (
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
-		Properties: Properties{Property{
-			Name:        "unit",
-			Type:        PropertyTypeString,
-			StringValue: "kg",
-		}},
+		Quantity: sdk.NewInt(100),
 	}
 
 	asset2 = MsgCreateAsset{
 		AssetID:  "asset2",
 		Sender:   addr,
 		Name:     "asset 2",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 
 	asset3 = MsgCreateAsset{
 		AssetID:  "asset3",
 		Sender:   addr,
 		Name:     "asset 3",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 
 	assetChild = MsgCreateAsset{
 		AssetID:  "asset4",
 		Sender:   addr,
 		Name:     "asset 3",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset3",
 	}
 
@@ -53,7 +48,7 @@ var (
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset4",
 	}
 
@@ -61,7 +56,7 @@ var (
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset4",
 	}
 )
@@ -77,7 +72,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.ID == asset.AssetID)
 	assert.True(t, newAsset.Owner.String() == asset.Sender.String())
 	assert.True(t, newAsset.Name == asset.Name)
-	assert.True(t, newAsset.Quantity == asset.Quantity)
+	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
 	assert.True(t, newAsset.Unit == "kg")
 
 	keeper.CreateAsset(ctx, asset2)
@@ -94,7 +89,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
 	// invalid asset quantity
-	assetChild.Quantity += 1
+	assetChild.Quantity = assetChild.Quantity.Add(sdk.NewInt(1))
 	_, err = keeper.CreateAsset(ctx, assetChild)
 	assert.True(t, err != nil)
 
@@ -108,7 +103,7 @@ func TestKeeper(t *testing.T) {
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset45",
 	}
 	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
@@ -120,25 +115,25 @@ func TestKeeper(t *testing.T) {
 		AssetID: asset3.AssetID,
 		Sender:  addr,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
 		},
 	}
-	keeper.AddMaterials(ctx, msgAddMaterials)
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	newAsset, _ = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
 	msgAddMaterials.Materials = msgAddMaterials.Materials.Sort()
 	assert.True(t, newAsset.Materials[0].AssetID == msgAddMaterials.Materials[0].AssetID)
-	assert.True(t, newAsset.Materials[0].Quantity == msgAddMaterials.Materials[0].Quantity)
+	assert.True(t, newAsset.Materials[0].Quantity.Equal(msgAddMaterials.Materials[0].Quantity))
 	assert.True(t, newAsset.Materials[1].AssetID == msgAddMaterials.Materials[1].AssetID)
-	assert.True(t, newAsset.Materials[1].Quantity == msgAddMaterials.Materials[1].Quantity)
+	assert.True(t, newAsset.Materials[1].Quantity.Equal(msgAddMaterials.Materials[1].Quantity))
 
 	// add materials error
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -148,8 +143,8 @@ func TestKeeper(t *testing.T) {
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1000},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1000)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -196,7 +191,7 @@ func TestKeeper(t *testing.T) {
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   assetChild1.AssetID,
 	}
 	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
@@ -206,21 +201,21 @@ func TestKeeper(t *testing.T) {
 	// Test Add Quantity
 
 	// add quantity err
-	_, err = keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: assetChild1.AssetID, Sender: addr, Quantity: 50})
+	_, err = keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: assetChild1.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	assert.True(t, err != nil)
 
 	// Test add quantity
-	keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 50})
+	keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Quantity == 150)
+	assert.True(t, newAsset.Quantity.Equal(sdk.NewInt(150)))
 
 	// Test subtract quantity
-	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 50})
+	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Quantity == 100)
+	assert.True(t, newAsset.Quantity.Equal(sdk.NewInt(100)))
 
 	// Test subtract quantity error
-	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 102})
+	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(102)})
 	assert.True(t, err != nil)
 
 	// Test Update Properties
@@ -316,7 +311,7 @@ func TestFinalize(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -355,7 +350,7 @@ func TestSubtractQuantity(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -363,7 +358,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity := MsgSubtractQuantity{
 		AssetID:  "45345",
 		Sender:   addr,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err := keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -372,7 +367,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity = MsgSubtractQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -381,7 +376,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity = MsgSubtractQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -406,7 +401,7 @@ func TestAddQuantity(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -414,7 +409,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity := MsgAddQuantity{
 		AssetID:  "45345",
 		Sender:   addr,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err := keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -423,7 +418,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity = MsgAddQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -432,7 +427,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity = MsgAddQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -457,7 +452,7 @@ func TestCreateReporter(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -497,7 +492,7 @@ func TestRevokeReporter(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 

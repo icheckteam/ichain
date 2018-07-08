@@ -47,7 +47,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 
-		if m.Asset.Quantity == 0 {
+		if m.Asset.Quantity.IsZero() {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset.quantity is required"))
 			return
@@ -67,7 +67,6 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 
 		// build message
 		m.Asset.Sender = info.GetPubKey().Address()
-		msg := m.Asset
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.baseBody, m.Asset)
 	}
 }

@@ -18,3 +18,7 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgRevokeReporter{}, "asset/RevokeReporter", nil)
 	cdc.RegisterConcrete(MsgTransfer{}, "asset/Transfer", nil)
 }
+
+func init() {
+	RegisterWire(msgCdc)
+}

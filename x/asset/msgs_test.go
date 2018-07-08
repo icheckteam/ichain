@@ -24,11 +24,11 @@ var (
 // Register Tests
 
 func TestRegisterMsg(t *testing.T) {
-	msg := NewMsgCreateAsset(addr, "1", "1", 10, "1")
+	msg := NewMsgCreateAsset(addr, "1", "1", sdk.NewInt(10), "1")
 	assert.Equal(t, msg.Sender, addr)
 	assert.Equal(t, msg.AssetID, "1")
 	assert.Equal(t, msg.Name, "1")
-	assert.Equal(t, msg.Quantity, int64(10))
+	assert.Equal(t, msg.Quantity, sdk.NewInt(10))
 	assert.Equal(t, msg.Parent, "1")
 
 }
@@ -39,7 +39,7 @@ func TestCreateAssetMsgType(t *testing.T) {
 	var msg = MsgCreateAsset{
 		AssetID:  "1",
 		Name:     "asset name",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Sender:   addr,
 	}
 
@@ -53,11 +53,11 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 		valid bool
 		tx    MsgCreateAsset
 	}{
-		{false, MsgCreateAsset{}},                                                                  // no asset info
-		{false, MsgCreateAsset{Sender: addr1, Quantity: 0, Name: "name", AssetID: "1"}},            // missing quantity
-		{false, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name"}},                          // missing id
-		{false, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name", AssetID: "1"}},            //
-		{true, MsgCreateAsset{Sender: addr1, Quantity: 1, Name: "name", AssetID: "1", Unit: "kg"}}, //
+		{false, MsgCreateAsset{}},                                                                              // no asset info
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(0), Name: "name", AssetID: "1"}},            // missing quantity
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name"}},                          // missing id
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1"}},            //
+		{true, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1", Unit: "kg"}}, //
 	}
 
 	for i, tc := range cases {
@@ -85,11 +85,12 @@ func TestRegisterGetSignBytes(t *testing.T) {
 		Sender:   addr1,
 		AssetID:  "1212",
 		Name:     "name",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
+		Unit:     "kg",
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1212","asset_type":"","name":"name","quantity":1,"parent":"","properties":null,"precision":0,"unit":""}`)
+	assert.Equal(t, string(res), `{"asset_id":"1212","asset_type":"","name":"name","parent":"","quantity":"1","sender":"cosmosaccaddr1d9h8qat5e4ehc5","unit":"kg"}`)
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
@@ -98,7 +99,7 @@ func TestRegisterGetGetSigners(t *testing.T) {
 		Sender:   addr1,
 		AssetID:  "1212",
 		Name:     "name",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 	}
 	res := msg.GetSigners()
 	// TODO bad results
@@ -194,7 +195,7 @@ func TestAddQuantityType(t *testing.T) {
 	var msg = MsgAddQuantity{
 		Sender:   addr,
 		AssetID:  "!",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 	}
 	// TODO some failures for bad result
 	assert.Equal(t, msg.Type(), "asset")
@@ -206,10 +207,10 @@ func TestAddQuantityMsgValidation(t *testing.T) {
 		valid bool
 		tx    MsgAddQuantity
 	}{
-		{false, MsgAddQuantity{}},                                         // no asset info
-		{false, MsgAddQuantity{Sender: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
-		{false, MsgAddQuantity{Sender: addr1, Quantity: 1}},               // missing id
-		{true, MsgAddQuantity{Sender: addr1, Quantity: 1, AssetID: "1"}},  //
+		{false, MsgAddQuantity{}},                                                     // no asset info
+		{false, MsgAddQuantity{Sender: addr1, Quantity: sdk.NewInt(0), AssetID: "1"}}, // missing quantity
+		{false, MsgAddQuantity{Sender: addr1, Quantity: sdk.NewInt(1)}},               // missing id
+		{true, MsgAddQuantity{Sender: addr1, Quantity: sdk.NewInt(1), AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -227,11 +228,11 @@ func TestAddQuantityMsgGetSignBytes(t *testing.T) {
 	var msg = MsgAddQuantity{
 		Sender:   addr1,
 		AssetID:  "1",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1\",\"quantity\":1}")
+	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1\",\"quantity\":\"1\"}")
 }
 
 func TestAddQuantityGetGetSigners(t *testing.T) {
@@ -255,7 +256,7 @@ func TestSubtractQuantityMsgType(t *testing.T) {
 	var msg = MsgSubtractQuantity{
 		Sender:   addr,
 		AssetID:  "!",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 	}
 	// TODO some failures for bad result
 	assert.Equal(t, msg.Type(), "asset")
@@ -267,10 +268,10 @@ func TestSubtractQuantityMsgValidation(t *testing.T) {
 		valid bool
 		tx    MsgSubtractQuantity
 	}{
-		{false, MsgSubtractQuantity{}},                                         // no asset info
-		{false, MsgSubtractQuantity{Sender: addr1, Quantity: 0, AssetID: "1"}}, // missing quantity
-		{false, MsgSubtractQuantity{Sender: addr1, Quantity: 1}},               // missing id
-		{true, MsgSubtractQuantity{Sender: addr1, Quantity: 1, AssetID: "1"}},  //
+		{false, MsgSubtractQuantity{}},                                                     // no asset info
+		{false, MsgSubtractQuantity{Sender: addr1, Quantity: sdk.NewInt(0), AssetID: "1"}}, // missing quantity
+		{false, MsgSubtractQuantity{Sender: addr1, Quantity: sdk.NewInt(1)}},               // missing id
+		{true, MsgSubtractQuantity{Sender: addr1, Quantity: sdk.NewInt(1), AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -288,11 +289,11 @@ func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
 	var msg = MsgSubtractQuantity{
 		Sender:   addr1,
 		AssetID:  "1",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1","quantity":1}`)
+	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"1","quantity":"1"}`)
 }
 
 func TestSubtractQuantityMsgGetSigners(t *testing.T) {
@@ -326,12 +327,12 @@ func TestMsgAddMaterialsValidation(t *testing.T) {
 		valid bool
 		tx    MsgAddMaterials
 	}{
-		{false, MsgAddMaterials{}},                                                                                       // no asset info
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1"}},                                                            // missing quantity
-		{false, MsgAddMaterials{Sender: addr1}},                                                                          // missing id
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: 0}}}}, //
-		{true, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: 1}}}},  //
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{Quantity: 1}}}},               //
+		{false, MsgAddMaterials{}},                                                                                                   // no asset info
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1"}},                                                                        // missing quantity
+		{false, MsgAddMaterials{Sender: addr1}},                                                                                      // missing id
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(0)}}}}, //
+		{true, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(1)}}}},  //
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{Quantity: sdk.NewInt(1)}}}},               //
 	}
 
 	for i, tc := range cases {
@@ -349,11 +350,11 @@ func TestMsgAddMaterialsGetSignBytes(t *testing.T) {
 	var msg = MsgAddMaterials{
 		Sender:    addr1,
 		AssetID:   "1",
-		Materials: Materials{Material{AssetID: "1", Quantity: 1}},
+		Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(1)}},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"asset_id":"1","sender":"696E707574","materials":[{"asset_id":"1","quantity":1}]}`)
+	assert.Equal(t, string(res), `{"asset_id":"1","sender":"696E707574","materials":[{"asset_id":"1","quantity":"1"}]}`)
 }
 
 func TestMsgGetSigners(t *testing.T) {

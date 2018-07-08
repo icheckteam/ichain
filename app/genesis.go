@@ -5,14 +5,15 @@ import (
 	"errors"
 
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/icheckteam/ichain/types"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	crypto "github.com/tendermint/go-crypto"
+
+	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -21,7 +22,6 @@ var (
 	flagClientHome = "home-client"
 	flagOWK        = "owk"
 
-	// bonded tokens given to genesis validators/accounts
 	freeFermionVal  = int64(100)
 	freeFermionsAcc = int64(50)
 )
@@ -52,18 +52,15 @@ type GaiaGenTx struct {
 }
 
 // Generate a gaia genesis transaction with flags
-func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey) (
+func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
-	clientRoot := viper.GetString(flagClientHome)
-	overwrite := viper.GetBool(flagOWK)
-	name := viper.GetString(flagName)
-	if name == "" {
+	if genTxConfig.Name == "" {
 		return nil, nil, tmtypes.GenesisValidator{}, errors.New("Must specify --name (validator moniker)")
 	}
 
 	var addr sdk.Address
 	var secret string
-	addr, secret, err = server.GenerateSaveCoinKey(clientRoot, name, "1234567890", overwrite)
+	addr, secret, err = server.GenerateSaveCoinKey(genTxConfig.CliRoot, genTxConfig.Name, "1234567890", genTxConfig.Overwrite)
 	if err != nil {
 		return
 	}
@@ -73,13 +70,15 @@ func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey) (
 	if err != nil {
 		return
 	}
+
 	cliPrint = json.RawMessage(bz)
-	appGenTx, _, validator, err = GaiaAppGenTxNF(cdc, pk, addr, name, overwrite)
+
+	appGenTx, _, validator, err = GaiaAppGenTxNF(cdc, pk, addr, genTxConfig.Name)
 	return
 }
 
 // Generate a gaia genesis transaction without flags
-func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.Address, name string, overwrite bool) (
+func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.Address, name string) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
 	var bz []byte
@@ -128,12 +127,12 @@ func GaiaAppGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (genesisState
 			BaseAccount: auth.NewBaseAccountWithAddress(genTx.Address),
 		}
 		accAuth.Coins = sdk.Coins{
-			{genTx.Name + "Token", 1000},
-			{"steak", freeFermionsAcc},
+			sdk.NewCoin(genTx.Name+"Token", 1000),
+			sdk.NewCoin("steak", freeFermionsAcc),
 		}
 		acc := types.NewGenesisAccount(&accAuth)
 		genaccs[i] = acc
-		stakeData.Pool.LooseUnbondedTokens += freeFermionsAcc // increase the supply
+		stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens + freeFermionsAcc // increase the supply
 
 		// add the validator
 		if len(genTx.Name) > 0 {

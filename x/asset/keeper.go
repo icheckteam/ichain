@@ -49,17 +49,16 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	)
 
 	newAsset := Asset{
-		ID:        msg.AssetID,
-		Type:      msg.AssetType,
-		Name:      msg.Name,
-		Owner:     msg.Sender,
-		Quantity:  msg.Quantity,
-		Parent:    msg.Parent,
-		Final:     false,
-		Precision: msg.Precision,
-		Height:    ctx.BlockHeight(),
-		Created:   ctx.BlockHeader().Time,
-		Unit:      msg.Unit,
+		ID:       msg.AssetID,
+		Type:     msg.AssetType,
+		Name:     msg.Name,
+		Owner:    msg.Sender,
+		Quantity: msg.Quantity,
+		Parent:   msg.Parent,
+		Final:    false,
+		Height:   ctx.BlockHeight(),
+		Created:  ctx.BlockHeader().Time,
+		Unit:     msg.Unit,
 	}
 
 	if len(msg.Parent) > 0 {
@@ -76,12 +75,12 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Sender))
 		}
 
-		if parent.Quantity < msg.Quantity {
+		if parent.Quantity.GT(msg.Quantity) {
 			return nil, ErrInvalidAssetQuantity(parent.ID)
 		}
-		parent.Quantity -= msg.Quantity
+		parent.Quantity = parent.Quantity.Sub(msg.Quantity)
 
-		if len(parent.Root) != 0 && parent.Quantity == 0 {
+		if len(parent.Root) != 0 && parent.Quantity.IsZero() {
 			parent.Final = true
 		}
 
@@ -95,13 +94,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 
 		newAsset.Unit = parent.Unit
-		newAsset.Precision = parent.Precision
 	}
-
-	if len(msg.Properties) > 0 {
-		newAsset.Properties.Adds(msg.Properties...)
-	}
-
 	// update asset info
 	k.SetAsset(ctx, newAsset)
 	k.setAssetByAccountIndex(ctx, newAsset)
@@ -185,7 +178,7 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 	if !authorized {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
 	}
-	asset.Quantity += msg.Quantity
+	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
@@ -210,10 +203,10 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to subtract", msg.Sender))
 	}
 
-	if asset.Quantity < msg.Quantity {
+	if asset.Quantity.LT(msg.Quantity) {
 		return nil, ErrInvalidAssetQuantity(asset.ID)
 	}
-	asset.Quantity -= msg.Quantity
+	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(asset.ID),
