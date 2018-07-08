@@ -231,6 +231,11 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 
 	asset.Final = true
 	k.removeAssetByAccountIndex(ctx, asset.ID, asset.Owner)
+
+	// delete all index for reporter
+	for _, reporter := range asset.Reporters {
+		k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+	}
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		"asset_id", []byte(msg.AssetID),

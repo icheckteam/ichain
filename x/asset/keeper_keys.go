@@ -12,6 +12,8 @@ var (
 	ProposalsKey        = []byte{0x02} // prefix for each key to an account a proposal
 	AssetChildrenKey    = []byte{0x03} // prefix for each key to an asset parent a an asset child
 	AccountProposalsKey = []byte{0x04} // prefix for each key to an account a proposal
+	ReportersKey        = []byte{0x05}
+	PropertiesKey       = []byte{0x06}
 )
 
 // GetAssetKey get the key for the record with address
