@@ -484,3 +484,113 @@ func TestMsgRevokeReporterGetSigners(t *testing.T) {
 	// TODO bad results
 	assert.Equal(t, fmt.Sprintf("%v", res), `[696E707574]`)
 }
+
+// CreateProposal  Tests
+// ------------------------------------------------------------
+func TestCreateProposalMsgType(t *testing.T) {
+	msg := MsgCreateProposal{}
+	assert.Equal(t, msg.Type(), "asset")
+}
+
+func TestCreateProposalMsgValidation(t *testing.T) {
+	cases := []struct {
+		valid bool
+		tx    MsgCreateProposal
+	}{
+		{false, MsgCreateProposal{AssetID: "1"}},
+		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0]}},
+		{false, MsgCreateProposal{AssetID: "1", Recipient: addrs[0]}},
+		{false, MsgCreateProposal{AssetID: "1", Propertipes: []string{"location"}}},
+		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1]}},
+		{false, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 0, Propertipes: []string{"location"}}},
+		{true, MsgCreateProposal{AssetID: "1", Sender: addrs[0], Recipient: addrs[1], Role: 1, Propertipes: []string{"location"}}},
+	}
+
+	for i, tc := range cases {
+		err := tc.tx.ValidateBasic()
+		if tc.valid {
+			assert.Nil(t, err, "%d: %+v", i, err)
+		} else {
+			assert.NotNil(t, err, "%d", i)
+		}
+	}
+}
+
+func TestCreateProposalMsgGet(t *testing.T) {
+	msg := MsgCreateProposal{}
+	res := msg.Get(nil)
+	assert.Nil(t, res)
+}
+
+func TestCreateProposalMsgGetSigners(t *testing.T) {
+	msg := MsgCreateProposal{
+		Sender: addrs[0],
+	}
+	res := msg.GetSigners()
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
+}
+
+func TestCreateProposalMsgGetSignBytes(t *testing.T) {
+	msg := MsgCreateProposal{
+		AssetID:     "1",
+		Propertipes: []string{"location"},
+		Sender:      addrs[0],
+		Recipient:   addrs[1],
+	}
+	res := msg.GetSignBytes()
+	// TODO bad results
+	assert.Equal(t, string(res), `{"asset_id":"1","sender":"A58856F0FD53BF058B4909A21AEC019107BA6100","recipient":"A58856F0FD53BF058B4909A21AEC019107BA6101","propertipes":["location"],"role":0}`)
+}
+
+// AnswerProposal  Tests
+// ------------------------------------------------------------
+
+func TestAnswerProposalMsgType(t *testing.T) {
+	msg := MsgCreateProposal{}
+	assert.Equal(t, msg.Type(), "asset")
+}
+
+func TestAnswerProposalMsgValidation(t *testing.T) {
+	cases := []struct {
+		valid bool
+		tx    MsgAnswerProposal
+	}{
+		{false, MsgAnswerProposal{AssetID: "1"}},
+		{false, MsgAnswerProposal{Recipient: addrs[0]}},
+		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 3}},
+		{true, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1}},
+	}
+
+	for i, tc := range cases {
+		err := tc.tx.ValidateBasic()
+		if tc.valid {
+			assert.Nil(t, err, "%d: %+v", i, err)
+		} else {
+			assert.NotNil(t, err, "%d", i)
+		}
+	}
+}
+
+func TestAnswerProposalMsgGet(t *testing.T) {
+	msg := MsgAnswerProposal{}
+	res := msg.Get(nil)
+	assert.Nil(t, res)
+}
+
+func TestAnswerProposalGetSigners(t *testing.T) {
+	msg := MsgAnswerProposal{
+		Recipient: addrs[0],
+	}
+	res := msg.GetSigners()
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
+}
+
+func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
+	msg := MsgAnswerProposal{
+		AssetID:   "1",
+		Recipient: addrs[0],
+	}
+	res := msg.GetSignBytes()
+	// TODO bad results
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"A58856F0FD53BF058B4909A21AEC019107BA6100\",\"response\":0}")
+}

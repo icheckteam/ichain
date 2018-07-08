@@ -108,9 +108,6 @@ type MsgUpdateProperties struct {
 func (msg MsgUpdateProperties) Type() string                            { return msgType }
 func (msg MsgUpdateProperties) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgUpdateProperties) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgUpdateProperties) String() string {
-	return fmt.Sprintf("MsgUpdateProperties{%s->%v}", msg.AssetID, msg.Properties)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
@@ -159,9 +156,6 @@ type MsgAddQuantity struct {
 func (msg MsgAddQuantity) Type() string                            { return msgType }
 func (msg MsgAddQuantity) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgAddQuantity) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgAddQuantity) String() string {
-	return fmt.Sprintf("MsgAddQuantity{Sender: %v, quantity: %v}", msg.Sender, msg.Quantity)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddQuantity) ValidateBasic() sdk.Error {
@@ -197,9 +191,6 @@ type MsgSubtractQuantity struct {
 func (msg MsgSubtractQuantity) Type() string                            { return msgType }
 func (msg MsgSubtractQuantity) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgSubtractQuantity) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgSubtractQuantity) String() string {
-	return fmt.Sprintf("MsgSubtractQuantity{Issuer: %v, quantity: %v}", msg.Sender, msg.Quantity)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
@@ -276,9 +267,6 @@ type MsgFinalize struct {
 func (msg MsgFinalize) Type() string                            { return msgType }
 func (msg MsgFinalize) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgFinalize) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgFinalize) String() string {
-	return fmt.Sprintf(`MsgFinalize{%s->%s}`, msg.Sender, msg.AssetID)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgFinalize) ValidateBasic() sdk.Error {
@@ -311,9 +299,6 @@ type MsgRevokeReporter struct {
 func (msg MsgRevokeReporter) Type() string                            { return msgType }
 func (msg MsgRevokeReporter) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgRevokeReporter) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgRevokeReporter) String() string {
-	return fmt.Sprintf(`MsgRevokeReporter{%s->%s}`, msg.Sender, msg.Reporter)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgRevokeReporter) ValidateBasic() sdk.Error {
@@ -341,7 +326,7 @@ func (msg MsgRevokeReporter) GetSignBytes() []byte {
 // CreateProposalMsg ...
 type MsgCreateProposal struct {
 	AssetID     string       `json:"asset_id"`
-	Sender      sdk.Address  `json:"issuer"`
+	Sender      sdk.Address  `json:"sender"`
 	Recipient   sdk.Address  `json:"recipient"`
 	Propertipes []string     `json:"propertipes"`
 	Role        ProposalRole `json:"role"`
@@ -363,7 +348,7 @@ func (msg MsgCreateProposal) ValidateBasic() sdk.Error {
 		return ErrMissingField("propertipes")
 	}
 	switch msg.Role {
-	case 1, 2, 3:
+	case 1, 2:
 		break
 	default:
 		return ErrInvalidField("role")
@@ -390,15 +375,6 @@ type MsgAnswerProposal struct {
 func (msg MsgAnswerProposal) Type() string                            { return msgType }
 func (msg MsgAnswerProposal) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgAnswerProposal) GetSigners() []sdk.Address               { return []sdk.Address{msg.Recipient} }
-func (msg MsgAnswerProposal) String() string {
-	return fmt.Sprintf(`
-	MsgAnswerProposal{
-			AssetID: %s, 
-			Recipient: %v,
-			Response:%v,
-		}	
-	`, msg.AssetID, msg.Recipient, msg.Response)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
