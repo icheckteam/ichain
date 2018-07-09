@@ -69,7 +69,6 @@ func (a Asset) ValidateUpdateProperty(sender sdk.Address, name string) sdk.Error
 	if a.Final {
 		return ErrAssetAlreadyFinal(a.ID)
 	}
-
 	authorized := a.CheckUpdateAttributeAuthorization(sender, Property{Name: name})
 	if !authorized {
 		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized", sender))
@@ -98,4 +97,17 @@ func (a Asset) ValidateFinalize(sender sdk.Address) sdk.Error {
 
 func (a Asset) ValidateAddMaterial(sender sdk.Address) sdk.Error {
 	return a.ValidateUpdateProperty(sender, "materials")
+}
+
+func (a Asset) ValidateAddChildren(sender sdk.Address, quantity sdk.Int) sdk.Error {
+	if a.Final {
+		return ErrAssetAlreadyFinal(a.ID)
+	}
+	if !a.IsOwner(sender) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("address {%v} not unauthorized to create asset", sender))
+	}
+	if a.Quantity.LT(quantity) {
+		return ErrInvalidAssetQuantity(a.ID)
+	}
+	return nil
 }

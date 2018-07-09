@@ -66,15 +66,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		if !found {
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
-		if parent.Final {
-			return nil, ErrAssetAlreadyFinal(parent.ID)
-		}
-
-		if !parent.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Sender))
-		}
-		if parent.Quantity.LT(msg.Quantity) {
-			return nil, ErrInvalidAssetQuantity(parent.ID)
+		if err := parent.ValidateAddChildren(msg.Sender, msg.Quantity); err != nil {
+			return nil, err
 		}
 		parent.Quantity = parent.Quantity.Sub(msg.Quantity)
 
@@ -87,11 +80,10 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		} else {
 			newAsset.Root = parent.ID
 		}
-		// save parent asset to store
-		k.setAsset(ctx, parent)
-		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 
+		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 		newAsset.Unit = parent.Unit
+		k.setAsset(ctx, parent)
 	}
 	// update asset info
 	k.SetAsset(ctx, newAsset)
