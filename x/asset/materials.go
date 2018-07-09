@@ -124,12 +124,12 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	asset.Materials = asset.Materials.Plus(msg.Materials)
 	materialsToSave = append(materialsToSave, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	for _, meterialToSave := range materialsToSave {
 		k.setAsset(ctx, meterialToSave)
-		tags = tags.AppendTag("asset_id", []byte(meterialToSave.ID))
+		tags = tags.AppendTag(TagAsset, []byte(meterialToSave.ID))
 	}
 
 	return tags, nil

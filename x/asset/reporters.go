@@ -38,9 +38,9 @@ func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags
 
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
-		"recipient", []byte(msg.Reporter.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
+		TagRecipient, []byte(msg.Reporter.String()),
 	)
 	return tags, nil
 }

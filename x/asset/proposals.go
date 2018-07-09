@@ -104,9 +104,9 @@ func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, s
 	k.SetProposal(ctx, asset.ID, proposal)
 
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"recipient", []byte(msg.Recipient.String()),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagRecipient, []byte(msg.Recipient.String()),
+		TagSender, []byte(msg.Sender.String()),
 	)
 
 	return tags, nil
@@ -167,8 +167,8 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	}
 
 	tags := sdk.NewTags(
-		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Recipient.String()),
+		TagAsset, []byte(msg.AssetID),
+		TagSender, []byte(msg.Recipient.String()),
 	)
 	return tags, nil
 }

@@ -163,8 +163,8 @@ func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.
 	// save asset to store
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }

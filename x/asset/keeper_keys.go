@@ -47,11 +47,3 @@ func GetProposalKey(assetID string, recipient sdk.Address) []byte {
 func GetProposalsKey(assetID string) []byte {
 	return append(ProposalsKey, []byte(assetID)...)
 }
-
-func GetAccountProposalKey(addr sdk.Address, assetID string) []byte {
-	return append(GetAccountProposalsKey(addr), []byte(assetID)...)
-}
-
-func GetAccountProposalsKey(address sdk.Address) []byte {
-	return append(AccountProposalsKey, []byte(address.String())...)
-}

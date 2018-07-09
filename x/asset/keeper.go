@@ -44,8 +44,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	}
 
 	tags := sdk.NewTags(
-		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(msg.AssetID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 
 	newAsset := Asset{
@@ -81,7 +81,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 			newAsset.Root = parent.ID
 		}
 
-		tags = tags.AppendTag("asset_id", []byte(parent.ID))
+		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
 		newAsset.Unit = parent.Unit
 		k.setAsset(ctx, parent)
 	}
@@ -164,8 +164,8 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -185,8 +185,8 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagRecipient, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -210,8 +210,8 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	}
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(msg.AssetID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
