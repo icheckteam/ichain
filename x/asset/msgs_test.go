@@ -57,6 +57,7 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(0), Name: "name", AssetID: "1"}},            // missing quantity
 		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name"}},                          // missing id
 		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1"}},            //
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), AssetID: "1", Unit: "kg"}},              // missing name
 		{true, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1", Unit: "kg"}}, //
 	}
 
@@ -139,6 +140,10 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 		{false, MsgUpdateProperties{Sender: addr1, Properties: []Property{
 			attr,
 		}}}, // missing id
+		{false, MsgUpdateProperties{Sender: addr1, AssetID: "adasd"}}, // missing Properties
+		{false, MsgUpdateProperties{Sender: addr1, Properties: []Property{
+			Property{Type: 13213213},
+		}, AssetID: "1212"}}, // invalid property type
 		{true, MsgUpdateProperties{Sender: addr1, Properties: []Property{
 			attr,
 		}, AssetID: "1212"}},
@@ -547,7 +552,7 @@ func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 // ------------------------------------------------------------
 
 func TestAnswerProposalMsgType(t *testing.T) {
-	msg := MsgCreateProposal{}
+	msg := MsgAnswerProposal{}
 	assert.Equal(t, msg.Type(), "asset")
 }
 
@@ -559,7 +564,9 @@ func TestAnswerProposalMsgValidation(t *testing.T) {
 		{false, MsgAnswerProposal{AssetID: "1"}},
 		{false, MsgAnswerProposal{Recipient: addrs[0]}},
 		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 3}},
-		{true, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1}},
+		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 3}},
+		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 5, Sender: addr2}},
+		{true, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1, Sender: addr2}},
 	}
 
 	for i, tc := range cases {
@@ -593,5 +600,5 @@ func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\"}")
+	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\",\"sender\":\"cosmosaccaddr16y6p2v\"}")
 }

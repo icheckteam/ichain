@@ -43,9 +43,6 @@ var _ sdk.Msg = MsgCreateAsset{}
 func (msg MsgCreateAsset) Type() string                            { return msgType }
 func (msg MsgCreateAsset) Get(key interface{}) (value interface{}) { return nil }
 func (msg MsgCreateAsset) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
-func (msg MsgCreateAsset) String() string {
-	return fmt.Sprintf("MsgCreateAsset{%s}", msg.Name)
-}
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
@@ -413,6 +410,7 @@ func (msg MsgCreateProposal) GetSignBytes() []byte {
 // MsgAnswerProposal ...
 type MsgAnswerProposal struct {
 	AssetID   string         `json:"asset_id"`
+	Sender    sdk.Address    `json:"sender"`
 	Recipient sdk.Address    `json:"recipient"`
 	Response  ProposalStatus `json:"response"`
 }
@@ -429,8 +427,14 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 	if len(msg.Recipient) == 0 {
 		return ErrMissingField("recipient")
 	}
-	if msg.Response > 2 {
-		return ErrMissingField("response")
+	if len(msg.Sender) == 0 {
+		return ErrMissingField("sender")
+	}
+	switch msg.Response {
+	case StatusAccepted, StatusCancel, StatusRejected:
+		break
+	default:
+		return ErrInvalidField("response")
 	}
 	return nil
 }
@@ -439,10 +443,12 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 func (msg MsgAnswerProposal) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(struct {
 		AssetID   string         `json:"asset_id"`
+		Sender    string         `json:"sender"`
 		Recipient string         `json:"recipient"`
 		Response  ProposalStatus `json:"response"`
 	}{
 		Recipient: sdk.MustBech32ifyAcc(msg.Recipient),
+		Sender:    sdk.MustBech32ifyAcc(msg.Sender),
 		AssetID:   msg.AssetID,
 		Response:  msg.Response,
 	})
