@@ -16,11 +16,12 @@ var (
 	addr4 = sdk.Address([]byte("addr4"))
 
 	asset = MsgCreateAsset{
-		AssetID:  "asset1",
-		Sender:   addr,
-		Name:     "asset 1",
-		Unit:     "kg",
-		Quantity: sdk.NewInt(100),
+		AssetID:    "asset1",
+		Sender:     addr,
+		Name:       "asset 1",
+		Unit:       "kg",
+		Quantity:   sdk.NewInt(100),
+		Properties: Properties{Property{Name: "size", StringValue: "34343"}},
 	}
 
 	asset2 = MsgCreateAsset{
@@ -89,6 +90,8 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
 	assert.True(t, newAsset.Unit == "kg")
+	assert.True(t, newAsset.Properties[0].Name == asset.Properties[0].Name)
+	assert.True(t, newAsset.Properties[0].StringValue == asset.Properties[0].StringValue)
 
 	keeper.CreateAsset(ctx, asset2)
 	keeper.CreateAsset(ctx, asset3)

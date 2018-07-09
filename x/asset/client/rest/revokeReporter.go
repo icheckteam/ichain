@@ -14,7 +14,7 @@ import (
 )
 
 type revokeReporterBody struct {
-	baseBody
+	BaseReq baseBody `json:"base_req"`
 }
 
 func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -30,14 +30,14 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		err = m.Validate()
+		err = m.BaseReq.Validate()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -58,6 +58,6 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			Reporter: address,
 			AssetID:  vars["id"],
 		}
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

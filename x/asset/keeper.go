@@ -85,6 +85,11 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		newAsset.Unit = parent.Unit
 		k.setAsset(ctx, parent)
 	}
+
+	if len(msg.Properties) > 0 {
+		newAsset.Properties = msg.Properties.Sort()
+	}
+
 	// update asset info
 	k.SetAsset(ctx, newAsset)
 	k.setAssetByAccountIndex(ctx, newAsset.ID, newAsset.Owner)

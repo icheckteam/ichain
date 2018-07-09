@@ -15,8 +15,8 @@ import (
 )
 
 type addAssetQuantityBody struct {
-	baseBody
-	Quantity sdk.Int `json:"quantity"`
+	BaseReq  baseBody `json:"base_req"`
+	Quantity sdk.Int  `json:"quantity"`
 }
 
 func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -32,15 +32,10 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.BaseReq.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
-			return
-		}
-
-		if m.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -50,7 +45,7 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 			return
 		}
 
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -59,17 +54,9 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 		// build message
 		msg := asset.MsgAddQuantity{
 			Sender:   info.GetPubKey().Address(),
-			AssetID:  vars["asset_id"],
+			AssetID:  vars["id"],
 			Quantity: m.Quantity,
 		}
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
-	}
-}
-
-func buildAdAssetQuantityMsg(creator sdk.Address, assetID string, qty sdk.Int) sdk.Msg {
-	return asset.MsgAddQuantity{
-		Sender:   creator,
-		AssetID:  assetID,
-		Quantity: qty,
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

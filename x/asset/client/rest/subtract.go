@@ -14,8 +14,8 @@ import (
 )
 
 type subtractAssetQuantityBody struct {
-	baseBody
-	Quantity sdk.Int `json:"quantity"`
+	BaseReq  baseBody `json:"base_req"`
+	Quantity sdk.Int  `json:"quantity"`
 }
 
 func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -31,15 +31,10 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.BaseReq.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
-			return
-		}
-
-		if m.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -48,7 +43,7 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			w.Write([]byte("quantity is required"))
 			return
 		}
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -62,6 +57,6 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 			Quantity: m.Quantity,
 		}
 
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

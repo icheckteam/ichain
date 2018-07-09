@@ -13,7 +13,7 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	ctx = ctx.WithAccountNumber(m.AccountNumber)
 	ctx = ctx.WithSequence(m.Sequence)
 	ctx = ctx.WithChainID(m.ChainID)
-	txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, []sdk.Msg{msg}, cdc)
+	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))

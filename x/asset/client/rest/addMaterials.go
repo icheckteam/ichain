@@ -13,7 +13,7 @@ import (
 )
 
 type addMaterialsBody struct {
-	baseBody
+	BaseReq   baseBody        `json:"base_req"`
 	Materials asset.Materials `json:"materials"`
 }
 
@@ -31,15 +31,10 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.BaseReq.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
-			return
-		}
-
-		if m.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
@@ -49,7 +44,7 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -63,6 +58,6 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 		}
 
 		// sign
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

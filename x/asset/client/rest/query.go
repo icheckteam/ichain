@@ -151,3 +151,35 @@ func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Co
 
 	return items, nil
 }
+
+func QueryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		kvs, err := ctx.QuerySubspace(cdc, asset.GetProposalsKey(vars["asset_id"]), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
+			return
+		}
+
+		proposals := make([]ProposalOutput, len(kvs))
+		for index, kv := range kvs {
+			proposal := asset.Proposal{}
+			err = cdc.UnmarshalBinary(kv.Value, &proposal)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+			proposals[index] = bech32ProposalOutput(proposal)
+		}
+		output, err := cdc.MarshalJSON(proposals)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
