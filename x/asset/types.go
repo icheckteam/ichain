@@ -2,6 +2,7 @@ package asset
 
 import (
 	"bytes"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -62,4 +63,39 @@ func (a Asset) GetReporter(address sdk.Address) (*Reporter, int) {
 		}
 	}
 	return nil, -1
+}
+
+func (a Asset) ValidateUpdateProperty(sender sdk.Address, name string) sdk.Error {
+	if a.Final {
+		return ErrAssetAlreadyFinal(a.ID)
+	}
+
+	authorized := a.CheckUpdateAttributeAuthorization(sender, Property{Name: name})
+	if !authorized {
+		return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized", sender))
+	}
+	return nil
+}
+
+// ValidateAddQuantity return error if invalid
+func (a Asset) ValidateAddQuantity(sender sdk.Address) sdk.Error {
+	if len(a.Parent) != 0 {
+		return ErrInvalidAssetRoot(a.ID)
+	}
+	return a.ValidateUpdateProperty(sender, "quantity")
+}
+
+func (a Asset) ValidateSubtractQuantity(sender sdk.Address, quantity sdk.Int) sdk.Error {
+	if a.Quantity.LT(quantity) {
+		return ErrInvalidAssetQuantity(a.ID)
+	}
+	return a.ValidateUpdateProperty(sender, "quantity")
+}
+
+func (a Asset) ValidateFinalize(sender sdk.Address) sdk.Error {
+	return a.ValidateUpdateProperty(sender, "final")
+}
+
+func (a Asset) ValidateAddMaterial(sender sdk.Address) sdk.Error {
+	return a.ValidateUpdateProperty(sender, "materials")
 }

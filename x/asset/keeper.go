@@ -164,18 +164,11 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+
+	if err := asset.ValidateAddQuantity(msg.Sender); err != nil {
+		return nil, err
 	}
 
-	if len(asset.Parent) != 0 {
-		return nil, ErrInvalidAssetRoot(asset.ID)
-	}
-
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
-	}
 	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
@@ -192,18 +185,11 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+
+	if err := asset.ValidateSubtractQuantity(msg.Sender, msg.Quantity); err != nil {
+		return nil, err
 	}
 
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to subtract", msg.Sender))
-	}
-
-	if asset.Quantity.LT(msg.Quantity) {
-		return nil, ErrInvalidAssetQuantity(asset.ID)
-	}
 	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
@@ -220,14 +206,9 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+	if err := asset.ValidateFinalize(msg.Sender); err != nil {
+		return nil, err
 	}
-
-	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to finalize", msg.Sender))
-	}
-
 	asset.Final = true
 	k.removeAssetByAccountIndex(ctx, asset.ID, asset.Owner)
 
@@ -241,8 +222,4 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 		"sender", []byte(msg.Sender.String()),
 	)
 	return tags, nil
-}
-
-func (k Keeper) ChangeOwner(ctx sdk.Context) {
-
 }

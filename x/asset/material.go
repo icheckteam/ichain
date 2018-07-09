@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -103,13 +102,8 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 
-	if asset.Final {
-		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
-	}
-
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "materials"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
+	if err := asset.ValidateAddMaterial(msg.Sender); err != nil {
+		return nil, err
 	}
 	// subtract quantity
 	materialsToSave := []Asset{}
@@ -118,14 +112,9 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		if !found {
 			return nil, ErrAssetNotFound(m.ID)
 		}
-		if m.Final {
-			return nil, ErrAssetAlreadyFinal(m.ID)
-		}
-		if !m.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
-		}
-		if m.Quantity.LT(material.Quantity) {
-			return nil, ErrInvalidAssetQuantity(m.ID)
+
+		if err := m.ValidateSubtractQuantity(msg.Sender, material.Quantity); err != nil {
+			return nil, err
 		}
 
 		m.Quantity = m.Quantity.Sub(material.Quantity)
