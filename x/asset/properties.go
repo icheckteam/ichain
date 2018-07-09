@@ -2,7 +2,6 @@ package asset
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
 	"strings"
 
@@ -145,16 +144,9 @@ func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.
 	if !found {
 		return nil, ErrAssetNotFound(asset.ID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
-	}
 
-	// check role permissions
-	for _, attr := range msg.Properties {
-		authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, attr)
-		if !authorized {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to transfer", msg.Sender))
-		}
+	if err := asset.ValidateUpdateProperties(msg.Sender, msg.Properties); err != nil {
+		return nil, err
 	}
 
 	// update all Properties

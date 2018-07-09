@@ -111,3 +111,19 @@ func (a Asset) ValidateAddChildren(sender sdk.Address, quantity sdk.Int) sdk.Err
 	}
 	return nil
 }
+
+func (a Asset) ValidateUpdateProperties(sender sdk.Address, properties Properties) sdk.Error {
+	if a.Final {
+		return ErrAssetAlreadyFinal(a.ID)
+	}
+
+	// check role permissions
+	for _, attr := range properties {
+		authorized := a.CheckUpdateAttributeAuthorization(sender, attr)
+		if !authorized {
+			return sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to update", sender))
+		}
+	}
+
+	return nil
+}
