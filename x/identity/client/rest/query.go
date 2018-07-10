@@ -106,7 +106,7 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 			w.Write([]byte(fmt.Sprintf("couldn't decode ident_id. Error: %s", err.Error())))
 			return
 		}
-		kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(int64(identID)), storeName)
+		kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(int64(identID), vars["property"]), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
@@ -155,7 +155,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 			w.Write([]byte(fmt.Sprintf("couldn't decode address. Error: %s", err.Error())))
 			return
 		}
-		kvs, err := ctx.QuerySubspace(cdc, identity.KeyTrusted(address), storeName)
+		kvs, err := ctx.QuerySubspace(cdc, identity.KeyTrusts(address), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't query trusts. Error: %s", err.Error())))

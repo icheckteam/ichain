@@ -39,17 +39,17 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identityID)
-	store.Set(KeyClaimedIdentity(account, identityID), bz)
+	store.Set(KeyClaimedIdentity(account), bz)
 }
 
 func (k Keeper) DeleteClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(KeyClaimedIdentity(account, identityID))
+	store.Delete(KeyClaimedIdentity(account))
 }
 
 func (k Keeper) HasClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(KeyClaimedIdentity(account, identityID))
+	return store.Has(KeyClaimedIdentity(account))
 }
 
 // Get Identity from store by identityID
@@ -70,7 +70,7 @@ func (k Keeper) GetIdentity(ctx sdk.Context, identityID int64) (Identity, bool) 
 func (k Keeper) SetIdentityByOwnerIndex(ctx sdk.Context, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identity.ID)
-	store.Set(KeyIdentitiesByOwnerIndex(identity.Owner, identity.ID), bz)
+	store.Set(KeyIdentityByOwnerIndex(identity.Owner, identity.ID), bz)
 }
 
 // set the main record holding trust details

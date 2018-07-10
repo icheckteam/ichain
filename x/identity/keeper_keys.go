@@ -21,35 +21,25 @@ func KeyIdentityByOwnerIndex(owner sdk.Address, identityID int64) []byte {
 	return []byte(fmt.Sprintf("account:%s:%d", owner.String(), identityID))
 }
 
-func KeyClaimedIdentity(address sdk.Address, identityID int64) []byte {
-	return []byte(fmt.Sprintf("claimed:%s:%d", address.String(), identityID))
-}
-
-func KeyClaimedIdentities(address sdk.Address) []byte {
-	return []byte(fmt.Sprintf("claimed:%s", address.String()))
-}
-
-// Key for getting all identity id  of the account from the store
-func KeyIdentitiesByOwnerIndex(owner sdk.Address, identityID int64) []byte {
-	return []byte(fmt.Sprintf("account:%s:", owner.String()))
+func KeyClaimedIdentity(address sdk.Address) []byte {
+	return []byte(fmt.Sprintf("claim:%s", address.String()))
 }
 
 // Key for getting all trusting from the store
 func KeyTrust(trustor, trusting sdk.Address) []byte {
-	return []byte(fmt.Sprintf("trust:%s:%s", trustor.String(), trusting.String()))
+	return append(KeyTrusts(trustor), []byte(fmt.Sprintf("trust:%s:%s", trustor.String(), trusting.String()))...)
 }
 
-// Key for getting all trusting from the store
-func KeyTrusted(trustor sdk.Address) []byte {
+func KeyTrusts(trustor sdk.Address) []byte {
 	return []byte(fmt.Sprintf("trust:%s", trustor.String()))
 }
 
 // Key for getting a cert from the store
 func KeyCert(identityID int64, property string, certifier sdk.Address) []byte {
-	return []byte(fmt.Sprintf("identity:%d:%s:%s", identityID, property, certifier.String()))
+	return append(KeyCerts(identityID, property), []byte(fmt.Sprintf(":%s", certifier.String()))...)
 }
 
 // Key for getting all certs from the store
-func KeyCerts(identityID int64) []byte {
-	return []byte(fmt.Sprintf("identity:%d:cert:", identityID))
+func KeyCerts(identityID int64, property string) []byte {
+	return []byte(fmt.Sprintf("identity:%d:%s", identityID, property))
 }
