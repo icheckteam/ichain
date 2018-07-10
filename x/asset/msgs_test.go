@@ -34,7 +34,7 @@ func TestRegisterMsg(t *testing.T) {
 }
 
 func TestCreateAssetMsgType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 
 	var msg = MsgCreateAsset{
 		AssetID:  "1",
@@ -48,7 +48,7 @@ func TestCreateAssetMsgType(t *testing.T) {
 }
 
 func TestCreateAssetMsgValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgCreateAsset
@@ -72,7 +72,7 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 }
 
 func TestRegisterMsgGet(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateAsset{
 		Sender: addr1,
 	}
@@ -81,7 +81,7 @@ func TestRegisterMsgGet(t *testing.T) {
 }
 
 func TestRegisterGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateAsset{
 		Sender:     addr1,
 		AssetID:    "1212",
@@ -92,11 +92,11 @@ func TestRegisterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1212\",\"name\":\"name\",\"parent\":\"\",\"properties\":[{\"location_value\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"name\":\"size\",\"string_value\":\"50\",\"type\":\"0\"}],\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"unit\":\"kg\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/CreateAsset\",\"value\":{\"asset_id\":\"1212\",\"name\":\"name\",\"parent\":\"\",\"properties\":[{\"name\":\"size\",\"string_value\":\"50\",\"type\":\"0\"}],\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"unit\":\"kg\"}}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateAsset{
 		Sender:   addr1,
 		AssetID:  "1212",
@@ -115,7 +115,7 @@ func TestUpdateAttrMsgMsg(t *testing.T) {
 }
 
 func TestUpdateAttrMsgType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 
 	var msg = MsgUpdateProperties{
 		Sender: addr,
@@ -130,7 +130,7 @@ func TestUpdateAttrMsgType(t *testing.T) {
 }
 
 func TestUpdateAttrMsgValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgUpdateProperties
@@ -160,7 +160,7 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 }
 
 func TestUpdateAttrMsgGet(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgUpdateProperties{
 		Sender: addr1,
 	}
@@ -169,7 +169,7 @@ func TestUpdateAttrMsgGet(t *testing.T) {
 }
 
 func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgUpdateProperties{
 		Sender:     addr1,
 		AssetID:    "1",
@@ -177,11 +177,11 @@ func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"properties\":[{\"location_value\":{\"latitude\":\"0\",\"longitude\":\"0\"},\"name\":\"weight\",\"number_value\":\"100\",\"type\":\"3\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/UpdateProperties\",\"value\":{\"asset_id\":\"1\",\"properties\":[{\"name\":\"weight\",\"number_value\":\"100\",\"type\":\"3\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestUpdateAttrGetGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgUpdateProperties{
 		Sender: addr1,
 	}
@@ -197,7 +197,7 @@ func TestAddQuantityMsg(t *testing.T) {
 }
 
 func TestAddQuantityType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddQuantity{
 		Sender:   addr,
 		AssetID:  "!",
@@ -208,7 +208,7 @@ func TestAddQuantityType(t *testing.T) {
 }
 
 func TestAddQuantityMsgValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgAddQuantity
@@ -230,7 +230,7 @@ func TestAddQuantityMsgValidation(t *testing.T) {
 }
 
 func TestAddQuantityMsgGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddQuantity{
 		Sender:   addr1,
 		AssetID:  "1",
@@ -238,11 +238,11 @@ func TestAddQuantityMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"sender\":\"696E707574\",\"asset_id\":\"1\",\"quantity\":\"1\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/AddQuantity\",\"value\":{\"asset_id\":\"1\",\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestAddQuantityGetGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddQuantity{
 		Sender: addr1,
 	}
@@ -258,7 +258,7 @@ func TestSubtractQuantityMsg(t *testing.T) {
 }
 
 func TestSubtractQuantityMsgType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 	var msg = MsgSubtractQuantity{
 		Sender:   addr,
 		AssetID:  "!",
@@ -269,7 +269,7 @@ func TestSubtractQuantityMsgType(t *testing.T) {
 }
 
 func TestSubtractQuantityMsgValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgSubtractQuantity
@@ -291,7 +291,7 @@ func TestSubtractQuantityMsgValidation(t *testing.T) {
 }
 
 func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgSubtractQuantity{
 		Sender:   addr1,
 		AssetID:  "1",
@@ -299,11 +299,11 @@ func TestSubtractQuantityMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/SubtractQuantity\",\"value\":{\"asset_id\":\"1\",\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestSubtractQuantityMsgGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddQuantity{
 		Sender: addr1,
 	}
@@ -319,7 +319,7 @@ func TestAddMaterialsMsg(t *testing.T) {
 }
 
 func TestMsgAddMaterialsType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddMaterials{
 		Sender: addr,
 	}
@@ -328,7 +328,7 @@ func TestMsgAddMaterialsType(t *testing.T) {
 }
 
 func TestMsgAddMaterialsValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgAddMaterials
@@ -352,7 +352,7 @@ func TestMsgAddMaterialsValidation(t *testing.T) {
 }
 
 func TestMsgAddMaterialsGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddMaterials{
 		Sender:    addr1,
 		AssetID:   "1",
@@ -360,11 +360,11 @@ func TestMsgAddMaterialsGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"materials\":[{\"asset_id\":\"1\",\"quantity\":\"1\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/AddMaterials\",\"value\":{\"asset_id\":\"1\",\"materials\":[{\"asset_id\":\"1\",\"quantity\":\"1\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestMsgGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddMaterials{
 		Sender: addr1,
 	}
@@ -380,7 +380,7 @@ func TestMsgFinalize(t *testing.T) {
 }
 
 func TestMsgFinalizeType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 	var msg = MsgFinalize{
 		Sender:  addr,
 		AssetID: "121",
@@ -390,7 +390,7 @@ func TestMsgFinalizeType(t *testing.T) {
 }
 
 func TestMsgMsgFinalizeValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgFinalize
@@ -411,18 +411,18 @@ func TestMsgMsgFinalizeValidation(t *testing.T) {
 }
 
 func TestMsgFinalizeGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgFinalize{
 		Sender:  addr1,
 		AssetID: "3434",
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), `{"sender":"696E707574","asset_id":"3434"}`)
+	assert.Equal(t, string(res), "{\"type\":\"asset/FinalizeAsset\",\"value\":{\"asset_id\":\"3434\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestMsgFinalizeGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgFinalize{
 		Sender: addr1,
 	}
@@ -438,7 +438,7 @@ func TestMsgRevokeReporter(t *testing.T) {
 }
 
 func TestMsgMsgRevokeReporterType(t *testing.T) {
-	addr := sdk.Address([]byte("input"))
+	addr := sdk.AccAddress([]byte("input"))
 	var msg = MsgRevokeReporter{
 		Sender:  addr,
 		AssetID: "121",
@@ -448,7 +448,7 @@ func TestMsgMsgRevokeReporterType(t *testing.T) {
 }
 
 func TestMsgRevokeReporterValidation(t *testing.T) {
-	addr1 := sdk.Address([]byte{1, 2})
+	addr1 := sdk.AccAddress([]byte{1, 2})
 	cases := []struct {
 		valid bool
 		tx    MsgRevokeReporter
@@ -470,7 +470,7 @@ func TestMsgRevokeReporterValidation(t *testing.T) {
 }
 
 func TestMsgRevokeReporterGetSignBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgRevokeReporter{
 		Sender:   addr1,
 		Reporter: addr2,
@@ -478,11 +478,11 @@ func TestMsgRevokeReporterGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"3434\",\"reporter\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/RevokeReporter\",\"value\":{\"asset_id\":\"3434\",\"reporter\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestMsgRevokeReporterGetSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgRevokeReporter{
 		Sender: addr1,
 	}
@@ -545,7 +545,7 @@ func TestCreateProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"properties\":[\"location\"],\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\",\"role\":\"0\",\"sender\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/CreateProposal\",\"value\":{\"asset_id\":\"1\",\"properties\":[\"location\"],\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\",\"role\":\"0\",\"sender\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\"}}")
 }
 
 // AnswerProposal  Tests
@@ -600,5 +600,5 @@ func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\",\"sender\":\"cosmosaccaddr16y6p2v\"}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/AnswerProposal\",\"value\":{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\",\"sender\":\"cosmosaccaddr16y6p2v\"}}")
 }

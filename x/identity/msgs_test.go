@@ -10,15 +10,15 @@ import (
 )
 
 var (
-	addr1 = sdk.Address([]byte("addr1"))
-	addr2 = sdk.Address([]byte("addr2"))
-	addr3 = sdk.Address([]byte("addr3"))
+	addr1 = sdk.AccAddress([]byte("addr1"))
+	addr2 = sdk.AccAddress([]byte("addr2"))
+	addr3 = sdk.AccAddress([]byte("addr3"))
 )
 
 func TestMsgCreateIdentity(t *testing.T) {
 	tests := []struct {
 		name       string
-		sender     sdk.Address
+		sender     sdk.AccAddress
 		expectPass bool
 	}{
 		{"basic good", addr1, true},
@@ -44,7 +44,7 @@ func TestMsgCreateIdentityGetSignBytes(t *testing.T) {
 	signBytes := MsgCreateIdentity{
 		Sender: addr1,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"sender":"cosmosaccaddr1v9jxgu333rmgrm"}`)
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/CreateIdentity\",\"value\":{\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}}")
 }
 
 func TestMsgCreateIdentityGetSigner(t *testing.T) {
@@ -55,8 +55,8 @@ func TestMsgCreateIdentityGetSigner(t *testing.T) {
 func TestMsgSetTrust(t *testing.T) {
 	tests := []struct {
 		name       string
-		trustor    sdk.Address
-		trusting   sdk.Address
+		trustor    sdk.AccAddress
+		trusting   sdk.AccAddress
 		trust      bool
 		expectPass bool
 	}{
@@ -86,7 +86,7 @@ func TestMsgSetTrustGetSignBytes(t *testing.T) {
 		Trusting: addr2,
 		Trust:    true,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"trustor":"cosmosaccaddr1v9jxgu333rmgrm","trusting":"cosmosaccaddr1v9jxgu3jlsw7dy","trust":true}`)
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetTrust\",\"value\":{\"trust\":true,\"trusting\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"trustor\":\"cosmosaccaddr1v9jxgu333rmgrm\"}}")
 }
 
 func TestMsgSetTrustGetSigner(t *testing.T) {
@@ -97,7 +97,7 @@ func TestMsgSetTrustGetSigner(t *testing.T) {
 func TestMsgSetCerts(t *testing.T) {
 	tests := []struct {
 		name       string
-		certifier  sdk.Address
+		certifier  sdk.AccAddress
 		identity   int64
 		values     []CertValue
 		expectPass bool
@@ -134,5 +134,5 @@ func TestMsgSetCertsGetSignBytes(t *testing.T) {
 		IdentityID: 1,
 		Values:     []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}},
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"certifier":"cosmosaccaddr1v9jxgu333rmgrm","identity_id":"1","values":[{"property":"owner","type":"realname","data":null,"confidence":true}]}`)
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetCerts\",\"value\":{\"certifier\":\"cosmosaccaddr1v9jxgu333rmgrm\",\"identity_id\":\"1\",\"values\":[{\"confidence\":true,\"data\":null,\"property\":\"owner\",\"type\":\"realname\"}]}}")
 }

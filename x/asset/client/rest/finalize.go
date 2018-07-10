@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
@@ -46,7 +47,7 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		}
 		// build message
 		msg := asset.MsgFinalize{
-			Sender:  info.GetPubKey().Address(),
+			Sender:  sdk.AccAddress(info.GetPubKey().Address()),
 			AssetID: vars["id"],
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)

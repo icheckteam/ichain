@@ -21,11 +21,11 @@ type createContractBody struct {
 }
 
 type contractBody struct {
-	ID        string      `json:"id"`
-	AssetID   string      `json:"asset_id"`
-	Expires   time.Time   `json:"expires"`
-	Serial    string      `json:"serial"`
-	Recipient sdk.Address `json:"recipient"`
+	ID        string         `json:"id"`
+	AssetID   string         `json:"asset_id"`
+	Expires   time.Time      `json:"expires"`
+	Serial    string         `json:"serial"`
+	Recipient sdk.AccAddress `json:"recipient"`
 }
 
 // CreateContractHandlerFn
@@ -84,7 +84,7 @@ func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 
 		// build message
 		msg := buildMsgCreateContract(
-			info.GetPubKey().Address(),
+			sdk.AccAddress(info.GetPubKey().Address()),
 			b.Contract.Recipient,
 			b.Contract.AssetID,
 			b.Contract.Serial,
@@ -118,7 +118,7 @@ func CreateContractHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	}
 }
 
-func buildMsgCreateContract(issuer sdk.Address, recipient sdk.Address, assetID, serial string, expires time.Time) insurance.MsgCreateContract {
+func buildMsgCreateContract(issuer sdk.AccAddress, recipient sdk.AccAddress, assetID, serial string, expires time.Time) insurance.MsgCreateContract {
 	return insurance.MsgCreateContract{
 		ID:        assetID,
 		Issuer:    issuer,

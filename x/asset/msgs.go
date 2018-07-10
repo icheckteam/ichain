@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,17 +15,17 @@ var _, _, _ sdk.Msg = &MsgSubtractQuantity{}, &MsgAnswerProposal{}, &MsgUpdatePr
 // MsgCreateAsset A really msg record create type, these fields are can be entirely arbitrary and
 // custom to your message
 type MsgCreateAsset struct {
-	Sender     sdk.Address `json:"sender"`
-	AssetID    string      `json:"asset_id"`
-	Name       string      `json:"name"`
-	Quantity   sdk.Int     `json:"quantity"`
-	Parent     string      `json:"parent"` // the id of the  parent asset
-	Unit       string      `json:"unit"`
-	Properties Properties  `json:"properties"`
+	Sender     sdk.AccAddress `json:"sender"`
+	AssetID    string         `json:"asset_id"`
+	Name       string         `json:"name"`
+	Quantity   sdk.Int        `json:"quantity"`
+	Parent     string         `json:"parent"` // the id of the  parent asset
+	Unit       string         `json:"unit"`
+	Properties Properties     `json:"properties"`
 }
 
 // NewMsgCreateAsset new record create msg
-func NewMsgCreateAsset(sender sdk.Address, id, name string, quantity sdk.Int, parent string) MsgCreateAsset {
+func NewMsgCreateAsset(sender sdk.AccAddress, id, name string, quantity sdk.Int, parent string) MsgCreateAsset {
 	return MsgCreateAsset{
 		Sender:   sender,
 		AssetID:  id,
@@ -42,7 +41,7 @@ var _ sdk.Msg = MsgCreateAsset{}
 // nolint ...
 func (msg MsgCreateAsset) Type() string                            { return msgType }
 func (msg MsgCreateAsset) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgCreateAsset) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgCreateAsset) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
@@ -71,23 +70,7 @@ func (msg MsgCreateAsset) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgCreateAsset) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Sender     string            `json:"sender"`
-		AssetID    string            `json:"asset_id"`
-		Name       string            `json:"name"`
-		Quantity   sdk.Int           `json:"quantity"`
-		Parent     string            `json:"parent"`
-		Unit       string            `json:"unit"`
-		Properties []json.RawMessage `json:"properties"`
-	}{
-		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:    msg.AssetID,
-		Name:       msg.Name,
-		Quantity:   msg.Quantity,
-		Parent:     msg.Parent,
-		Unit:       msg.Unit,
-		Properties: msg.Properties.GetSignBytes(),
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -97,14 +80,14 @@ func (msg MsgCreateAsset) GetSignBytes() []byte {
 // MsgUpdateProperties ...
 // ---------------------------------------------------------------
 type MsgUpdateProperties struct {
-	Sender     sdk.Address `json:"sender"`
-	AssetID    string      `json:"asset_id"`
-	Properties Properties  `json:"properties"`
+	Sender     sdk.AccAddress `json:"sender"`
+	AssetID    string         `json:"asset_id"`
+	Properties Properties     `json:"properties"`
 }
 
 func (msg MsgUpdateProperties) Type() string                            { return msgType }
 func (msg MsgUpdateProperties) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgUpdateProperties) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgUpdateProperties) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
@@ -135,15 +118,7 @@ func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgUpdateProperties) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Sender     string            `json:"sender"`
-		AssetID    string            `json:"asset_id"`
-		Properties []json.RawMessage `json:"properties"`
-	}{
-		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:    msg.AssetID,
-		Properties: msg.Properties.GetSignBytes(),
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -153,14 +128,14 @@ func (msg MsgUpdateProperties) GetSignBytes() []byte {
 // MsgAddQuantity ...
 // ---------------------------------------------------------------
 type MsgAddQuantity struct {
-	Sender   sdk.Address `json:"sender"`
-	AssetID  string      `json:"asset_id"`
-	Quantity sdk.Int     `json:"quantity"`
+	Sender   sdk.AccAddress `json:"sender"`
+	AssetID  string         `json:"asset_id"`
+	Quantity sdk.Int        `json:"quantity"`
 }
 
 func (msg MsgAddQuantity) Type() string                            { return msgType }
 func (msg MsgAddQuantity) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgAddQuantity) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgAddQuantity) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddQuantity) ValidateBasic() sdk.Error {
@@ -178,24 +153,24 @@ func (msg MsgAddQuantity) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAddQuantity) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgSubtractQuantity ...
 // ---------------------------------------------------------------
 type MsgSubtractQuantity struct {
-	Sender   sdk.Address `json:"sender"`
-	AssetID  string      `json:"asset_id"`
-	Quantity sdk.Int     `json:"quantity"`
+	Sender   sdk.AccAddress `json:"sender"`
+	AssetID  string         `json:"asset_id"`
+	Quantity sdk.Int        `json:"quantity"`
 }
 
 func (msg MsgSubtractQuantity) Type() string                            { return msgType }
 func (msg MsgSubtractQuantity) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgSubtractQuantity) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgSubtractQuantity) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
@@ -213,15 +188,7 @@ func (msg MsgSubtractQuantity) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgSubtractQuantity) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Sender   string  `json:"sender"`
-		AssetID  string  `json:"asset_id"`
-		Quantity sdk.Int `json:"quantity"`
-	}{
-		Sender:   sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:  msg.AssetID,
-		Quantity: msg.Quantity,
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -230,14 +197,14 @@ func (msg MsgSubtractQuantity) GetSignBytes() []byte {
 
 // MsgAddMaterials ...
 type MsgAddMaterials struct {
-	AssetID   string      `json:"asset_id"`
-	Sender    sdk.Address `json:"sender"`
-	Materials Materials   `json:"materials"`
+	AssetID   string         `json:"asset_id"`
+	Sender    sdk.AccAddress `json:"sender"`
+	Materials Materials      `json:"materials"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
 func (msg MsgAddMaterials) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgAddMaterials) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgAddMaterials) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
@@ -264,19 +231,7 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAddMaterials) GetSignBytes() []byte {
-	materials := []json.RawMessage{}
-	for _, material := range msg.Materials {
-		materials = append(materials, material.GetSignBytes())
-	}
-	b, err := msgCdc.MarshalJSON(struct {
-		Sender    string            `json:"sender"`
-		AssetID   string            `json:"asset_id"`
-		Materials []json.RawMessage `json:"materials"`
-	}{
-		Sender:    sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:   msg.AssetID,
-		Materials: materials,
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -285,13 +240,13 @@ func (msg MsgAddMaterials) GetSignBytes() []byte {
 
 // MsgSend ...
 type MsgFinalize struct {
-	Sender  sdk.Address `json:"sender"`
-	AssetID string      `json:"asset_id"`
+	Sender  sdk.AccAddress `json:"sender"`
+	AssetID string         `json:"asset_id"`
 }
 
 func (msg MsgFinalize) Type() string                            { return msgType }
 func (msg MsgFinalize) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgFinalize) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgFinalize) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgFinalize) ValidateBasic() sdk.Error {
@@ -307,23 +262,23 @@ func (msg MsgFinalize) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgFinalize) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // MsgRevokeReporter ...
 type MsgRevokeReporter struct {
-	Sender   sdk.Address `json:"sender"`
-	Reporter sdk.Address `json:"reporter"`
-	AssetID  string      `json:"asset_id"`
+	Sender   sdk.AccAddress `json:"sender"`
+	Reporter sdk.AccAddress `json:"reporter"`
+	AssetID  string         `json:"asset_id"`
 }
 
 func (msg MsgRevokeReporter) Type() string                            { return msgType }
 func (msg MsgRevokeReporter) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgRevokeReporter) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgRevokeReporter) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgRevokeReporter) ValidateBasic() sdk.Error {
@@ -341,15 +296,7 @@ func (msg MsgRevokeReporter) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgRevokeReporter) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Sender   string `json:"sender"`
-		Reporter string `json:"reporter"`
-		AssetID  string `json:"asset_id"`
-	}{
-		Sender:   sdk.MustBech32ifyAcc(msg.Sender),
-		Reporter: sdk.MustBech32ifyAcc(msg.Reporter),
-		AssetID:  msg.AssetID,
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -358,16 +305,16 @@ func (msg MsgRevokeReporter) GetSignBytes() []byte {
 
 // CreateProposalMsg ...
 type MsgCreateProposal struct {
-	AssetID    string       `json:"asset_id"`
-	Sender     sdk.Address  `json:"sender"`
-	Recipient  sdk.Address  `json:"recipient"`
-	Properties []string     `json:"properties"`
-	Role       ProposalRole `json:"role"`
+	AssetID    string         `json:"asset_id"`
+	Sender     sdk.AccAddress `json:"sender"`
+	Recipient  sdk.AccAddress `json:"recipient"`
+	Properties []string       `json:"properties"`
+	Role       ProposalRole   `json:"role"`
 }
 
 func (msg MsgCreateProposal) Type() string                            { return msgType }
 func (msg MsgCreateProposal) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgCreateProposal) GetSigners() []sdk.Address               { return []sdk.Address{msg.Sender} }
+func (msg MsgCreateProposal) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Sender} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgCreateProposal) ValidateBasic() sdk.Error {
@@ -388,19 +335,7 @@ func (msg MsgCreateProposal) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgCreateProposal) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		AssetID    string       `json:"asset_id"`
-		Sender     string       `json:"sender"`
-		Recipient  string       `json:"recipient"`
-		Properties []string     `json:"properties"`
-		Role       ProposalRole `json:"role"`
-	}{
-		Sender:     sdk.MustBech32ifyAcc(msg.Sender),
-		Recipient:  sdk.MustBech32ifyAcc(msg.Recipient),
-		AssetID:    msg.AssetID,
-		Properties: msg.Properties,
-		Role:       msg.Role,
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
@@ -410,14 +345,14 @@ func (msg MsgCreateProposal) GetSignBytes() []byte {
 // MsgAnswerProposal ...
 type MsgAnswerProposal struct {
 	AssetID   string         `json:"asset_id"`
-	Sender    sdk.Address    `json:"sender"`
-	Recipient sdk.Address    `json:"recipient"`
+	Sender    sdk.AccAddress `json:"sender"`
+	Recipient sdk.AccAddress `json:"recipient"`
 	Response  ProposalStatus `json:"response"`
 }
 
 func (msg MsgAnswerProposal) Type() string                            { return msgType }
 func (msg MsgAnswerProposal) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgAnswerProposal) GetSigners() []sdk.Address               { return []sdk.Address{msg.Recipient} }
+func (msg MsgAnswerProposal) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Recipient} }
 
 // ValidateBasic Validate Basic is used to quickly disqualify obviously invalid messages quickly
 func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
@@ -441,17 +376,7 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 
 // GetSignBytes Get the bytes for the message signer to sign on
 func (msg MsgAnswerProposal) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		AssetID   string         `json:"asset_id"`
-		Sender    string         `json:"sender"`
-		Recipient string         `json:"recipient"`
-		Response  ProposalStatus `json:"response"`
-	}{
-		Recipient: sdk.MustBech32ifyAcc(msg.Recipient),
-		Sender:    sdk.MustBech32ifyAcc(msg.Sender),
-		AssetID:   msg.AssetID,
-		Response:  msg.Response,
-	})
+	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}

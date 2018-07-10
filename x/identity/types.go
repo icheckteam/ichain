@@ -8,19 +8,19 @@ import (
 
 // Identity
 type Identity struct {
-	ID       int64       `json:"id"`    // id of the identity
-	Owner    sdk.Address `json:"owner"` // owner of the identity
-	Defaults bool        `json:"defaults"`
+	ID       int64          `json:"id"`    // id of the identity
+	Owner    sdk.AccAddress `json:"owner"` // owner of the identity
+	Defaults bool           `json:"defaults"`
 }
 
 type Cert struct {
-	ID         string      `json:"id"`
-	Property   string      `json:"property"`
-	Certifier  sdk.Address `json:"certifier"`
-	Type       string      `json:"type"`
-	Trust      bool        `json:"trust"`
-	Data       Metadata    `json:"data"`
-	Confidence bool        `json:"confidence"`
+	ID         string         `json:"id"`
+	Property   string         `json:"property"`
+	Certifier  sdk.AccAddress `json:"certifier"`
+	Type       string         `json:"type"`
+	Trust      bool           `json:"trust"`
+	Data       Metadata       `json:"data"`
+	Confidence bool           `json:"confidence"`
 }
 
 type CertValue struct {
@@ -78,6 +78,6 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 }
 
 type Trust struct {
-	Trustor  sdk.Address `json:"trustor"`
-	Trusting sdk.Address `json:"trusting"`
+	Trustor  sdk.AccAddress `json:"trustor"`
+	Trusting sdk.AccAddress `json:"trusting"`
 }

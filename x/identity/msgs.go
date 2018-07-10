@@ -1,8 +1,6 @@
 package identity
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,12 +11,12 @@ var _, _, _ sdk.Msg = &MsgSetTrust{}, &MsgCreateIdentity{}, &MsgSetCerts{}
 
 // MsgSetTrust struct for set trust
 type MsgSetTrust struct {
-	Trustor  sdk.Address `json:"trustor"`
-	Trusting sdk.Address `json:"trusting"`
-	Trust    bool        `json:"trust"`
+	Trustor  sdk.AccAddress `json:"trustor"`
+	Trusting sdk.AccAddress `json:"trusting"`
+	Trust    bool           `json:"trust"`
 }
 
-func NewMsgSetTrust(trustor, trusting sdk.Address, trust bool) MsgSetTrust {
+func NewMsgSetTrust(trustor, trusting sdk.AccAddress, trust bool) MsgSetTrust {
 	return MsgSetTrust{
 		Trustor:  trustor,
 		Trusting: trusting,
@@ -28,25 +26,17 @@ func NewMsgSetTrust(trustor, trusting sdk.Address, trust bool) MsgSetTrust {
 
 //nolint
 func (msg MsgSetTrust) Type() string { return MsgType }
-func (msg MsgSetTrust) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Trustor}
+func (msg MsgSetTrust) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Trustor}
 }
 
 // get the bytes for the message signer to sign on
 func (msg MsgSetTrust) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(struct {
-		Trustor  string `json:"trustor"`
-		Trusting string `json:"trusting"`
-		Trust    bool   `json:"trust"`
-	}{
-		Trustor:  sdk.MustBech32ifyAcc(msg.Trustor),
-		Trusting: sdk.MustBech32ifyAcc(msg.Trusting),
-		Trust:    msg.Trust,
-	})
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // quick validity check
@@ -63,10 +53,10 @@ func (msg MsgSetTrust) ValidateBasic() sdk.Error {
 
 // MsgCreateIdentity struct for create identity
 type MsgCreateIdentity struct {
-	Sender sdk.Address `json:"sender"`
+	Sender sdk.AccAddress `json:"sender"`
 }
 
-func NewMsgCreateIdentity(sender sdk.Address) MsgCreateIdentity {
+func NewMsgCreateIdentity(sender sdk.AccAddress) MsgCreateIdentity {
 	return MsgCreateIdentity{
 		Sender: sender,
 	}
@@ -74,21 +64,17 @@ func NewMsgCreateIdentity(sender sdk.Address) MsgCreateIdentity {
 
 //nolint
 func (msg MsgCreateIdentity) Type() string { return MsgType }
-func (msg MsgCreateIdentity) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Sender}
+func (msg MsgCreateIdentity) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
 }
 
 // get the bytes for the message signer to sign on
 func (msg MsgCreateIdentity) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(struct {
-		Sender string `json:"sender"`
-	}{
-		Sender: sdk.MustBech32ifyAcc(msg.Sender),
-	})
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // quick validity check
@@ -102,12 +88,12 @@ func (msg MsgCreateIdentity) ValidateBasic() sdk.Error {
 
 // MsgSetCerts struct for set certs
 type MsgSetCerts struct {
-	Certifier  sdk.Address `json:"certifier"`
-	IdentityID int64       `json:"identity_id"`
-	Values     []CertValue `json:"values"`
+	Certifier  sdk.AccAddress `json:"certifier"`
+	IdentityID int64          `json:"identity_id"`
+	Values     []CertValue    `json:"values"`
 }
 
-func NewMsgSetCerts(certifier sdk.Address, identityID int64, values []CertValue) MsgSetCerts {
+func NewMsgSetCerts(certifier sdk.AccAddress, identityID int64, values []CertValue) MsgSetCerts {
 	return MsgSetCerts{
 		Certifier:  certifier,
 		IdentityID: identityID,
@@ -117,31 +103,17 @@ func NewMsgSetCerts(certifier sdk.Address, identityID int64, values []CertValue)
 
 //nolint
 func (msg MsgSetCerts) Type() string { return MsgType }
-func (msg MsgSetCerts) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Certifier}
+func (msg MsgSetCerts) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Certifier}
 }
 
 // get the bytes for the message signer to sign on
 func (msg MsgSetCerts) GetSignBytes() []byte {
-	var values []json.RawMessage
-
-	for _, value := range msg.Values {
-		values = append(values, value.GetSignBytes())
-	}
-
-	b, err := MsgCdc.MarshalJSON(struct {
-		Certifier  string            `json:"certifier"`
-		IdentityID int64             `json:"identity_id"`
-		Values     []json.RawMessage `json:"values"`
-	}{
-		Certifier:  sdk.MustBech32ifyAcc(msg.Certifier),
-		IdentityID: msg.IdentityID,
-		Values:     values,
-	})
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // quick validity check

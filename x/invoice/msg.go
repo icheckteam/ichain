@@ -1,17 +1,15 @@
 package invoice
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/types"
 )
 
 type MsgCreate struct {
-	ID       string      `json:"id"`
-	Issuer   sdk.Address `json:"issuer"`
-	Receiver sdk.Address `json:"receiver"`
-	Items    []Item      `json:"items"`
+	ID       string         `json:"id"`
+	Issuer   sdk.AccAddress `json:"issuer"`
+	Receiver sdk.AccAddress `json:"receiver"`
+	Items    []Item         `json:"items"`
 }
 
 func (msg MsgCreate) Type() string {
@@ -19,11 +17,11 @@ func (msg MsgCreate) Type() string {
 }
 
 func (msg MsgCreate) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 func (msg MsgCreate) ValidateBasic() sdk.Error {
@@ -46,11 +44,11 @@ func (msg MsgCreate) ValidateBasic() sdk.Error {
 	return nil
 }
 
-func (msg MsgCreate) GetSigners() []sdk.Address {
-	return []sdk.Address{msg.Issuer}
+func (msg MsgCreate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Issuer}
 }
 
-func NewMsgCreate(id string, issuer, receiver sdk.Address, items []Item) MsgCreate {
+func NewMsgCreate(id string, issuer, receiver sdk.AccAddress, items []Item) MsgCreate {
 	return MsgCreate{
 		ID:       id,
 		Issuer:   issuer,

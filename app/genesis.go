@@ -46,9 +46,9 @@ func GaiaAppInit() server.AppInit {
 
 // simple genesis tx
 type GaiaGenTx struct {
-	Name    string        `json:"name"`
-	Address sdk.Address   `json:"address"`
-	PubKey  crypto.PubKey `json:"pub_key"`
+	Name    string         `json:"name"`
+	Address sdk.AccAddress `json:"address"`
+	PubKey  crypto.PubKey  `json:"pub_key"`
 }
 
 // Generate a gaia genesis transaction with flags
@@ -58,7 +58,7 @@ func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 		return nil, nil, tmtypes.GenesisValidator{}, errors.New("Must specify --name (validator moniker)")
 	}
 
-	var addr sdk.Address
+	var addr sdk.AccAddress
 	var secret string
 	addr, secret, err = server.GenerateSaveCoinKey(genTxConfig.CliRoot, genTxConfig.Name, "1234567890", genTxConfig.Overwrite)
 	if err != nil {
@@ -78,7 +78,7 @@ func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 }
 
 // Generate a gaia genesis transaction without flags
-func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.Address, name string) (
+func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.AccAddress, name string) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
 	var bz []byte

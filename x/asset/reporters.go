@@ -7,9 +7,9 @@ import (
 )
 
 type Reporter struct {
-	Addr       sdk.Address `json:"address"`
-	Properties []string    `json:"properties"`
-	Created    int64       `json:"created"`
+	Addr       sdk.AccAddress `json:"address"`
+	Properties []string       `json:"properties"`
+	Created    int64          `json:"created"`
 }
 
 type Reporters []Reporter

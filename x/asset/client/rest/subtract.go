@@ -52,7 +52,7 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 		// build message
 
 		msg := asset.MsgSubtractQuantity{
-			Sender:   info.GetPubKey().Address(),
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
 			AssetID:  vars["id"],
 			Quantity: m.Quantity,
 		}

@@ -112,8 +112,11 @@ func makeCreateInvoiceEndpoint(ctx cosmosContext.CoreContext, cdc *wire.Codec, k
 			return nil, ErrorUnauthorized
 		}
 
-		issuer := info.GetPubKey().Address()
-		receiver, _ := sdk.GetAccAddressHex(req.Receiver)
+		issuer := sdk.AccAddress(info.GetPubKey().Address())
+		receiver, err := sdk.AccAddressFromBech32(req.Receiver)
+		if err != nil {
+			return nil, err
+		}
 		msg := invoice.NewMsgCreate(
 			req.ID,
 			issuer,

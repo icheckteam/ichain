@@ -72,7 +72,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			Name:       m.Name,
 			Parent:     m.Parent,
 			Properties: m.Properties,
-			Sender:     info.GetPubKey().Address(),
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
 			Quantity:   m.Quantity,
 			Unit:       m.Unit,
 		}

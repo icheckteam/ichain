@@ -38,7 +38,6 @@
   revision = "d4cc87b860166d00d6b5b9e0d3b3d71d6088d4d4"
 
 [[projects]]
-  branch = "develop"
   name = "github.com/cosmos/cosmos-sdk"
   packages = [
     "baseapp",
@@ -85,7 +84,7 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "988614e4aab52126f655c6bbbc40f6a2c0d5432a"
+  revision = "7ba52e8d32d7a7ffe9002e6f0a4eb1e982136eb8"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -585,6 +584,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0ffde2abca528901555f29fd98d1bc26b1cd76a5ff5780c1fb1ed2c830c1f6e"
+  inputs-digest = "51074a5469a7972806001ec6f6f6886db2d72c8dd6bd5ba0a7cfc36df516df3f"
   solver-name = "gps-cdcl"
   solver-version = 1

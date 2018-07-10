@@ -74,7 +74,7 @@ func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 		// build message
-		msg := buildCreateOrderMsg(info.GetPubKey().Address(), m)
+		msg := buildCreateOrderMsg(sdk.AccAddress(info.GetPubKey().Address()), m)
 
 		// sign
 		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
@@ -104,9 +104,9 @@ func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	}
 }
 
-func buildCreateOrderMsg(creator sdk.Address, body createOrderBody) sdk.Msg {
-	carrier, _ := sdk.GetValAddressHex(body.Carrier)
-	receiver, _ := sdk.GetAccAddressHex(body.Receiver)
+func buildCreateOrderMsg(creator sdk.AccAddress, body createOrderBody) sdk.Msg {
+	carrier, _ := sdk.AccAddressFromBech32(body.Carrier)
+	receiver, _ := sdk.AccAddressFromBech32(body.Receiver)
 
 	return shipping.CreateOrderMsg{
 		ID:                body.OrderID,

@@ -64,7 +64,7 @@ func ProcessClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 
 		// build message
 		msg := buildMsgProcessClaim(
-			info.GetPubKey().Address(),
+			sdk.AccAddress(info.GetPubKey().Address()),
 			b.ContractID,
 			b.Status,
 		)
@@ -96,6 +96,6 @@ func ProcessClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 	}
 }
 
-func buildMsgProcessClaim(issuer sdk.Address, contractID string, status insurance.ClaimStatus) insurance.MsgProcessClaim {
+func buildMsgProcessClaim(issuer sdk.AccAddress, contractID string, status insurance.ClaimStatus) insurance.MsgProcessClaim {
 	return insurance.MsgProcessClaim{ContractID: contractID, Issuer: issuer, Status: status}
 }

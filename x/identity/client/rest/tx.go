@@ -43,7 +43,7 @@ func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 
-		trusting, err := sdk.GetAccAddressBech32(vars[RestTrusting])
+		trusting, err := sdk.AccAddressFromBech32(vars[RestTrusting])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -53,7 +53,7 @@ func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		msg := identity.MsgSetTrust{
 			Trust:    m.Trust,
 			Trusting: trusting,
-			Trustor:  info.GetPubKey().Address(),
+			Trustor:  sdk.AccAddress(info.GetPubKey().Address()),
 		}
 
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
@@ -96,7 +96,7 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		}
 
 		msg := identity.MsgSetCerts{
-			Certifier:  info.GetPubKey().Address(),
+			Certifier:  sdk.AccAddress(info.GetPubKey().Address()),
 			IdentityID: int64(identityID),
 			Values:     m.Values,
 		}
@@ -132,7 +132,7 @@ func CreateIdentityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		}
 
 		msg := identity.MsgCreateIdentity{
-			Sender: info.GetPubKey().Address(),
+			Sender: sdk.AccAddress(info.GetPubKey().Address()),
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}

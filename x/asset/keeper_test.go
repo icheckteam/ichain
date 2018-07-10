@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	addr  = sdk.Address([]byte("addr1"))
-	addr2 = sdk.Address([]byte("addr2"))
-	addr3 = sdk.Address([]byte("addr3"))
-	addr4 = sdk.Address([]byte("addr4"))
+	addr  = sdk.AccAddress([]byte("addr1"))
+	addr2 = sdk.AccAddress([]byte("addr2"))
+	addr3 = sdk.AccAddress([]byte("addr3"))
+	addr4 = sdk.AccAddress([]byte("addr4"))
 
 	asset = MsgCreateAsset{
 		AssetID:    "asset1",

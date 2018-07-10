@@ -28,7 +28,7 @@
 
 [[constraint]]
   name = "github.com/cosmos/cosmos-sdk"
-  branch = "develop"
+  revision = "7ba52e8d32d7a7ffe9002e6f0a4eb1e982136eb8"
 
 [[constraint]]
   name = "github.com/tendermint/tendermint"

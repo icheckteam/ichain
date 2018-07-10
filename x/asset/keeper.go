@@ -111,13 +111,13 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	store.Set(GetAssetKey(asset.ID), bz)
 }
 
-func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.Address) {
+func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(assetID)
 	store.Set(GetAccountAssetKey(recipient, assetID), bz)
 }
 
-func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.Address) {
+func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetAccountAssetKey(recipient, assetID))
 }

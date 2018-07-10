@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
@@ -53,7 +54,7 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 
 		msg := asset.MsgAddMaterials{
 			AssetID:   vars["id"],
-			Sender:    info.GetPubKey().Address(),
+			Sender:    sdk.AccAddress(info.GetPubKey().Address()),
 			Materials: m.Materials,
 		}
 

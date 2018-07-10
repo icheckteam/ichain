@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
@@ -54,7 +55,7 @@ func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.
 		msg := asset.MsgUpdateProperties{
 			AssetID:    vars["id"],
 			Properties: m.Properties,
-			Sender:     info.GetPubKey().Address(),
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
 		}
 
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)

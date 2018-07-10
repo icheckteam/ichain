@@ -26,7 +26,7 @@ import (
 var (
 	addrs       = createTestAddrs(100)
 	pks         = createTestPubKeys(100)
-	emptyAddr   sdk.Address
+	emptyAddr   sdk.AccAddress
 	emptyPubkey crypto.PubKey
 )
 
@@ -76,7 +76,7 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	return ctx, accountMapper, assetKeeper
 }
 
-func newPubKey(pk string) (res crypto.PubKey) {
+func NewPubKey(pk string) (res crypto.PubKey) {
 	pkBytes, err := hex.DecodeString(pk)
 	if err != nil {
 		panic(err)
@@ -88,21 +88,18 @@ func newPubKey(pk string) (res crypto.PubKey) {
 }
 
 // for incode address generation
-func testAddr(addr string, bech string) sdk.Address {
+func TestAddr(addr string, bech string) sdk.AccAddress {
 
-	res, err := sdk.GetAccAddressHex(addr)
+	res, err := sdk.AccAddressFromHex(addr)
 	if err != nil {
 		panic(err)
 	}
-	bechexpected, err := sdk.Bech32ifyAcc(res)
-	if err != nil {
-		panic(err)
-	}
+	bechexpected := res.String()
 	if bech != bechexpected {
 		panic("Bech encoding doesn't match reference")
 	}
 
-	bechres, err := sdk.GetAccAddressBech32(bech)
+	bechres, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		panic(err)
 	}
@@ -112,8 +109,10 @@ func testAddr(addr string, bech string) sdk.Address {
 
 	return res
 }
-func createTestAddrs(numAddrs int) []sdk.Address {
-	var addresses []sdk.Address
+
+// nolint: unparam
+func createTestAddrs(numAddrs int) []sdk.AccAddress {
+	var addresses []sdk.AccAddress
 	var buffer bytes.Buffer
 
 	// start at 100 so we can make up to 999 test addresses with valid test addresses
@@ -122,14 +121,15 @@ func createTestAddrs(numAddrs int) []sdk.Address {
 		buffer.WriteString("A58856F0FD53BF058B4909A21AEC019107BA6") //base address string
 
 		buffer.WriteString(numString) //adding on final two digits to make addresses unique
-		res, _ := sdk.GetAccAddressHex(buffer.String())
-		bech, _ := sdk.Bech32ifyAcc(res)
-		addresses = append(addresses, testAddr(buffer.String(), bech))
+		res, _ := sdk.AccAddressFromHex(buffer.String())
+		bech := res.String()
+		addresses = append(addresses, TestAddr(buffer.String(), bech))
 		buffer.Reset()
 	}
 	return addresses
 }
 
+// nolint: unparam
 func createTestPubKeys(numPubKeys int) []crypto.PubKey {
 	var publicKeys []crypto.PubKey
 	var buffer bytes.Buffer
@@ -139,8 +139,16 @@ func createTestPubKeys(numPubKeys int) []crypto.PubKey {
 		numString := strconv.Itoa(i)
 		buffer.WriteString("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF") //base pubkey string
 		buffer.WriteString(numString)                                                       //adding on final two digits to make pubkeys unique
-		publicKeys = append(publicKeys, newPubKey(buffer.String()))
+		publicKeys = append(publicKeys, NewPubKey(buffer.String()))
 		buffer.Reset()
 	}
 	return publicKeys
+}
+
+//_____________________________________________________________________________________
+
+// does a certain by-power index record exist
+func ValidatorByPowerIndexExists(ctx sdk.Context, keeper Keeper, power []byte) bool {
+	store := ctx.KVStore(keeper.storeKey)
+	return store.Get(power) != nil
 }

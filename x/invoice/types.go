@@ -9,9 +9,9 @@ type Item struct {
 }
 
 type Invoice struct {
-	ID         string      `json:"id"`
-	Issuer     sdk.Address `json:"issuer"`
-	Receiver   sdk.Address `json:"receiver"`
-	Items      []Item      `json:"items"`
-	CreateTime int64       `json:"create_time"`
+	ID         string         `json:"id"`
+	Issuer     sdk.AccAddress `json:"issuer"`
+	Receiver   sdk.AccAddress `json:"receiver"`
+	Items      []Item         `json:"items"`
+	CreateTime int64          `json:"create_time"`
 }

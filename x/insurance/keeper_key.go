@@ -15,10 +15,10 @@ func GetContractKey(contractID string) []byte {
 	return append(ContractKeyPrefix, []byte(contractID)...)
 }
 
-func GetAccountContractKey(addr sdk.Address, contractID string) []byte {
+func GetAccountContractKey(addr sdk.AccAddress, contractID string) []byte {
 	return append(GetAccountContractsKey(addr), []byte(contractID)...)
 }
 
-func GetAccountContractsKey(addr sdk.Address) []byte {
+func GetAccountContractsKey(addr sdk.AccAddress) []byte {
 	return append(AccountContractKey, []byte(addr.String())...)
 }

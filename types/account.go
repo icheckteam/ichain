@@ -37,6 +37,6 @@ func GetAccountDecoder(cdc *wire.Codec) auth.AccountDecoder {
 	}
 }
 
-func AddrToBytes(addr sdk.Address) []byte {
+func AddrToBytes(addr sdk.AccAddress) []byte {
 	return []byte(addr.String())
 }

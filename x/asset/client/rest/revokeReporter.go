@@ -44,7 +44,7 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		address, err := sdk.GetAccAddressBech32(vars["address"])
+		address, err := sdk.AccAddressFromBech32(vars["address"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -54,7 +54,7 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		// build message
 
 		msg := asset.MsgRevokeReporter{
-			Sender:   info.GetPubKey().Address(),
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
 			Reporter: address,
 			AssetID:  vars["id"],
 		}

@@ -21,7 +21,7 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	}
 }
 
-func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.Address) Identity {
+func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.AccAddress) Identity {
 	return Identity{
 		ID:    k.getNewIdentityID(ctx),
 		Owner: owner,
@@ -36,18 +36,18 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	k.SetIdentityByOwnerIndex(ctx, identity)
 }
 
-func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
+func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identityID)
 	store.Set(KeyClaimedIdentity(account), bz)
 }
 
-func (k Keeper) DeleteClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) {
+func (k Keeper) DeleteClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyClaimedIdentity(account))
 }
 
-func (k Keeper) HasClaimedIdentity(ctx sdk.Context, account sdk.Address, identityID int64) bool {
+func (k Keeper) HasClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(KeyClaimedIdentity(account))
 }
@@ -74,14 +74,14 @@ func (k Keeper) SetIdentityByOwnerIndex(ctx sdk.Context, identity Identity) {
 }
 
 // set the main record holding trust details
-func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
+func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
 	store.Set(KeyTrust(trustor, trusting), bz)
 }
 
 // delete cert from the store
-func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
+func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyTrust(trustor, trusting))
 }
@@ -96,7 +96,7 @@ func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) sdk.Error {
 	return nil
 }
 
-func (k Keeper) GetTrust(ctx sdk.Context, trustor, trusting sdk.Address) (trust Trust, found bool) {
+func (k Keeper) GetTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) (trust Trust, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(KeyTrust(trustor, trusting))
 	if bz == nil {
@@ -115,7 +115,7 @@ func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 }
 
 // set the main record holding cert details
-func (k Keeper) GetCert(ctx sdk.Context, identity int64, property string, certifier sdk.Address) (cert Cert, found bool) {
+func (k Keeper) GetCert(ctx sdk.Context, identity int64, property string, certifier sdk.AccAddress) (cert Cert, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(KeyCert(identity, property, certifier))
 	if bz == nil {
@@ -127,7 +127,7 @@ func (k Keeper) GetCert(ctx sdk.Context, identity int64, property string, certif
 }
 
 // delete cert from the store
-func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property string, certifier sdk.Address) {
+func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property string, certifier sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyCert(identity, property, certifier))
 }

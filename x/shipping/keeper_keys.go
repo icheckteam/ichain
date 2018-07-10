@@ -17,11 +17,11 @@ func GetOrderKey(uid []byte) []byte {
 }
 
 // GetAccountOrderKey get the key for an account for a order
-func GetAccountOrderKey(addr sdk.Address, claimID string) []byte {
+func GetAccountOrderKey(addr sdk.AccAddress, claimID string) []byte {
 	return append(GetAccountOrdersKey(addr), []byte(claimID)...)
 }
 
 // GetAccountOrdersKey get the key for an account for all orders
-func GetAccountOrdersKey(addr sdk.Address) []byte {
+func GetAccountOrdersKey(addr sdk.AccAddress) []byte {
 	return append(AccountOrdersKey, []byte(addr.String())...)
 }

@@ -53,7 +53,7 @@ func AddAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 		}
 		// build message
 		msg := asset.MsgAddQuantity{
-			Sender:   info.GetPubKey().Address(),
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
 			AssetID:  vars["id"],
 			Quantity: m.Quantity,
 		}

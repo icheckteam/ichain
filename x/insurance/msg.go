@@ -1,7 +1,6 @@
 package insurance
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,29 +13,26 @@ const msgType = "insurance"
 // MsgCreateContract
 // --------------------------------------------------
 type MsgCreateContract struct {
-	ID        string      `json:"id"`
-	Issuer    sdk.Address `json:"issuer"`
-	Recipient sdk.Address `json:"recipient"`
-	Expires   time.Time   `json:"expires"`
-	Serial    string      `json:"serial"`
-	AssetID   string      `json:"asset_id"`
+	ID        string         `json:"id"`
+	Issuer    sdk.AccAddress `json:"issuer"`
+	Recipient sdk.AccAddress `json:"recipient"`
+	Expires   time.Time      `json:"expires"`
+	Serial    string         `json:"serial"`
+	AssetID   string         `json:"asset_id"`
 }
 
 // nolint ...
 func (msg MsgCreateContract) Type() string                            { return msgType }
 func (msg MsgCreateContract) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgCreateContract) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
-func (msg MsgCreateContract) String() string {
-	return fmt.Sprintf(`MsgCreateContract{%v->%v}`, msg.Issuer, msg.Recipient)
-}
+func (msg MsgCreateContract) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Issuer} }
 
 // Implements Msg.
 func (msg MsgCreateContract) GetSignBytes() []byte {
-	b, err := json.Marshal(msg) // XXX: ensure some canonical form
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // Implements Msg.
@@ -67,12 +63,12 @@ func (msg MsgCreateContract) ValidateBasic() sdk.Error {
 // MsgCreateClaim
 // --------------------------------------------------
 type MsgCreateClaim struct {
-	ContractID string      `json:"contract_id"`
-	Issuer     sdk.Address `json:"issuer"`
-	Recipient  sdk.Address `json:"recipient"`
+	ContractID string         `json:"contract_id"`
+	Issuer     sdk.AccAddress `json:"issuer"`
+	Recipient  sdk.AccAddress `json:"recipient"`
 }
 
-func NewMsgCreateClaim(issuer, recipient sdk.Address, contractID string) MsgCreateClaim {
+func NewMsgCreateClaim(issuer, recipient sdk.AccAddress, contractID string) MsgCreateClaim {
 	return MsgCreateClaim{
 		ContractID: contractID,
 		Issuer:     issuer,
@@ -83,18 +79,18 @@ func NewMsgCreateClaim(issuer, recipient sdk.Address, contractID string) MsgCrea
 // nolint ...
 func (msg MsgCreateClaim) Type() string                            { return msgType }
 func (msg MsgCreateClaim) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgCreateClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgCreateClaim) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Issuer} }
 func (msg MsgCreateClaim) String() string {
 	return fmt.Sprintf(`MsgCreateClaim{%v->%v}`, msg.ContractID, msg.Issuer)
 }
 
 // Implements Msg.
 func (msg MsgCreateClaim) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // Implements Msg.
@@ -115,26 +111,26 @@ func (msg MsgCreateClaim) ValidateBasic() sdk.Error {
 // MsgCompleteClaim
 // --------------------------------------------------
 type MsgProcessClaim struct {
-	ContractID string      `json:"contract_id"`
-	Issuer     sdk.Address `json:"issuer"`
-	Status     ClaimStatus `json:"status"`
+	ContractID string         `json:"contract_id"`
+	Issuer     sdk.AccAddress `json:"issuer"`
+	Status     ClaimStatus    `json:"status"`
 }
 
 // nolint ...
 func (msg MsgProcessClaim) Type() string                            { return msgType }
 func (msg MsgProcessClaim) Get(key interface{}) (value interface{}) { return nil }
-func (msg MsgProcessClaim) GetSigners() []sdk.Address               { return []sdk.Address{msg.Issuer} }
+func (msg MsgProcessClaim) GetSigners() []sdk.AccAddress            { return []sdk.AccAddress{msg.Issuer} }
 func (msg MsgProcessClaim) String() string {
 	return fmt.Sprintf(`MsgProcessClaim{%v->%v}`, msg.ContractID, msg.Issuer)
 }
 
 // Implements Msg.
 func (msg MsgProcessClaim) GetSignBytes() []byte {
-	b, err := json.Marshal(msg)
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 // Implements Msg.

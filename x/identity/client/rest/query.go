@@ -14,52 +14,6 @@ import (
 
 const storeName = "identity"
 
-type IdentOutput struct {
-	ID    int64  `json:"id"`    // id of the identity
-	Owner string `json:"owner"` // owner of the identity
-}
-
-func bech32IdentOutput(ident identity.Identity) IdentOutput {
-	return IdentOutput{
-		ID:    ident.ID,
-		Owner: sdk.MustBech32ifyAcc(ident.Owner),
-	}
-}
-
-type CertOutput struct {
-	ID         string            `json:"id"`
-	Property   string            `json:"property"`
-	Certifier  string            `json:"certifier"`
-	Type       string            `json:"type"`
-	Trust      bool              `json:"trust"`
-	Data       identity.Metadata `json:"data"`
-	Confidence bool              `json:"confidence"`
-}
-
-func bech32CertOutput(cert identity.Cert) CertOutput {
-	return CertOutput{
-		ID:         cert.ID,
-		Property:   cert.Property,
-		Certifier:  sdk.MustBech32ifyAcc(cert.Certifier),
-		Type:       cert.Type,
-		Data:       cert.Data,
-		Confidence: cert.Confidence,
-		Trust:      cert.Trust,
-	}
-}
-
-type TrustOutput struct {
-	Trustor  string
-	Trusting string
-}
-
-func bech32TrustOutput(trust identity.Trust) TrustOutput {
-	return TrustOutput{
-		Trustor:  sdk.MustBech32ifyAcc(trust.Trustor),
-		Trusting: sdk.MustBech32ifyAcc(trust.Trusting),
-	}
-}
-
 func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		kvs, err := ctx.QuerySubspace(cdc, identity.IdentitiesKey, storeName)
@@ -69,7 +23,7 @@ func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 			return
 		}
 
-		idents := make([]IdentOutput, len(kvs))
+		idents := make([]identity.Identity, len(kvs))
 		for i, kv := range kvs {
 
 			addr := kv.Key[1:]
@@ -81,8 +35,7 @@ func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 				return
 			}
 
-			bech32Ident := bech32IdentOutput(ident)
-			idents[i] = bech32Ident
+			idents[i] = ident
 		}
 
 		output, err := cdc.MarshalJSON(idents)
@@ -113,7 +66,7 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 			return
 		}
 
-		certs := make([]CertOutput, len(kvs))
+		certs := make([]identity.Cert, len(kvs))
 		for i, kv := range kvs {
 
 			addr := kv.Key[1:]
@@ -124,9 +77,7 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 				w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
 				return
 			}
-
-			bech32Cert := bech32CertOutput(cert)
-			certs[i] = bech32Cert
+			certs[i] = cert
 		}
 
 		output, err := cdc.MarshalJSON(certs)
@@ -144,7 +95,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		address, err := sdk.GetAccAddressBech32(vars[RestTrusting])
+		address, err := sdk.AccAddressFromBech32(vars[RestTrusting])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -162,7 +113,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 			return
 		}
 
-		trusts := make([]TrustOutput, len(kvs))
+		trusts := make([]identity.Trust, len(kvs))
 		for i, kv := range kvs {
 
 			addr := kv.Key[1:]
@@ -174,8 +125,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 				return
 			}
 
-			bech32Trust := bech32TrustOutput(trust)
-			trusts[i] = bech32Trust
+			trusts[i] = trust
 		}
 
 		output, err := cdc.MarshalJSON(trusts)

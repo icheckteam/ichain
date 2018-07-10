@@ -14,8 +14,8 @@ type Proposal struct {
 	Role       ProposalRole   `json:"role"`       // The role assigned to the recipient
 	Status     ProposalStatus `json:"status"`     // The response of the recipient
 	Properties []string       `json:"properties"` // The asset's attributes name that the recipient is authorized to update
-	Issuer     sdk.Address    `json:"issuer"`     // The proposal issuer
-	Recipient  sdk.Address    `json:"recipient"`  // The recipient of the proposal
+	Issuer     sdk.AccAddress `json:"issuer"`     // The proposal issuer
+	Recipient  sdk.AccAddress `json:"recipient"`  // The recipient of the proposal
 }
 
 func (p Proposal) ValidateAnswer(msg MsgAnswerProposal) sdk.Error {
@@ -68,12 +68,12 @@ func (k Keeper) SetProposal(ctx sdk.Context, assetID string, proposal Proposal) 
 	store.Set(GetProposalKey(assetID, proposal.Recipient), bz)
 }
 
-func (k Keeper) DeleteProposal(ctx sdk.Context, assetID string, recipient sdk.Address) {
+func (k Keeper) DeleteProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetProposalKey(assetID, recipient))
 }
 
-func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.Address) (proposal Proposal, found bool) {
+func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) (proposal Proposal, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetProposalKey(assetID, recipient))
 	if b == nil {

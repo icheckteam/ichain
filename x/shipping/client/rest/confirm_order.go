@@ -54,7 +54,7 @@ func ConfirmOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 		// build message
-		msg := buildConfirmOrderMsg(info.GetPubKey().Address(), vars["id"])
+		msg := buildConfirmOrderMsg(sdk.AccAddress(info.GetPubKey().Address()), vars["id"])
 
 		// sign
 		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
@@ -84,7 +84,7 @@ func ConfirmOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 	}
 }
 
-func buildConfirmOrderMsg(creator sdk.Address, orderID string) sdk.Msg {
+func buildConfirmOrderMsg(creator sdk.AccAddress, orderID string) sdk.Msg {
 	return shipping.ConfirmOrderMsg{
 		OrderID: orderID,
 		Carrier: creator,

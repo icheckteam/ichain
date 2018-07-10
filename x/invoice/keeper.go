@@ -23,11 +23,11 @@ func GetKey(id string) []byte {
 	return append(PrefixKey, []byte(id)...)
 }
 
-func GetAccountInvoiceKey(addr sdk.Address, contractID string) []byte {
+func GetAccountInvoiceKey(addr sdk.AccAddress, contractID string) []byte {
 	return append(GetAccountInvoicesKey(addr), []byte(contractID)...)
 }
 
-func GetAccountInvoicesKey(addr sdk.Address) []byte {
+func GetAccountInvoicesKey(addr sdk.AccAddress) []byte {
 	return append(AccountInvoiceKey, []byte(addr.String())...)
 }
 

@@ -9,17 +9,17 @@ import (
 
 // Contract
 type Contract struct {
-	ID        string      `json:"id"`
-	Issuer    sdk.Address `json:"issuer"`
-	Recipient sdk.Address `json:"recipient"`
-	AssetID   string      `json:"asset_id"` // the id of asset
-	Serial    string      `json:"serial"`   // the serial of asset
-	Expires   time.Time   `json:"expires"`
-	Claim     *Claim      // the claim of contract
+	ID        string         `json:"id"`
+	Issuer    sdk.AccAddress `json:"issuer"`
+	Recipient sdk.AccAddress `json:"recipient"`
+	AssetID   string         `json:"asset_id"` // the id of asset
+	Serial    string         `json:"serial"`   // the serial of asset
+	Expires   time.Time      `json:"expires"`
+	Claim     *Claim         // the claim of contract
 }
 
 // CanCreateClaim
-func (c Contract) ValidateCreateClaim(addr sdk.Address) (valid bool) {
+func (c Contract) ValidateCreateClaim(addr sdk.AccAddress) (valid bool) {
 	valid = false
 
 	if c.Claim != nil {
@@ -38,7 +38,7 @@ func (c Contract) ValidateCreateClaim(addr sdk.Address) (valid bool) {
 }
 
 // ValidateClaimProcess ...
-func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (valid bool) {
+func (c Contract) ValidateClaimProcess(addr sdk.AccAddress, status ClaimStatus) (valid bool) {
 	valid = false
 	if c.Claim == nil {
 		return
@@ -64,7 +64,7 @@ func (c Contract) ValidateClaimProcess(addr sdk.Address, status ClaimStatus) (va
 // Claim the claim of the contract
 type Claim struct {
 	Status    ClaimStatus
-	Recipient sdk.Address // insurance address
+	Recipient sdk.AccAddress // insurance address
 }
 
 // ClaimStatus status of a claim

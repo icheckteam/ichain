@@ -21,7 +21,7 @@ type createClaimBody struct {
 
 type claimBody struct {
 	ContractID string `json:"contract_id"`
-	Recipient  sdk.Address
+	Recipient  sdk.AccAddress
 }
 
 // CreateClaimHandlerFn
@@ -68,7 +68,7 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 
 		// build message
 		msg := buildMsgCreateClaim(
-			info.GetPubKey().Address(),
+			sdk.AccAddress(info.GetPubKey().Address()),
 			b.Claim.Recipient,
 			b.Claim.ContractID,
 		)
@@ -100,6 +100,6 @@ func CreateClaimHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	}
 }
 
-func buildMsgCreateClaim(issuer sdk.Address, recipient sdk.Address, contractID string) insurance.MsgCreateClaim {
+func buildMsgCreateClaim(issuer sdk.AccAddress, recipient sdk.AccAddress, contractID string) insurance.MsgCreateClaim {
 	return insurance.NewMsgCreateClaim(issuer, recipient, contractID)
 }

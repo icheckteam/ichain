@@ -52,7 +52,7 @@ func ErrInvalidAssetRoot(assetID string) sdk.Error {
 
 // ErrInvalidRevokeReporter is used when the reporter of
 // a revoke reporter message is not in the asset's reporter list
-func ErrInvalidRevokeReporter(addr sdk.Address) sdk.Error {
+func ErrInvalidRevokeReporter(addr sdk.AccAddress) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidRevokeReporter, fmt.Sprintf("address %s is an invalid target for revoking reporter", addr.String()))
 }
 
@@ -61,6 +61,6 @@ func ErrInvalidTransaction(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidTransaction, msg)
 }
 
-func ErrProposalNotFound(recipient sdk.Address) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeProposalNotFound, fmt.Sprintf("proposal %s not found", sdk.MustBech32ifyAcc(recipient)))
+func ErrProposalNotFound(recipient sdk.AccAddress) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeProposalNotFound, fmt.Sprintf("proposal %s not found", recipient.String()))
 }

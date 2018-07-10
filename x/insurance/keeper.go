@@ -126,7 +126,7 @@ func (k Keeper) setContract(ctx sdk.Context, c Contract) {
 	store.Set(GetContractKey(c.ID), bz)
 }
 
-func (k Keeper) setContractByAccountIndex(ctx sdk.Context, addr sdk.Address, contractID string) {
+func (k Keeper) setContractByAccountIndex(ctx sdk.Context, addr sdk.AccAddress, contractID string) {
 	store := ctx.KVStore(k.storeKey)
 	// marshal the record and add to the state
 	bz, err := k.cdc.MarshalBinary(contractID)
@@ -136,7 +136,7 @@ func (k Keeper) setContractByAccountIndex(ctx sdk.Context, addr sdk.Address, con
 	store.Set(GetAccountContractKey(addr, contractID), bz)
 }
 
-func (k Keeper) removeContractByAccountIndex(ctx sdk.Context, addr sdk.Address, contractID string) {
+func (k Keeper) removeContractByAccountIndex(ctx sdk.Context, addr sdk.AccAddress, contractID string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetAccountContractKey(addr, contractID))
 }

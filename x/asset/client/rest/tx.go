@@ -61,14 +61,14 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			w.Write([]byte(err.Error()))
 			return
 		}
-		address, err := sdk.GetAccAddressBech32(m.Recipient)
+		address, err := sdk.AccAddressFromBech32(m.Recipient)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 		msg := asset.MsgCreateProposal{
-			Sender:     info.GetPubKey().Address(),
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
 			Properties: m.Properties,
 			Role:       m.Role,
 			AssetID:    vars["id"],
@@ -114,14 +114,14 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			w.Write([]byte(err.Error()))
 			return
 		}
-		recipient, err := sdk.GetAccAddressBech32(vars["recipient"])
+		recipient, err := sdk.AccAddressFromBech32(vars["recipient"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 		msg := asset.MsgAnswerProposal{
-			Sender:    info.GetPubKey().Address(),
+			Sender:    sdk.AccAddress(info.GetPubKey().Address()),
 			Recipient: recipient,
 			Response:  m.Response,
 			AssetID:   vars["id"],

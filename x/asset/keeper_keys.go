@@ -22,12 +22,12 @@ func GetAssetKey(assetID string) []byte {
 }
 
 // GetAccountAssetKey get the key for an account for an asset
-func GetAccountAssetKey(addr sdk.Address, assetID string) []byte {
+func GetAccountAssetKey(addr sdk.AccAddress, assetID string) []byte {
 	return append(GetAccountAssetsKey(addr), []byte(assetID)...)
 }
 
 // GetAccountAssetsKey get the key for an account for all assets
-func GetAccountAssetsKey(addr sdk.Address) []byte {
+func GetAccountAssetsKey(addr sdk.AccAddress) []byte {
 	return append(AccountAssetKey, []byte(addr.String())...)
 }
 
@@ -40,7 +40,7 @@ func GetAssetChildrensKey(parent string) []byte {
 	return append(AssetChildrenKey, []byte(parent)...)
 }
 
-func GetProposalKey(assetID string, recipient sdk.Address) []byte {
+func GetProposalKey(assetID string, recipient sdk.AccAddress) []byte {
 	return append(GetProposalsKey(assetID), []byte(recipient.String())...)
 }
 
