@@ -39,7 +39,7 @@ type CertOutput struct {
 func bech32CertOutput(cert identity.Cert) CertOutput {
 	return CertOutput{
 		ID:         cert.ID,
-		Property:   sdk.MustBech32ifyAcc(cert.Property),
+		Property:   cert.Property,
 		Certifier:  sdk.MustBech32ifyAcc(cert.Certifier),
 		Type:       cert.Type,
 		Data:       cert.Data,
@@ -100,7 +100,7 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		identID, err := strconv.Atoi(vars["ident_id"])
+		identID, err := strconv.Atoi(vars[RestIdentityID])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't decode ident_id. Error: %s", err.Error())))
@@ -144,7 +144,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		address, err := sdk.GetAccAddressBech32(vars["address"])
+		address, err := sdk.GetAccAddressBech32(vars[RestTrusting])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))

@@ -102,9 +102,9 @@ func TestMsgSetCerts(t *testing.T) {
 		values     []CertValue
 		expectPass bool
 	}{
-		{"basic good", addr1, 1, []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}}, true},
-		{"empty certifier", nil, 1, []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}}, false},
-		{"empty identity id", addr1, 0, []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}}, false},
+		{"basic good", addr1, 1, []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}}, true},
+		{"empty certifier", nil, 1, []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}}, false},
+		{"empty identity id", addr1, 0, []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}}, false},
 		{"empty property address", addr1, 1, []CertValue{CertValue{Type: "realname", Confidence: true}}, false},
 	}
 
@@ -132,7 +132,7 @@ func TestMsgSetCertsGetSignBytes(t *testing.T) {
 	signBytes := MsgSetCerts{
 		Certifier:  addr1,
 		IdentityID: 1,
-		Values:     []CertValue{CertValue{Property: addr2, Type: "realname", Confidence: true}},
+		Values:     []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}},
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), `{"certifier":"cosmosaccaddr1v9jxgu333rmgrm","identity_id":"1","values":[{"property":"cosmosaccaddr1v9jxgu3jlsw7dy","type":"realname","data":null,"confidence":true}]}`)
+	assert.Equal(t, string(signBytes), `{"certifier":"cosmosaccaddr1v9jxgu333rmgrm","identity_id":"1","values":[{"property":"owner","type":"realname","data":null,"confidence":true}]}`)
 }

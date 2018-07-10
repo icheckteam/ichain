@@ -115,7 +115,7 @@ func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 }
 
 // set the main record holding cert details
-func (k Keeper) GetCert(ctx sdk.Context, identity int64, property, certifier sdk.Address) (cert Cert, found bool) {
+func (k Keeper) GetCert(ctx sdk.Context, identity int64, property string, certifier sdk.Address) (cert Cert, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(KeyCert(identity, property, certifier))
 	if bz == nil {
@@ -127,14 +127,14 @@ func (k Keeper) GetCert(ctx sdk.Context, identity int64, property, certifier sdk
 }
 
 // delete cert from the store
-func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property, certifier sdk.Address) {
+func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property string, certifier sdk.Address) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(KeyCert(identity, property, certifier))
 }
 
 // add a trusting
 func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
-	_, found := k.GetIdentity(ctx, msg.IdentityID)
+	ident, found := k.GetIdentity(ctx, msg.IdentityID)
 	if !found {
 		return ErrUnknownIdentity(k.codespace, msg.IdentityID)
 	}
@@ -148,15 +148,20 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 				Data:       value.Data,
 				Type:       value.Type,
 			})
-			// handle by owner
-			if bytes.Equal(value.Property, msg.Certifier) {
-				k.SetClaimedIdentity(ctx, msg.Certifier, msg.IdentityID)
+
+			if value.Property == "owner" {
+				if bytes.Equal(msg.Certifier, ident.Owner) {
+					k.SetClaimedIdentity(ctx, msg.Certifier, ident.ID)
+				}
 			}
+
 		} else {
 			// delete cert
 			k.DeleteCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
-			if bytes.Equal(value.Property, msg.Certifier) {
-				k.DeleteClaimedIdentity(ctx, msg.Certifier, msg.IdentityID)
+			if value.Property == "owner" {
+				if bytes.Equal(msg.Certifier, ident.Owner) {
+					k.DeleteClaimedIdentity(ctx, msg.Certifier, ident.ID)
+				}
 			}
 		}
 	}

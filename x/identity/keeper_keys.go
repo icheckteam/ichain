@@ -45,8 +45,8 @@ func KeyTrusted(trustor sdk.Address) []byte {
 }
 
 // Key for getting a cert from the store
-func KeyCert(identityID int64, property sdk.Address, certifier sdk.Address) []byte {
-	return []byte(fmt.Sprintf("identity:%d:%s:%s", identityID, property.String(), certifier.String()))
+func KeyCert(identityID int64, property string, certifier sdk.Address) []byte {
+	return []byte(fmt.Sprintf("identity:%d:%s:%s", identityID, property, certifier.String()))
 }
 
 // Key for getting all certs from the store

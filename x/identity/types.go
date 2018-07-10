@@ -15,7 +15,7 @@ type Identity struct {
 
 type Cert struct {
 	ID         string      `json:"id"`
-	Property   sdk.Address `json:"property"`
+	Property   string      `json:"property"`
 	Certifier  sdk.Address `json:"certifier"`
 	Type       string      `json:"type"`
 	Trust      bool        `json:"trust"`
@@ -24,15 +24,15 @@ type Cert struct {
 }
 
 type CertValue struct {
-	Property   sdk.Address `json:"property"`
-	Type       string      `json:"type"`
-	Data       Metadata    `json:"data"`
-	Confidence bool        `json:"confidence"`
+	Property   string   `json:"property"`
+	Type       string   `json:"type"`
+	Data       Metadata `json:"data"`
+	Confidence bool     `json:"confidence"`
 }
 
 // quick validity check
 func (msg CertValue) ValidateBasic() sdk.Error {
-	if msg.Property == nil {
+	if len(msg.Property) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
 	}
 	return nil
@@ -45,7 +45,7 @@ func (msg CertValue) GetSignBytes() []byte {
 		Data       Metadata `json:"data"`
 		Confidence bool     `json:"confidence"`
 	}{
-		Property:   sdk.MustBech32ifyAcc(msg.Property),
+		Property:   msg.Property,
 		Type:       msg.Type,
 		Data:       msg.Data,
 		Confidence: msg.Confidence,
