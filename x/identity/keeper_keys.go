@@ -26,7 +26,7 @@ func KeyIdentitiesByOwnerIndex(owner sdk.AccAddress) []byte {
 }
 
 func KeyClaimedIdentity(address sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("claim:%s", address.String()))
+	return []byte(fmt.Sprintf("account:%s:claimed", address.String()))
 }
 
 // Key for getting all trusting from the store
