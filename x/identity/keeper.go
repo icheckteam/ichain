@@ -33,7 +33,6 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identity)
 	store.Set(KeyIdentity(identity.ID), bz)
-	k.SetIdentityByOwnerIndex(ctx, identity)
 }
 
 func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
@@ -140,15 +139,26 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 	}
 	for _, value := range msg.Values {
 		if value.Confidence == true {
-			// add cert
-			k.SetCert(ctx, msg.IdentityID, Cert{
-				Property:   value.Property,
-				Certifier:  msg.Certifier,
-				Confidence: value.Confidence,
-				Data:       value.Data,
-				Type:       value.Type,
-			})
+			cert, found := k.GetCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
+			if !found {
+				// new cert
+				cert = Cert{
+					Property:   value.Property,
+					Certifier:  msg.Certifier,
+					Confidence: value.Confidence,
+					Data:       value.Data,
+					Type:       value.Type,
+				}
+			} else {
+				// update cert
+				cert.Data = value.Data
+				cert.Type = value.Type
+			}
 
+			// add cert
+			k.SetCert(ctx, msg.IdentityID, cert)
+
+			// special handling for owner
 			if value.Property == "owner" {
 				if bytes.Equal(msg.Certifier, ident.Owner) {
 					k.SetClaimedIdentity(ctx, msg.Certifier, ident.ID)
@@ -158,6 +168,7 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 		} else {
 			// delete cert
 			k.DeleteCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
+
 			if value.Property == "owner" {
 				if bytes.Equal(msg.Certifier, ident.Owner) {
 					k.DeleteClaimedIdentity(ctx, msg.Certifier, ident.ID)
@@ -181,7 +192,10 @@ func (k Keeper) getNewIdentityID(ctx sdk.Context) (identityID int64) {
 	return identityID
 }
 
+// AddIdentity add new an identity
 func (k Keeper) AddIdentity(ctx sdk.Context, msg MsgCreateIdentity) sdk.Error {
-	k.SetIdentity(ctx, k.NewIdentity(ctx, msg.Sender))
+	ident := k.NewIdentity(ctx, msg.Sender)
+	k.SetIdentity(ctx, ident)
+	k.SetIdentityByOwnerIndex(ctx, ident)
 	return nil
 }

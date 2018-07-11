@@ -43,7 +43,7 @@ func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 
-		trusting, err := sdk.AccAddressFromBech32(vars[RestTrusting])
+		trusting, err := sdk.AccAddressFromBech32(vars[RestAccount])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -88,7 +88,7 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 
-		identityID, err := strconv.Atoi(vars[RestIdentityID])
+		identityID, err := strconv.Atoi(vars["identityID"])
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))

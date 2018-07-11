@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,13 +11,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
+	"github.com/pkg/errors"
 )
 
 const storeName = "identity"
 
-func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func identsByAccountHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		kvs, err := ctx.QuerySubspace(cdc, identity.IdentitiesKey, storeName)
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		kvs, err := ctx.QuerySubspace(cdc, identity.KeyIdentitiesByOwnerIndex(address), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
@@ -25,10 +36,23 @@ func identsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 
 		idents := make([]identity.Identity, len(kvs))
 		for i, kv := range kvs {
+			var identID int64
+			err = cdc.UnmarshalBinary(kv.Value, &identID)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("couldn't decode ident id. Error: %s", err.Error())))
+				return
+			}
 
-			addr := kv.Key[1:]
+			res, err := ctx.QueryStore(identity.KeyIdentity(identID), "identity")
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("couldn't query ident. Error: %s", err.Error())))
+				return
+			}
+
 			ident := identity.Identity{}
-			err = cdc.UnmarshalBinary(addr, &ident)
+			err = cdc.UnmarshalBinary(res, &ident)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -53,6 +77,22 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
+		bechCertifier := vars["certifier"]
+		property := vars["property"]
+		trust := vars["trust"] == "1"
+		var err error
+		var certifierAddr sdk.AccAddress
+
+		if len(bechCertifier) != 0 {
+			certifierAddr, err = sdk.AccAddressFromBech32(bechCertifier)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				err := errors.Errorf("'%s' needs to be bech32 encoded", "certifier")
+				w.Write([]byte(err.Error()))
+				return
+			}
+		}
+
 		identID, err := strconv.Atoi(vars[RestIdentityID])
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -66,18 +106,58 @@ func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 			return
 		}
 
-		certs := make([]identity.Cert, len(kvs))
-		for i, kv := range kvs {
-
-			addr := kv.Key[1:]
+		validators, err := getValidators(ctx, cdc)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't query validatorss. Error: %s", err.Error())))
+			return
+		}
+		certs := []identity.Cert{}
+		for _, kv := range kvs {
 			cert := identity.Cert{}
-			err = cdc.UnmarshalBinary(addr, &cert)
+			err = cdc.UnmarshalBinary(kv.Value, &cert)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
+				w.Write([]byte(fmt.Sprintf("Couldn't encode cert. Error: %s", err.Error())))
 				return
 			}
-			certs[i] = cert
+
+			if len(bechCertifier) != 0 {
+				if !bytes.Equal(certifierAddr, cert.Certifier) {
+					continue
+				}
+			}
+
+			if len(property) != 0 {
+				if property != cert.Property {
+					continue
+				}
+			}
+
+			// check trust
+			for _, validator := range validators {
+				if bytes.Equal(validator.Owner, cert.Certifier) {
+					cert.Trust = true
+					break
+				}
+			}
+
+			if cert.Trust == false {
+				for _, validator := range validators {
+					if hasTrust(ctx, cdc, validator.Owner, cert.Certifier) {
+						cert.Trust = true
+						break
+					}
+				}
+			}
+
+			if len(vars["trust"]) != 0 {
+				if cert.Trust != trust {
+					continue
+				}
+			}
+
+			certs = append(certs, cert)
 		}
 
 		output, err := cdc.MarshalJSON(certs)
@@ -95,7 +175,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		address, err := sdk.AccAddressFromBech32(vars[RestTrusting])
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -115,10 +195,8 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 
 		trusts := make([]identity.Trust, len(kvs))
 		for i, kv := range kvs {
-
-			addr := kv.Key[1:]
 			trust := identity.Trust{}
-			err = cdc.UnmarshalBinary(addr, &trust)
+			err = cdc.UnmarshalBinary(kv.Value, &trust)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode trust. Error: %s", err.Error())))
@@ -137,4 +215,17 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 
 		w.Write(output)
 	}
+}
+
+func hasTrust(ctx context.CoreContext, cdc *wire.Codec, trustor, trusting sdk.AccAddress) bool {
+	res, err := ctx.QueryStore(identity.KeyTrust(trustor, trusting), "identity")
+	if err != nil {
+		panic(err)
+	}
+
+	if len(res) > 0 {
+		return true
+	}
+
+	return false
 }

@@ -11,23 +11,18 @@ import (
 
 const (
 	RestIdentityID = "identityID"
-	RestTrusting   = "address"
-	RestTrustor    = "address"
+	RestAccount    = "address"
 )
 
 // resgister REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 
 	// trusts
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestTrustor), trustsHandlerFn(ctx, cdc)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestTrusting), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), trustsHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
 
-	// identities
-	r.HandleFunc("/identities", identsHandlerFn(ctx, cdc)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/identities/{%s}", RestIdentityID), identsHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/identities", RestAccount), identsByAccountHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc("/identities", CreateIdentityHandlerFn(ctx, cdc, kb)).Methods("POST")
-
-	// certs
-	r.HandleFunc(fmt.Sprintf("/identities/{%s}/certs", RestIdentityID), SetCertsHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/identities/{%s}/certs", RestIdentityID), certsHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc("/identities/{identityID}/certs", SetCertsHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/identities/{identityID}/certs", certsHandlerFn(ctx, cdc)).Methods("GET")
 }

@@ -21,6 +21,10 @@ func KeyIdentityByOwnerIndex(owner sdk.AccAddress, identityID int64) []byte {
 	return []byte(fmt.Sprintf("account:%s:%d", owner.String(), identityID))
 }
 
+func KeyIdentitiesByOwnerIndex(owner sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("account:%s", owner.String()))
+}
+
 func KeyClaimedIdentity(address sdk.AccAddress) []byte {
 	return []byte(fmt.Sprintf("claim:%s", address.String()))
 }

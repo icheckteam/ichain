@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/icheckteam/ichain/x/asset"
+	"github.com/icheckteam/ichain/x/identity"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1370,4 +1371,186 @@ func getProposals(t *testing.T, port string) []asset.Proposal {
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
+}
+
+// Test Identity Module
+// -------------------------------------------------------------------------------------------------
+
+func TestAddTrust(t *testing.T) {
+	name, password := "test", "1234567890"
+	addr, seed := CreateAddr(t, name, password, GetKB(t))
+	name2, _ := "test2", "1234567890"
+	addr2, _ := CreateAddr(t, name2, password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr, addr2})
+	defer cleanup()
+
+	// AddTrust tests
+	resultTx := doAddTrust(t, port, seed, name, password, addr, addr2)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	trusts := getTrusts(t, port, addr)
+	assert.Equal(t, len(trusts), 1)
+
+}
+
+func TestCreateIdentity(t *testing.T) {
+	name, password := "test", "1234567890"
+	addr, seed := CreateAddr(t, name, password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
+	defer cleanup()
+
+	// AddTrust tests
+	resultTx := doCreateIdentity(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	identities := getIdentsByAccount(t, port, addr)
+	assert.Equal(t, len(identities), 1)
+
+}
+
+func TestAddCerts(t *testing.T) {
+	name, password := "test", "1234567890"
+	addr, seed := CreateAddr(t, name, password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
+	defer cleanup()
+
+	// CreateIdentity
+	resultTx := doCreateIdentity(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+
+	// AddCerts tests
+	resultTx = doAddCerts(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	certs := getCertsByIdentity(t, port)
+	assert.Equal(t, len(certs), 1)
+
+}
+
+func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": %d,
+			"sequence": %d,
+			"gas": 10000,
+			"chain_id": "%s"
+		},
+		"trust": true
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/accounts/%s/trusts", trusting), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doCreateIdentity(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": %d,
+			"sequence": %d,
+			"gas": 10000,
+			"chain_id": "%s"
+		}
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "POST", "/identities", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": %d,
+			"sequence": %d,
+			"gas": 10000,
+			"chain_id": "%s"
+		},
+		"values": [
+			{
+				"property": "company",
+				"type": "demo",
+				"data": {
+					"demo": "1212"
+				},
+				"confidence": true
+			}
+		]
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/identities/1/certs"), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func getTrusts(t *testing.T, port string, trustor sdk.AccAddress) []identity.Trust {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/trusts", trustor), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var trusts []identity.Trust
+	err := cdc.UnmarshalJSON([]byte(body), &trusts)
+	require.Nil(t, err)
+	return trusts
+}
+
+func getIdentsByAccount(t *testing.T, port string, addr sdk.AccAddress) []identity.Identity {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/identities", addr), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var identities []identity.Identity
+	err := cdc.UnmarshalJSON([]byte(body), &identities)
+	require.Nil(t, err)
+	return identities
+}
+
+func getCertsByIdentity(t *testing.T, port string) []identity.Cert {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", "/identities/1/certs", nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var certs []identity.Cert
+	err := cdc.UnmarshalJSON([]byte(body), &certs)
+	require.Nil(t, err)
+	return certs
 }
