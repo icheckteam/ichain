@@ -178,26 +178,26 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials := MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
-		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
-			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(assetChild1.AssetID, 1),
+			sdk.NewCoin(asset2.AssetID, 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	newAsset, _ = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
-	msgAddMaterials.Materials = msgAddMaterials.Materials.Sort()
-	assert.True(t, newAsset.Materials[0].AssetID == msgAddMaterials.Materials[0].AssetID)
-	assert.True(t, newAsset.Materials[0].Quantity.Equal(msgAddMaterials.Materials[0].Quantity))
-	assert.True(t, newAsset.Materials[1].AssetID == msgAddMaterials.Materials[1].AssetID)
-	assert.True(t, newAsset.Materials[1].Quantity.Equal(msgAddMaterials.Materials[1].Quantity))
+	msgAddMaterials.Amount = msgAddMaterials.Amount.Sort()
+	assert.True(t, newAsset.Materials[0].Denom == msgAddMaterials.Amount[0].Denom)
+	assert.True(t, newAsset.Materials[0].Amount.Equal(msgAddMaterials.Amount[0].Amount))
+	assert.True(t, newAsset.Materials[1].Denom == msgAddMaterials.Amount[1].Denom)
+	assert.True(t, newAsset.Materials[1].Amount.Equal(msgAddMaterials.Amount[1].Amount))
 
 	// add materials error
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
-		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
-			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(assetChild1.AssetID, 1),
+			sdk.NewCoin(asset2.AssetID, 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -207,9 +207,9 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
-		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1000)},
-			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(assetChild1.AssetID, 10000),
+			sdk.NewCoin(asset2.AssetID, 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -235,8 +235,8 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
-		Materials: Materials{
-			Material{AssetID: "12121", Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin("121212", 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -246,8 +246,8 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
-		Materials: Materials{
-			Material{AssetID: asset10.AssetID, Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(asset10.AssetID, 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -257,8 +257,8 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
-		Materials: Materials{
-			Material{AssetID: asset11.AssetID, Quantity: sdk.NewInt(1)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(asset11.AssetID, 1),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -268,8 +268,8 @@ func TestKeeper(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
-		Materials: Materials{
-			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(100000)},
+		Amount: sdk.Coins{
+			sdk.NewCoin(asset2.AssetID, 100000),
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)

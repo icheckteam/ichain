@@ -14,8 +14,8 @@ import (
 )
 
 type addMaterialsBody struct {
-	BaseReq   baseBody        `json:"base_req"`
-	Materials asset.Materials `json:"materials"`
+	BaseReq baseBody  `json:"base_req"`
+	Amount  sdk.Coins `json:"amount"`
 }
 
 // AddMaterialsHandlerFn  REST handler
@@ -39,9 +39,9 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 
-		if len(m.Materials) == 0 {
+		if len(m.Amount) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("materials is required"))
+			w.Write([]byte("amount is required"))
 			return
 		}
 
@@ -53,9 +53,9 @@ func AddMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 		}
 
 		msg := asset.MsgAddMaterials{
-			AssetID:   vars["id"],
-			Sender:    sdk.AccAddress(info.GetPubKey().Address()),
-			Materials: m.Materials,
+			AssetID: vars["id"],
+			Sender:  sdk.AccAddress(info.GetPubKey().Address()),
+			Amount:  m.Amount,
 		}
 
 		// sign
