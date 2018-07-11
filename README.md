@@ -4,7 +4,7 @@
 [![docs](https://readthedocs.org/projects/ichain/badge/?version=latest)](https://ichain.readthedocs.io/en/latest/?badge=latest)
 [![license](https://img.shields.io/github/license/icheckteam/ichain.svg)](https://github.com/icheckteam/ichain/blob/master/LICENSE)
 [![](https://tokei.rs/b1/github/icheckteam/ichain?category=lines)](https://github.com/icheckteam/ichain)
-[![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)]
+[![CircleCI](https://circleci.com/gh/icheckteam/ichain/tree/master.svg?style=shield)](https://circleci.com/gh/icheckteam/ichain/tree/master)
 [![codecov](https://codecov.io/gh/icheckteam/ichain/branch/master/graph/badge.svg)](https://codecov.io/gh/icheckteam/ichain)
 
 
