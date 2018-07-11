@@ -7,45 +7,43 @@ import (
 )
 
 var (
-	KeyNextIdentityID = []byte("keyNextIdentityID")
+	KeyNextIdentityID = []byte{0x01}
+	IdentitiesKey     = []byte{0x02}
 )
 
 // Key for getting a identity from the store
 func KeyIdentity(identityID int64) []byte {
-	return []byte(fmt.Sprintf("identities:%d", identityID))
-}
-
-// Key for getting all identities from the store
-func KeyIdentities() []byte {
-	return []byte(fmt.Sprintf("identities:"))
+	return append(IdentitiesKey, []byte(fmt.Sprintf("%d", identityID))...)
 }
 
 // Key for getting a identity id  of the account from the store
-func KeyIdentityByOwnerIndex(owner sdk.Address, identityID int64) []byte {
-	return []byte(fmt.Sprintf("accounts:%s:%d", owner.String(), identityID))
+func KeyIdentityByOwnerIndex(owner sdk.AccAddress, identityID int64) []byte {
+	return []byte(fmt.Sprintf("account:%s:%d", owner.String(), identityID))
 }
 
-// Key for getting all identity id  of the account from the store
-func KeyIdentitiesByOwnerIndex(owner sdk.Address, identityID int64) []byte {
-	return []byte(fmt.Sprintf("accounts:%s:", owner.String()))
+func KeyIdentitiesByOwnerIndex(owner sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("account:%s", owner.String()))
+}
+
+func KeyClaimedIdentity(address sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("claim:%s", address.String()))
 }
 
 // Key for getting all trusting from the store
-func KeyTrust(trustor, trusting sdk.Address) []byte {
-	return []byte(fmt.Sprintf("trusts:%s:%s", trustor.String(), trusting.String()))
+func KeyTrust(trustor, trusting sdk.AccAddress) []byte {
+	return append(KeyTrusts(trustor), []byte(fmt.Sprintf("trust:%s:%s", trustor.String(), trusting.String()))...)
 }
 
-// Key for getting all trusting from the store
-func KeyTrusting(trustor, trusting sdk.Address) []byte {
-	return []byte(fmt.Sprintf("trustings:%s:%s", trusting.String(), trustor.String()))
+func KeyTrusts(trustor sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("trust:%s", trustor.String()))
 }
 
 // Key for getting a cert from the store
-func KeyCert(identityID int64, certifier sdk.Address) []byte {
-	return []byte(fmt.Sprintf("certs:%d:%s", identityID, certifier.String()))
+func KeyCert(identityID int64, property string, certifier sdk.AccAddress) []byte {
+	return append(KeyCerts(identityID, property), []byte(fmt.Sprintf(":%s", certifier.String()))...)
 }
 
 // Key for getting all certs from the store
-func KeyCerts(identityID int64) []byte {
-	return []byte(fmt.Sprintf("certs:%d", identityID))
+func KeyCerts(identityID int64, property string) []byte {
+	return []byte(fmt.Sprintf("identity:%d:%s", identityID, property))
 }

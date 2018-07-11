@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -14,7 +13,7 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	ctx = ctx.WithAccountNumber(m.AccountNumber)
 	ctx = ctx.WithSequence(m.Sequence)
 	ctx = ctx.WithChainID(m.ChainID)
-	txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))
@@ -25,11 +24,11 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	res, err := ctx.BroadcastTx(txBytes)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte("BroadcastTx:" + err.Error()))
 		return
 	}
 
-	output, err := json.MarshalIndent(res, "", "  ")
+	output, err := wire.MarshalJSONIndent(cdc, res)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

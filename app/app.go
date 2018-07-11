@@ -6,15 +6,17 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/abci/types"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
+	dbm "github.com/tendermint/tendermint/libs/db"
+	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
-	cmn "github.com/tendermint/tmlibs/common"
-	dbm "github.com/tendermint/tmlibs/db"
-	"github.com/tendermint/tmlibs/log"
 
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
@@ -53,6 +55,7 @@ type IchainApp struct {
 	keyShipping  *sdk.KVStoreKey
 	keyInvoice   *sdk.KVStoreKey
 	keySlashing  *sdk.KVStoreKey
+	keyGov       *sdk.KVStoreKey
 
 	// Manage getting and setting accounts
 	accountMapper       auth.AccountMapper
@@ -61,11 +64,14 @@ type IchainApp struct {
 	stakeKeeper         stake.Keeper
 	slashingKeeper      slashing.Keeper
 	feeCollectionKeeper auth.FeeCollectionKeeper
-	assetKeeper         asset.Keeper
-	identityKeeper      identity.Keeper
-	insuranceKeeper     insurance.Keeper
-	shippingKeeper      shipping.Keeper
-	invoiceKeeper       invoice.InvoiceKeeper
+	govKeeper           gov.Keeper
+	keyFeeCollection    *sdk.KVStoreKey
+
+	assetKeeper     asset.Keeper
+	identityKeeper  identity.Keeper
+	insuranceKeeper insurance.Keeper
+	shippingKeeper  shipping.Keeper
+	invoiceKeeper   invoice.InvoiceKeeper
 }
 
 // NewIchainApp  new ichain application
@@ -74,25 +80,27 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	var cdc = MakeCodec()
 	// create your application object
 	var app = &IchainApp{
-		BaseApp:      bam.NewBaseApp(appName, cdc, logger, db),
-		cdc:          cdc,
-		keyMain:      sdk.NewKVStoreKey("main"),
-		keyAccount:   sdk.NewKVStoreKey("acc"),
-		keyIBC:       sdk.NewKVStoreKey("ibc"),
-		keyIdentity:  sdk.NewKVStoreKey("identity"),
-		keyAsset:     sdk.NewKVStoreKey("asset"),
-		keyInsurance: sdk.NewKVStoreKey("insurance"),
-		keyShipping:  sdk.NewKVStoreKey("shipping"),
-		keyInvoice:   sdk.NewKVStoreKey("invoice"),
-		keySlashing:  sdk.NewKVStoreKey("slashing"),
-		keyStake:     sdk.NewKVStoreKey("stake"),
+		BaseApp:          bam.NewBaseApp(appName, cdc, logger, db),
+		cdc:              cdc,
+		keyMain:          sdk.NewKVStoreKey("main"),
+		keyAccount:       sdk.NewKVStoreKey("acc"),
+		keyIBC:           sdk.NewKVStoreKey("ibc"),
+		keyIdentity:      sdk.NewKVStoreKey("identity"),
+		keyAsset:         sdk.NewKVStoreKey("asset"),
+		keyInsurance:     sdk.NewKVStoreKey("insurance"),
+		keyShipping:      sdk.NewKVStoreKey("shipping"),
+		keyInvoice:       sdk.NewKVStoreKey("invoice"),
+		keySlashing:      sdk.NewKVStoreKey("slashing"),
+		keyStake:         sdk.NewKVStoreKey("stake"),
+		keyGov:           sdk.NewKVStoreKey("gov"),
+		keyFeeCollection: sdk.NewKVStoreKey("fee"),
 	}
 
 	// define the accountMapper
 	app.accountMapper = auth.NewAccountMapper(
 		app.cdc,
-		app.keyAccount,      // target store
-		&types.AppAccount{}, // prototype
+		app.keyAccount,        // target store
+		types.ProtoAppAccount, // prototype
 	)
 
 	// add handlers
@@ -105,6 +113,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	app.shippingKeeper = shipping.NewKeeper(app.keyShipping, cdc, app.assetKeeper)
 	app.invoiceKeeper = invoice.NewInvoiceKeeper(app.keyInvoice, cdc, app.assetKeeper)
 	app.slashingKeeper = slashing.NewKeeper(app.cdc, app.keySlashing, app.stakeKeeper, app.RegisterCodespace(slashing.DefaultCodespace))
+	app.govKeeper = gov.NewKeeper(app.cdc, app.keyGov, app.bankKeeper, app.stakeKeeper, app.RegisterCodespace(gov.DefaultCodespace))
+	app.feeCollectionKeeper = auth.NewFeeCollectionKeeper(app.cdc, app.keyFeeCollection)
 	app.Router().
 		AddRoute("bank", bank.NewHandler(app.bankKeeper)).
 		AddRoute("ibc", ibc.NewHandler(app.ibcMapper, app.bankKeeper)).
@@ -114,7 +124,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		AddRoute("insurance", insurance.NewHandler(app.insuranceKeeper)).
 		AddRoute("shipping", shipping.NewHandler(app.shippingKeeper)).
 		AddRoute("invoice", invoice.MakeHandle(app.invoiceKeeper)).
-		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper))
+		AddRoute("slashing", slashing.NewHandler(app.slashingKeeper)).
+		AddRoute("gov", gov.NewHandler(app.govKeeper))
 
 	// initialize Ichain App
 	app.SetInitChainer(app.initChainer)
@@ -127,6 +138,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 		app.keyIBC,
 		app.keyStake,
 		app.keySlashing,
+		app.keyGov,
+		app.keyFeeCollection,
 
 		app.keyAsset,
 		app.keyIdentity,
@@ -145,12 +158,11 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 // MakeCodec Custom tx codec
 func MakeCodec() *wire.Codec {
 	var cdc = wire.NewCodec()
-
-	// Register Msgs
 	ibc.RegisterWire(cdc)
 	bank.RegisterWire(cdc)
 	stake.RegisterWire(cdc)
 	slashing.RegisterWire(cdc)
+	gov.RegisterWire(cdc)
 	auth.RegisterWire(cdc)
 	sdk.RegisterWire(cdc)
 	wire.RegisterCrypto(cdc)
@@ -178,8 +190,11 @@ func (app *IchainApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) 
 func (app *IchainApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	validatorUpdates := stake.EndBlocker(ctx, app.stakeKeeper)
 
+	tags, _ := gov.EndBlocker(ctx, app.govKeeper)
+
 	return abci.ResponseEndBlock{
 		ValidatorUpdates: validatorUpdates,
+		Tags:             tags,
 	}
 }
 
@@ -201,7 +216,7 @@ func (app *IchainApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 
 	// load the initial stake information
 	stake.InitGenesis(ctx, app.stakeKeeper, genesisState.StakeData)
-
+	gov.InitGenesis(ctx, app.govKeeper, gov.DefaultGenesisState())
 	return abci.ResponseInitChain{}
 }
 

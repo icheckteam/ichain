@@ -1,23 +1,23 @@
 package main
 
 import (
-	"github.com/icheckteam/ichain/app"
 	"github.com/spf13/cobra"
 
-	"github.com/tendermint/tmlibs/cli"
+	"github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/icheckteam/ichain/client/lcd"
-	"github.com/icheckteam/ichain/client/tx"
-
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+	govcmd "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	ibccmd "github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	slashingcmd "github.com/cosmos/cosmos-sdk/x/slashing/client/cli"
 	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
 
+	"github.com/icheckteam/ichain/app"
 	"github.com/icheckteam/ichain/version"
 )
 
@@ -95,7 +95,8 @@ func main() {
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
 			stakecmd.GetCmdDelegate(cdc),
-			stakecmd.GetCmdUnbond(cdc),
+			stakecmd.GetCmdUnbond("stake", cdc),
+			stakecmd.GetCmdRedelegate("stake", cdc),
 			slashingcmd.GetCmdUnrevoke(cdc),
 		)...)
 	rootCmd.AddCommand(
@@ -117,6 +118,26 @@ func main() {
 		keys.Commands(),
 		client.LineBreak,
 		version.VersionCmd,
+	)
+
+	//Add stake commands
+	govCmd := &cobra.Command{
+		Use:   "gov",
+		Short: "Governance and voting subcommands",
+	}
+	govCmd.AddCommand(
+		client.GetCommands(
+			govcmd.GetCmdQueryProposal("gov", cdc),
+			govcmd.GetCmdQueryVote("gov", cdc),
+		)...)
+	govCmd.AddCommand(
+		client.PostCommands(
+			govcmd.GetCmdSubmitProposal(cdc),
+			govcmd.GetCmdDeposit(cdc),
+			govcmd.GetCmdVote(cdc),
+		)...)
+	rootCmd.AddCommand(
+		govCmd,
 	)
 
 	// prepare and add flags

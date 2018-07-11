@@ -9,12 +9,13 @@ import (
 	"github.com/icheckteam/ichain/x/asset"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type finalizeBody struct {
-	baseBody
+	BaseReq baseBody `json:"base_req"`
 }
 
 func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -31,19 +32,14 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.BaseReq.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
-		if m.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
-			return
-		}
-
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -51,9 +47,9 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		}
 		// build message
 		msg := asset.MsgFinalize{
-			Sender:  info.PubKey.Address(),
+			Sender:  sdk.AccAddress(info.GetPubKey().Address()),
 			AssetID: vars["id"],
 		}
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

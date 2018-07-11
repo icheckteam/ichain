@@ -13,6 +13,7 @@ const (
 	CodeUnknownOrder
 	CodeDuplicateAddress
 	CodeInvalidAsset
+	CodeInvalidInput
 	DefaultCodespace sdk.CodespaceType = 10
 )
 

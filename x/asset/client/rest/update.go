@@ -6,22 +6,22 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
-type transferBody struct {
-	baseBody
-	Assets []string
+type updateAttributeBody struct {
+	BaseReq    baseBody         `json:"base_req"`
+	Properties asset.Properties `json:"properties"`
 }
 
-func TrasferHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func UpdateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var m transferBody
 		vars := mux.Vars(r)
+		var m updateAttributeBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -31,41 +31,33 @@ func TrasferHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase)
 			return
 		}
 
-		err = m.Validate()
+		err = m.BaseReq.Validate()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		if len(m.Assets) == 0 {
+		if len(m.Properties) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("assets is required"))
+			w.Write([]byte("properties is required"))
 			return
 		}
 
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
 			return
 		}
-
-		address, err := sdk.GetAccAddressBech32(vars["address"])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
 		// build message
 
-		msg := asset.MsgTransfer{
-			Sender:    info.PubKey.Address(),
-			Recipient: address,
-			Assets:    m.Assets,
+		msg := asset.MsgUpdateProperties{
+			AssetID:    vars["id"],
+			Properties: m.Properties,
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
 		}
 
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

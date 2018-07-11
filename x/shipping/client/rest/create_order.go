@@ -8,9 +8,9 @@ import (
 	"github.com/icheckteam/ichain/x/shipping"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type createOrderBody struct {
@@ -74,11 +74,11 @@ func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 		// build message
-		msg := buildCreateOrderMsg(info.PubKey.Address(), m)
+		msg := buildCreateOrderMsg(sdk.AccAddress(info.GetPubKey().Address()), m)
 
 		// sign
 		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, []sdk.Msg{msg}, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -104,9 +104,9 @@ func CreateOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	}
 }
 
-func buildCreateOrderMsg(creator sdk.Address, body createOrderBody) sdk.Msg {
-	carrier, _ := sdk.GetValAddressHex(body.Carrier)
-	receiver, _ := sdk.GetAccAddressHex(body.Receiver)
+func buildCreateOrderMsg(creator sdk.AccAddress, body createOrderBody) sdk.Msg {
+	carrier, _ := sdk.AccAddressFromBech32(body.Carrier)
+	receiver, _ := sdk.AccAddressFromBech32(body.Receiver)
 
 	return shipping.CreateOrderMsg{
 		ID:                body.OrderID,

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	addr  = sdk.Address([]byte("input"))
-	addr1 = sdk.Address([]byte("input"))
+	addr  = sdk.AccAddress([]byte("input"))
+	addr1 = sdk.AccAddress([]byte("input"))
 )
 
 // ------------------------------------------------------------
@@ -55,7 +55,7 @@ func TestMsgCreateContractValidation(t *testing.T) {
 }
 
 func TestCreateContractMsgGet(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateContract{
 		Issuer: addr1,
 	}
@@ -64,7 +64,7 @@ func TestCreateContractMsgGet(t *testing.T) {
 }
 
 func TestMsgCreateContractnBytes(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	expiration, _ := time.Parse(time.RFC3339Nano, "2018-05-11T16:28:45.78807557+07:00")
 	var msg = MsgCreateContract{
 		ID:        "1",
@@ -75,11 +75,11 @@ func TestMsgCreateContractnBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"issuer\":\"696E707574\",\"recipient\":\"696E707574\",\"expires\":\"2018-05-11T16:28:45.78807557+07:00\",\"serial\":\"1\",\"asset_id\":\"\"}")
+	assert.Equal(t, string(res), "{\"type\":\"insurance/MsgCreateContract\",\"value\":{\"asset_id\":\"\",\"expires\":\"2018-05-11T09:28:45.78807557Z\",\"id\":\"1\",\"issuer\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"recipient\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"serial\":\"1\"}}")
 }
 
 func TestMsgCreateContractSigners(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateContract{
 		ID:        "1",
 		Issuer:    addr,
@@ -129,7 +129,7 @@ func TestMsgCreateClaimValidation(t *testing.T) {
 }
 
 func TestMsgCreateClaimGet(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateClaim{
 		Issuer: addr1,
 	}
@@ -145,7 +145,7 @@ func TestMsgCreateClaimGetBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"contract_id\":\"1\",\"issuer\":\"696E707574\",\"recipient\":\"696E707574\"}")
+	assert.Equal(t, string(res), "{\"type\":\"insurance/MsgCreateClaim\",\"value\":{\"contract_id\":\"1\",\"issuer\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"recipient\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestMsgCreateClaimSigners(t *testing.T) {
@@ -192,7 +192,7 @@ func TestMsgProcessClaimValidation(t *testing.T) {
 }
 
 func TestMsgCompleteClaimGet(t *testing.T) {
-	addr1 := sdk.Address([]byte("input"))
+	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgProcessClaim{
 		Issuer: addr1,
 	}
@@ -207,7 +207,7 @@ func TestMsgCompleteClaimGetBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"contract_id\":\"1\",\"issuer\":\"696E707574\",\"status\":0}")
+	assert.Equal(t, string(res), "{\"type\":\"insurance/MsgProcessClaim\",\"value\":{\"contract_id\":\"1\",\"issuer\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"status\":\"0\"}}")
 }
 
 func TestMsgCompleteClaimSigners(t *testing.T) {

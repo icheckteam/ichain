@@ -14,7 +14,11 @@ func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgUpdateProperties{}, "asset/UpdateProperties", nil)
 	cdc.RegisterConcrete(MsgFinalize{}, "asset/FinalizeAsset", nil)
 	cdc.RegisterConcrete(MsgAddMaterials{}, "asset/AddMaterials", nil)
-	cdc.RegisterConcrete(MsgCreateReporter{}, "asset/CreateReporter", nil)
+	cdc.RegisterConcrete(MsgCreateProposal{}, "asset/CreateProposal", nil)
+	cdc.RegisterConcrete(MsgAnswerProposal{}, "asset/AnswerProposal", nil)
 	cdc.RegisterConcrete(MsgRevokeReporter{}, "asset/RevokeReporter", nil)
-	cdc.RegisterConcrete(MsgTransfer{}, "asset/Transfer", nil)
+}
+
+func init() {
+	RegisterWire(msgCdc)
 }

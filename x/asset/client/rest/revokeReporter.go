@@ -6,21 +6,21 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type revokeReporterBody struct {
-	baseBody
+	BaseReq baseBody `json:"base_req"`
 }
 
 func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		var m createReporterBody
+		var m revokeReporterBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = json.Unmarshal(body, &m)
 
@@ -30,21 +30,21 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			return
 		}
 
-		err = m.Validate()
+		err = m.BaseReq.Validate()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		address, err := sdk.GetAccAddressBech32(vars["address"])
+		address, err := sdk.AccAddressFromBech32(vars["address"])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -54,10 +54,10 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		// build message
 
 		msg := asset.MsgRevokeReporter{
-			Sender:   info.PubKey.Address(),
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
 			Reporter: address,
 			AssetID:  vars["id"],
 		}
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

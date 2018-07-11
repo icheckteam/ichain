@@ -6,14 +6,20 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/icheckteam/ichain/x/asset"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type createAssetBody struct {
-	baseBody
-	Asset asset.MsgCreateAsset `json:"asset"`
+	BaseReq    baseBody         `json:"base_req"`
+	AssetID    string           `json:"asset_id"`
+	Name       string           `json:"name"`
+	Quantity   sdk.Int          `json:"quantity"`
+	Parent     string           `json:"parent"`
+	Unit       string           `json:"unit"`
+	Properties asset.Properties `json:"properties"`
 }
 
 // Create asset REST handler
@@ -29,36 +35,31 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			return
 		}
 
-		if m.LocalAccountName == "" {
+		err = m.BaseReq.Validate()
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("account_name is required"))
+			w.Write([]byte(err.Error()))
 			return
 		}
 
-		if m.Password == "" {
+		if m.Name == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("password is required"))
+			w.Write([]byte("name is required"))
 			return
 		}
 
-		if m.Asset.Name == "" {
+		if m.Quantity.IsZero() {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset.name is required"))
+			w.Write([]byte("quantity is required"))
 			return
 		}
 
-		if m.Asset.Quantity == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset.quantity is required"))
-			return
-		}
-
-		if m.Asset.AssetID == "" {
+		if m.AssetID == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("asset.id is required"))
 			return
 		}
-		info, err := kb.Get(m.LocalAccountName)
+		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -66,8 +67,15 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 		}
 
 		// build message
-		m.Asset.Sender = info.PubKey.Address()
-		msg := m.Asset
-		signAndBuild(ctx, cdc, w, m.baseBody, msg)
+		msg := asset.MsgCreateAsset{
+			AssetID:    m.AssetID,
+			Name:       m.Name,
+			Parent:     m.Parent,
+			Properties: m.Properties,
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
+			Quantity:   m.Quantity,
+			Unit:       m.Unit,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }

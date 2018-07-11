@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -10,8 +9,22 @@ import (
 
 // Material defines the total material of new asset
 type Material struct {
-	AssetID  string `json:"asset_id"`
-	Quantity int64  `json:"quantity"`
+	AssetID  string  `json:"asset_id"`
+	Quantity sdk.Int `json:"quantity"`
+}
+
+func (msg Material) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(struct {
+		AssetID  string  `json:"asset_id"`
+		Quantity sdk.Int `json:"quantity"`
+	}{
+		AssetID:  msg.AssetID,
+		Quantity: msg.Quantity,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
 }
 
 // Materials - list of materials
@@ -27,7 +40,7 @@ func (material Material) Plus(materialB Material) Material {
 	if !material.SameAssetAs(materialB) {
 		return material
 	}
-	return Material{material.AssetID, material.Quantity + materialB.Quantity}
+	return Material{material.AssetID, material.Quantity.Add(materialB.Quantity)}
 }
 
 // Plus combines two sets of materials
@@ -51,7 +64,7 @@ func (materials Materials) Plus(materialsB Materials) Materials {
 			sum = append(sum, materialA)
 			indexA++
 		case 0:
-			if materialA.Quantity+materialB.Quantity == 0 {
+			if materialA.Quantity.Add(materialB.Quantity).IsZero() {
 				// ignore 0 sum coin type
 			} else {
 				sum = append(sum, materialA.Plus(materialB))
@@ -89,13 +102,8 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 
-	if asset.Final {
-		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already final", asset.ID))
-	}
-
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "materials"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
+	if err := asset.ValidateAddMaterial(msg.Sender); err != nil {
+		return nil, err
 	}
 	// subtract quantity
 	materialsToSave := []Asset{}
@@ -104,29 +112,24 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		if !found {
 			return nil, ErrAssetNotFound(m.ID)
 		}
-		if m.Final {
-			return nil, ErrAssetAlreadyFinal(m.ID)
-		}
-		if !m.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add materials", msg.Sender))
-		}
-		if m.Quantity < material.Quantity {
-			return nil, ErrInvalidAssetQuantity(m.ID)
+
+		if err := m.ValidateSubtractQuantity(msg.Sender, material.Quantity); err != nil {
+			return nil, err
 		}
 
-		m.Quantity -= material.Quantity
+		m.Quantity = m.Quantity.Sub(material.Quantity)
 		materialsToSave = append(materialsToSave, m)
 	}
 	msg.Materials = msg.Materials.Sort()
 	asset.Materials = asset.Materials.Plus(msg.Materials)
 	materialsToSave = append(materialsToSave, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	for _, meterialToSave := range materialsToSave {
 		k.setAsset(ctx, meterialToSave)
-		tags = tags.AppendTag("asset_id", []byte(meterialToSave.ID))
+		tags = tags.AppendTag(TagAsset, []byte(meterialToSave.ID))
 	}
 
 	return tags, nil

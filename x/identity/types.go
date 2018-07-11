@@ -8,24 +8,52 @@ import (
 
 // Identity
 type Identity struct {
-	ID       int64       `json:"id"`    // id of the identity
-	Owner    sdk.Address `json:"owner"` // owner of the identity
-	Defaults bool        `json:"defaults"`
+	ID       int64          `json:"id"`    // id of the identity
+	Owner    sdk.AccAddress `json:"owner"` // owner of the identity
+	Defaults bool           `json:"defaults"`
 }
 
 type Cert struct {
-	ID         string      `json:"id"`
-	Certifier  sdk.Address `json:"certifier"`
-	Type       string      `json:"type"`
-	Trust      bool        `json:"trust"`
-	Data       Metadata    `json:"data"`
-	Confidence bool        `json:"confidence"`
+	ID         string         `json:"id"`
+	Property   string         `json:"property"`
+	Certifier  sdk.AccAddress `json:"certifier"`
+	Type       string         `json:"type"`
+	Trust      bool           `json:"trust"`
+	Data       Metadata       `json:"data"`
+	Confidence bool           `json:"confidence"`
 }
 
 type CertValue struct {
+	Property   string   `json:"property"`
 	Type       string   `json:"type"`
 	Data       Metadata `json:"data"`
 	Confidence bool     `json:"confidence"`
+}
+
+// quick validity check
+func (msg CertValue) ValidateBasic() sdk.Error {
+	if len(msg.Property) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
+	}
+	return nil
+}
+
+func (msg CertValue) GetSignBytes() []byte {
+	b, err := MsgCdc.MarshalJSON(struct {
+		Property   string   `json:"property"`
+		Type       string   `json:"type"`
+		Data       Metadata `json:"data"`
+		Confidence bool     `json:"confidence"`
+	}{
+		Property:   msg.Property,
+		Type:       msg.Type,
+		Data:       msg.Data,
+		Confidence: msg.Confidence,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 type Certs []Cert
@@ -50,6 +78,6 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 }
 
 type Trust struct {
-	Trustor  sdk.Address `json:"trustor"`
-	Trusting sdk.Address `json:"trusting"`
+	Trustor  sdk.AccAddress `json:"trustor"`
+	Trusting sdk.AccAddress `json:"trusting"`
 }

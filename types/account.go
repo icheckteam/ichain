@@ -18,6 +18,11 @@ type AppAccount struct {
 	Name string `json:"name"`
 }
 
+// Constructor for AppAccount
+func ProtoAppAccount() auth.Account {
+	return &AppAccount{}
+}
+
 // nolint
 func (acc AppAccount) GetName() string      { return acc.Name }
 func (acc *AppAccount) SetName(name string) { acc.Name = name }
@@ -37,6 +42,6 @@ func GetAccountDecoder(cdc *wire.Codec) auth.AccountDecoder {
 	}
 }
 
-func AddrToBytes(addr sdk.Address) []byte {
+func AddrToBytes(addr sdk.AccAddress) []byte {
 	return []byte(addr.String())
 }

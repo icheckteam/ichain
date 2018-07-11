@@ -1,6 +1,8 @@
 package identity
 
 import (
+	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
@@ -9,18 +11,17 @@ type Keeper struct {
 	storeKey  sdk.StoreKey
 	cdc       *wire.Codec
 	codespace sdk.CodespaceType
-	// The ValidatorSet to get information about validators
-	vs sdk.ValidatorSet
 }
 
 func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	return Keeper{
-		storeKey: key,
-		cdc:      cdc,
+		storeKey:  key,
+		cdc:       cdc,
+		codespace: DefaultCodespace,
 	}
 }
 
-func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.Address) Identity {
+func (k Keeper) NewIdentity(ctx sdk.Context, owner sdk.AccAddress) Identity {
 	return Identity{
 		ID:    k.getNewIdentityID(ctx),
 		Owner: owner,
@@ -34,15 +35,20 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store.Set(KeyIdentity(identity.ID), bz)
 }
 
-func (k Keeper) DeleteIdentity(ctx sdk.Context, identityID int64) {
-	// delete identity
+func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(KeyIdentity(identityID))
-	// delete all certs
-	certs := k.GetCerts(ctx, identityID)
-	for _, cert := range certs {
-		k.DeleteCert(ctx, identityID, cert.Certifier)
-	}
+	bz := k.cdc.MustMarshalBinary(identityID)
+	store.Set(KeyClaimedIdentity(account), bz)
+}
+
+func (k Keeper) DeleteClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyClaimedIdentity(account))
+}
+
+func (k Keeper) HasClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(KeyClaimedIdentity(account))
 }
 
 // Get Identity from store by identityID
@@ -63,98 +69,111 @@ func (k Keeper) GetIdentity(ctx sdk.Context, identityID int64) (Identity, bool) 
 func (k Keeper) SetIdentityByOwnerIndex(ctx sdk.Context, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(identity.ID)
-	store.Set(KeyIdentitiesByOwnerIndex(identity.Owner, identity.ID), bz)
+	store.Set(KeyIdentityByOwnerIndex(identity.Owner, identity.ID), bz)
+}
+
+// set the main record holding trust details
+func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
+	store.Set(KeyTrust(trustor, trusting), bz)
+}
+
+// delete cert from the store
+func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(KeyTrust(trustor, trusting))
+}
+
+// add a trust
+func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) sdk.Error {
+	if msg.Trust == true {
+		k.SetTrust(ctx, msg.Trustor, msg.Trusting)
+	} else {
+		k.DeleteTrust(ctx, msg.Trustor, msg.Trusting)
+	}
+	return nil
+}
+
+func (k Keeper) GetTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) (trust Trust, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(KeyTrust(trustor, trusting))
+	if bz == nil {
+		return
+	}
+	k.cdc.MustUnmarshalBinary(bz, &trust)
+	found = true
+	return
 }
 
 // set the main record holding cert details
 func (k Keeper) SetCert(ctx sdk.Context, identity int64, cert Cert) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(cert)
-	store.Set(KeyCert(identity, cert.Certifier), bz)
+	store.Set(KeyCert(identity, cert.Property, cert.Certifier), bz)
 }
 
-func (k Keeper) GetCerts(ctx sdk.Context, identity int64) (certs []Cert) {
+// set the main record holding cert details
+func (k Keeper) GetCert(ctx sdk.Context, identity int64, property string, certifier sdk.AccAddress) (cert Cert, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, KeyCerts(identity))
-
-	i := 0
-	for ; ; i++ {
-		if !iterator.Valid() {
-			iterator.Close()
-			break
-		}
-		bz := iterator.Value()
-		var cert Cert
-		k.cdc.MustUnmarshalBinary(bz, &cert)
-		certs = append(certs, cert)
-		iterator.Next()
+	bz := store.Get(KeyCert(identity, property, certifier))
+	if bz == nil {
+		return
 	}
-	return certs
+	k.cdc.MustUnmarshalBinary(bz, &cert)
+	found = true
+	return
 }
 
 // delete cert from the store
-func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, certifier sdk.Address) {
+func (k Keeper) DeleteCert(ctx sdk.Context, identity int64, property string, certifier sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(KeyCert(identity, certifier))
-}
-
-// set the main record holding trust details
-func (k Keeper) SetTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(Trust{Trusting: trusting, Trustor: trustor})
-	store.Set(KeyTrust(trustor, trusting), bz)
-}
-
-// Get Identity from store by identityID
-func (k Keeper) HasTrust(ctx sdk.Context, trustor, trusting sdk.Address) bool {
-	store := ctx.KVStore(k.storeKey)
-	return store.Has(KeyTrust(trustor, trusting))
-}
-
-// delete cert from the store
-func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.Address) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(KeyTrust(trustor, trusting))
+	store.Delete(KeyCert(identity, property, certifier))
 }
 
 // add a trusting
-func (k Keeper) AddTrust(ctx sdk.Context, msg MsgAddTrust) sdk.Error {
-	k.SetTrust(ctx, msg.Trustor, msg.Trusting)
-	return nil
-}
-
-func (k Keeper) IsTrust(ctx sdk.Context, certifier sdk.Address) bool {
-	validator := k.vs.Validator(ctx, certifier)
-	trust := validator != nil
-	if validator == nil {
-		k.vs.IterateValidators(ctx, func(index int64, validator sdk.Validator) (stop bool) {
-			trust = k.HasTrust(ctx, validator.GetOwner(), certifier)
-			return trust
-		})
-	}
-	return trust
-}
-
-// add a trusting
-func (k Keeper) AddCerts(ctx sdk.Context, msg MsgAddCerts) sdk.Error {
-	_, found := k.GetIdentity(ctx, msg.IdentityID)
+func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
+	ident, found := k.GetIdentity(ctx, msg.IdentityID)
 	if !found {
 		return ErrUnknownIdentity(k.codespace, msg.IdentityID)
 	}
-	trust := k.IsTrust(ctx, msg.Certifier)
 	for _, value := range msg.Values {
 		if value.Confidence == true {
+			cert, found := k.GetCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
+			if !found {
+				// new cert
+				cert = Cert{
+					Property:   value.Property,
+					Certifier:  msg.Certifier,
+					Confidence: value.Confidence,
+					Data:       value.Data,
+					Type:       value.Type,
+				}
+			} else {
+				// update cert
+				cert.Data = value.Data
+				cert.Type = value.Type
+			}
+
 			// add cert
-			k.SetCert(ctx, msg.IdentityID, Cert{
-				Certifier:  msg.Certifier,
-				Confidence: value.Confidence,
-				Data:       value.Data,
-				Type:       value.Type,
-				Trust:      trust,
-			})
+			k.SetCert(ctx, msg.IdentityID, cert)
+
+			// special handling for owner
+			if value.Property == "owner" {
+				if bytes.Equal(msg.Certifier, ident.Owner) {
+					k.SetClaimedIdentity(ctx, msg.Certifier, ident.ID)
+				}
+			}
+
 		} else {
 			// delete cert
-			k.DeleteCert(ctx, msg.IdentityID, msg.Certifier)
+			k.DeleteCert(ctx, msg.IdentityID, value.Property, msg.Certifier)
+
+			if value.Property == "owner" {
+				if bytes.Equal(msg.Certifier, ident.Owner) {
+					k.DeleteClaimedIdentity(ctx, msg.Certifier, ident.ID)
+				}
+			}
 		}
 	}
 	return nil
@@ -164,15 +183,19 @@ func (k Keeper) getNewIdentityID(ctx sdk.Context) (identityID int64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(KeyNextIdentityID)
 	if bz == nil {
-		return 1
+		identityID = 1
+	} else {
+		k.cdc.MustUnmarshalBinary(bz, &identityID)
 	}
-	k.cdc.MustUnmarshalBinary(bz, &identityID)
 	bz = k.cdc.MustMarshalBinary(identityID + 1)
 	store.Set(KeyNextIdentityID, bz)
 	return identityID
 }
 
-func (k Keeper) AddIdentity(ctx sdk.Context, msg MsgCreateIdent) sdk.Error {
-	k.SetIdentity(ctx, k.NewIdentity(ctx, msg.Sender))
+// AddIdentity add new an identity
+func (k Keeper) AddIdentity(ctx sdk.Context, msg MsgCreateIdentity) sdk.Error {
+	ident := k.NewIdentity(ctx, msg.Sender)
+	k.SetIdentity(ctx, ident)
+	k.SetIdentityByOwnerIndex(ctx, ident)
 	return nil
 }

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 
 	cosmosContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -112,8 +112,11 @@ func makeCreateInvoiceEndpoint(ctx cosmosContext.CoreContext, cdc *wire.Codec, k
 			return nil, ErrorUnauthorized
 		}
 
-		issuer := info.PubKey.Address()
-		receiver, _ := sdk.GetAccAddressHex(req.Receiver)
+		issuer := sdk.AccAddress(info.GetPubKey().Address())
+		receiver, err := sdk.AccAddressFromBech32(req.Receiver)
+		if err != nil {
+			return nil, err
+		}
 		msg := invoice.NewMsgCreate(
 			req.ID,
 			issuer,
@@ -122,7 +125,7 @@ func makeCreateInvoiceEndpoint(ctx cosmosContext.CoreContext, cdc *wire.Codec, k
 		)
 
 		ctx = ctx.WithSequence(req.Sequence).WithChainID(req.ChainID)
-		txBytes, err := ctx.SignAndBuild(req.Account, req.Password, msg, cdc)
+		txBytes, err := ctx.SignAndBuild(req.Account, req.Password, []sdk.Msg{msg}, cdc)
 
 		if err != nil {
 			return nil, ErrorUnauthorized
@@ -142,7 +145,7 @@ func makeGetInvoiceEndpoint(ctx cosmosContext.CoreContext, cdc *wire.Codec) endp
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(getInvoiceRequest)
 		key := invoice.GetKey(req.ID)
-		res, err := ctx.Query(key, StoreName)
+		res, err := ctx.QueryStore(key, StoreName)
 
 		var invoice invoice.Invoice
 		err = cdc.UnmarshalBinary(res, &invoice)

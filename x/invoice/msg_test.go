@@ -15,7 +15,7 @@ func TestMsgCreate_Type(t *testing.T) {
 func TestMsgCreate_GetSignBytes(t *testing.T) {
 	msg := NewMsgCreate("1", addrs[0], addrs[1], items)
 	res := msg.GetSignBytes()
-	assert.Equal(t, string(res), "{\"id\":\"1\",\"issuer\":\"A58856F0FD53BF058B4909A21AEC019107BA6160\",\"receiver\":\"A58856F0FD53BF058B4909A21AEC019107BA6161\",\"items\":[{\"asset_id\":\"tomato\"}]}")
+	assert.Equal(t, string(res), "{\"type\":\"invoice/MsgCreate\",\"value\":{\"id\":\"1\",\"issuer\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"items\":[{\"asset_id\":\"tomato\"}],\"receiver\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\"}}")
 }
 
 func TestMsgCreate_ValidateBasic(t *testing.T) {
@@ -43,5 +43,5 @@ func TestMsgCreate_ValidateBasic(t *testing.T) {
 func TestMsgCreate_GetSigners(t *testing.T) {
 	msg := NewMsgCreate("1", addrs[0], addrs[1], items)
 	res := msg.GetSigners()
-	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6160]`)
+	assert.Equal(t, fmt.Sprintf("%v", res), `[A58856F0FD53BF058B4909A21AEC019107BA6100]`)
 }

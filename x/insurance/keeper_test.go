@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +27,7 @@ func TestKeeper(t *testing.T) {
 
 	keeper.assetKeeper.CreateAsset(ctx, asset.MsgCreateAsset{
 		AssetID:  "demi",
-		Quantity: 1,
+		Quantity: sdk.NewInt(1),
 		Sender:   addrs[0],
 	})
 

@@ -8,9 +8,9 @@ import (
 type Order struct {
 	ID                string             `json:"id"`                 // ID of the order, provided by the client
 	TransportedAssets []TransportedAsset `json:"transported_assets"` // The assets to be transported
-	Issuer            sdk.Address        `json:"issuer"`             // The issuer of the order, must also be the owner of the asset (coin)
-	Carrier           sdk.Address        `json:"carrier"`            // The carrier
-	Receiver          sdk.Address        `json:"receiver"`           // The receiver, often a buyer
+	Issuer            sdk.AccAddress     `json:"issuer"`             // The issuer of the order, must also be the owner of the asset (coin)
+	Carrier           sdk.AccAddress     `json:"carrier"`            // The carrier
+	Receiver          sdk.AccAddress     `json:"receiver"`           // The receiver, often a buyer
 	Status            OrderStatus        `json:"status"`             // The status of the order
 }
 

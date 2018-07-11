@@ -9,9 +9,9 @@ import (
 	"github.com/icheckteam/ichain/x/shipping"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/tendermint/go-crypto/keys"
 )
 
 type confirmOrderBody struct {
@@ -54,11 +54,11 @@ func ConfirmOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 			return
 		}
 		// build message
-		msg := buildConfirmOrderMsg(info.PubKey.Address(), vars["id"])
+		msg := buildConfirmOrderMsg(sdk.AccAddress(info.GetPubKey().Address()), vars["id"])
 
 		// sign
 		ctx = ctx.WithSequence(m.Sequence).WithChainID(m.ChainID)
-		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, msg, cdc)
+		txBytes, err := ctx.SignAndBuild(m.LocalAccountName, m.Password, []sdk.Msg{msg}, cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(err.Error()))
@@ -84,7 +84,7 @@ func ConfirmOrderHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 	}
 }
 
-func buildConfirmOrderMsg(creator sdk.Address, orderID string) sdk.Msg {
+func buildConfirmOrderMsg(creator sdk.AccAddress, orderID string) sdk.Msg {
 	return shipping.ConfirmOrderMsg{
 		OrderID: orderID,
 		Carrier: creator,

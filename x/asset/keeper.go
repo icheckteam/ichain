@@ -44,22 +44,20 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	}
 
 	tags := sdk.NewTags(
-		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(msg.AssetID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 
 	newAsset := Asset{
-		ID:        msg.AssetID,
-		Type:      msg.AssetType,
-		Name:      msg.Name,
-		Owner:     msg.Sender,
-		Quantity:  msg.Quantity,
-		Parent:    msg.Parent,
-		Final:     false,
-		Precision: msg.Precision,
-		Height:    ctx.BlockHeight(),
-		Created:   ctx.BlockHeader().Time,
-		Unit:      msg.Unit,
+		ID:       msg.AssetID,
+		Name:     msg.Name,
+		Owner:    msg.Sender,
+		Quantity: msg.Quantity,
+		Parent:   msg.Parent,
+		Final:    false,
+		Height:   ctx.BlockHeight(),
+		Created:  ctx.BlockHeader().Time,
+		Unit:     msg.Unit,
 	}
 
 	if len(msg.Parent) > 0 {
@@ -68,20 +66,12 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		if !found {
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
-		if parent.Final {
-			return nil, ErrAssetAlreadyFinal(parent.ID)
+		if err := parent.ValidateAddChildren(msg.Sender, msg.Quantity); err != nil {
+			return nil, err
 		}
+		parent.Quantity = parent.Quantity.Sub(msg.Quantity)
 
-		if !parent.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("Address {%v} not unauthorized to create asset", msg.Sender))
-		}
-
-		if parent.Quantity < msg.Quantity {
-			return nil, ErrInvalidAssetQuantity(parent.ID)
-		}
-		parent.Quantity -= msg.Quantity
-
-		if len(parent.Root) != 0 && parent.Quantity == 0 {
+		if len(parent.Root) != 0 && parent.Quantity.IsZero() {
 			parent.Final = true
 		}
 
@@ -90,21 +80,19 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		} else {
 			newAsset.Root = parent.ID
 		}
-		// save parent asset to store
-		k.setAsset(ctx, parent)
-		tags = tags.AppendTag("asset_id", []byte(parent.ID))
 
+		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
 		newAsset.Unit = parent.Unit
-		newAsset.Precision = parent.Precision
+		k.setAsset(ctx, parent)
 	}
 
 	if len(msg.Properties) > 0 {
-		newAsset.Properties.Adds(msg.Properties...)
+		newAsset.Properties = msg.Properties.Sort()
 	}
 
 	// update asset info
 	k.SetAsset(ctx, newAsset)
-	k.setAssetByAccountIndex(ctx, newAsset)
+	k.setAssetByAccountIndex(ctx, newAsset.ID, newAsset.Owner)
 
 	if len(newAsset.Parent) > 0 {
 		// index by parent
@@ -123,15 +111,15 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	store.Set(GetAssetKey(asset.ID), bz)
 }
 
-func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(asset.ID)
-	store.Set(GetAccountAssetKey(asset.Owner, asset.ID), bz)
+	bz := k.cdc.MustMarshalBinary(assetID)
+	store.Set(GetAccountAssetKey(recipient, assetID), bz)
 }
 
-func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, asset Asset) {
+func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountAssetKey(asset.Owner, asset.ID))
+	store.Delete(GetAccountAssetKey(recipient, assetID))
 }
 
 func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
@@ -173,23 +161,16 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+
+	if err := asset.ValidateAddQuantity(msg.Sender); err != nil {
+		return nil, err
 	}
 
-	if len(asset.Parent) != 0 {
-		return nil, ErrInvalidAssetRoot(asset.ID)
-	}
-
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
-	}
-	asset.Quantity += msg.Quantity
+	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -201,23 +182,16 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+
+	if err := asset.ValidateSubtractQuantity(msg.Sender, msg.Quantity); err != nil {
+		return nil, err
 	}
 
-	authorized := asset.CheckUpdateAttributeAuthorization(msg.Sender, Property{Name: "quantity"})
-	if !authorized {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to subtract", msg.Sender))
-	}
-
-	if asset.Quantity < msg.Quantity {
-		return nil, ErrInvalidAssetQuantity(asset.ID)
-	}
-	asset.Quantity -= msg.Quantity
+	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(asset.ID),
-		"sender", []byte(msg.Sender.String()),
+		TagRecipient, []byte(asset.ID),
+		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
 }
@@ -229,55 +203,20 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if asset.Final {
-		return nil, ErrAssetAlreadyFinal(asset.ID)
+	if err := asset.ValidateFinalize(msg.Sender); err != nil {
+		return nil, err
 	}
-
-	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to finalize", msg.Sender))
-	}
-
 	asset.Final = true
-	k.removeAssetByAccountIndex(ctx, asset)
+	k.removeAssetByAccountIndex(ctx, asset.ID, asset.Owner)
+
+	// delete all index for reporter
+	for _, reporter := range asset.Reporters {
+		k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+	}
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		"asset_id", []byte(msg.AssetID),
-		"sender", []byte(msg.Sender.String()),
+		TagAsset, []byte(msg.AssetID),
+		TagSender, []byte(msg.Sender.String()),
 	)
-	return tags, nil
-}
-
-// Transfer transfer asset
-func (k Keeper) Transfer(ctx sdk.Context, msg MsgTransfer) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costTransfer, "transferAsset")
-	assets := []Asset{}
-	for _, a := range msg.Assets {
-		asset, found := k.GetAsset(ctx, a)
-		if !found {
-			return nil, ErrAssetNotFound(a)
-		}
-		if asset.Final {
-			return nil, ErrAssetAlreadyFinal(asset.ID)
-		}
-		if !asset.IsOwner(msg.Sender) {
-			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to send", msg.Sender))
-		}
-		assets = append(assets, asset)
-	}
-	tags := sdk.NewTags(
-		"sender", []byte(msg.Sender.String()),
-		"recipient", []byte(msg.Recipient.String()),
-	)
-	for _, asset := range assets {
-		k.removeAssetByAccountIndex(ctx, asset)
-		// change ownership
-		asset.Owner = msg.Recipient
-		// clear reporter
-		asset.Reporters = nil
-		k.setAsset(ctx, asset)
-		k.setAssetByAccountIndex(ctx, asset)
-		// add asset tag
-		tags = tags.AppendTag("asset_id", []byte(asset.ID))
-	}
 	return tags, nil
 }

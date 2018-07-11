@@ -2,6 +2,7 @@ package asset
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,43 +10,53 @@ import (
 )
 
 var (
-	addr  = sdk.Address([]byte("addr1"))
-	addr2 = sdk.Address([]byte("addr2"))
-	addr3 = sdk.Address([]byte("addr3"))
-	addr4 = sdk.Address([]byte("addr4"))
+	addr  = sdk.AccAddress([]byte("addr1"))
+	addr2 = sdk.AccAddress([]byte("addr2"))
+	addr3 = sdk.AccAddress([]byte("addr3"))
+	addr4 = sdk.AccAddress([]byte("addr4"))
 
 	asset = MsgCreateAsset{
-		AssetID:  "asset1",
-		Sender:   addr,
-		Name:     "asset 1",
-		Unit:     "kg",
-		Quantity: 100,
-		Properties: Properties{Property{
-			Name:        "unit",
-			Type:        PropertyTypeString,
-			StringValue: "kg",
-		}},
+		AssetID:    "asset1",
+		Sender:     addr,
+		Name:       "asset 1",
+		Unit:       "kg",
+		Quantity:   sdk.NewInt(100),
+		Properties: Properties{Property{Name: "size", StringValue: "34343"}},
 	}
 
 	asset2 = MsgCreateAsset{
 		AssetID:  "asset2",
 		Sender:   addr,
 		Name:     "asset 2",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 
 	asset3 = MsgCreateAsset{
 		AssetID:  "asset3",
 		Sender:   addr,
 		Name:     "asset 3",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
+	}
+
+	asset10 = MsgCreateAsset{
+		AssetID:  "asset10",
+		Sender:   addr,
+		Name:     "asset10",
+		Quantity: sdk.NewInt(100),
+	}
+
+	asset11 = MsgCreateAsset{
+		AssetID:  "asset11",
+		Sender:   addr2,
+		Name:     "asset11",
+		Quantity: sdk.NewInt(100),
 	}
 
 	assetChild = MsgCreateAsset{
 		AssetID:  "asset4",
 		Sender:   addr,
 		Name:     "asset 3",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset3",
 	}
 
@@ -53,7 +64,7 @@ var (
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset4",
 	}
 
@@ -61,7 +72,7 @@ var (
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   "asset4",
 	}
 )
@@ -77,11 +88,15 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.ID == asset.AssetID)
 	assert.True(t, newAsset.Owner.String() == asset.Sender.String())
 	assert.True(t, newAsset.Name == asset.Name)
-	assert.True(t, newAsset.Quantity == asset.Quantity)
+	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
 	assert.True(t, newAsset.Unit == "kg")
+	assert.True(t, newAsset.Properties[0].Name == asset.Properties[0].Name)
+	assert.True(t, newAsset.Properties[0].StringValue == asset.Properties[0].StringValue)
 
 	keeper.CreateAsset(ctx, asset2)
 	keeper.CreateAsset(ctx, asset3)
+	keeper.CreateAsset(ctx, asset10)
+	keeper.CreateAsset(ctx, asset11)
 
 	// asset already exists
 	_, err := keeper.CreateAsset(ctx, asset)
@@ -94,7 +109,7 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
 	// invalid asset quantity
-	assetChild.Quantity += 1
+	assetChild.Quantity = assetChild.Quantity.Add(sdk.NewInt(1))
 	_, err = keeper.CreateAsset(ctx, assetChild)
 	assert.True(t, err != nil)
 
@@ -103,53 +118,158 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Parent == assetChild.AssetID)
 	assert.True(t, newAsset.Root == asset3.AssetID)
 
+	// valid
+	msgFinalize := MsgFinalize{
+		Sender:  addr,
+		AssetID: asset10.AssetID,
+	}
+	keeper.Finalize(ctx, msgFinalize)
+	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
+	assert.True(t, newAsset.Final == true)
+
 	// invalid parent
 	msgCreateAsset := MsgCreateAsset{
-		AssetID:  "asset5",
+		AssetID:  "asset575765",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
-		Parent:   "asset45",
+		Quantity: sdk.NewInt(100),
+		Parent:   "asset10",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	// invalid owner
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "asset575765",
+		Sender:   addr3,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100),
+		Parent:   "asset1",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	// invalid quantity
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "6456546",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100000),
+		Parent:   "asset2",
+	}
+	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
+	assert.True(t, err != nil)
+
+	msgCreateAsset = MsgCreateAsset{
+		AssetID:  "asset575765",
+		Sender:   addr,
+		Name:     "asset 5",
+		Quantity: sdk.NewInt(100),
+		Parent:   "asset6456456",
 	}
 	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
 	assert.True(t, err != nil)
 
 	// -----------------------------------------
 	// Test Add Materials
+	// -----------------------------------------------
+
+	// test valid
 	msgAddMaterials := MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
 		},
 	}
-	keeper.AddMaterials(ctx, msgAddMaterials)
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	newAsset, _ = keeper.GetAsset(ctx, msgAddMaterials.AssetID)
 	msgAddMaterials.Materials = msgAddMaterials.Materials.Sort()
 	assert.True(t, newAsset.Materials[0].AssetID == msgAddMaterials.Materials[0].AssetID)
-	assert.True(t, newAsset.Materials[0].Quantity == msgAddMaterials.Materials[0].Quantity)
+	assert.True(t, newAsset.Materials[0].Quantity.Equal(msgAddMaterials.Materials[0].Quantity))
 	assert.True(t, newAsset.Materials[1].AssetID == msgAddMaterials.Materials[1].AssetID)
-	assert.True(t, newAsset.Materials[1].Quantity == msgAddMaterials.Materials[1].Quantity)
+	assert.True(t, newAsset.Materials[1].Quantity.Equal(msgAddMaterials.Materials[1].Quantity))
 
 	// add materials error
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
 	assert.True(t, err != nil)
 
+	// invalid sender
 	msgAddMaterials = MsgAddMaterials{
 		AssetID: asset3.AssetID,
 		Sender:  addr4,
 		Materials: Materials{
-			Material{AssetID: assetChild1.AssetID, Quantity: 1000},
-			Material{AssetID: asset2.AssetID, Quantity: 1},
+			Material{AssetID: assetChild1.AssetID, Quantity: sdk.NewInt(1000)},
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	//  invalid asset id
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: "445",
+		Sender:  addr4,
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset final
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset10.AssetID,
+		Sender:  addr4,
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: "12121", Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid asset
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset10.AssetID, Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid owner
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset11.AssetID, Quantity: sdk.NewInt(1)},
+		},
+	}
+	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
+	assert.True(t, err != nil)
+
+	// invalid quantity
+	msgAddMaterials = MsgAddMaterials{
+		AssetID: asset3.AssetID,
+		Sender:  addr,
+		Materials: Materials{
+			Material{AssetID: asset2.AssetID, Quantity: sdk.NewInt(100000)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -159,7 +279,7 @@ func TestKeeper(t *testing.T) {
 	// Test Finalize
 
 	// invalid sender
-	msgFinalize := MsgFinalize{
+	msgFinalize = MsgFinalize{
 		Sender:  addrs[0],
 		AssetID: assetChild1.AssetID,
 	}
@@ -182,21 +302,12 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.Finalize(ctx, msgFinalize)
 	assert.True(t, err != nil)
 
-	// valid
-	msgFinalize = MsgFinalize{
-		Sender:  addr,
-		AssetID: assetChild1.AssetID,
-	}
-	keeper.Finalize(ctx, msgFinalize)
-	newAsset, _ = keeper.GetAsset(ctx, msgFinalize.AssetID)
-	assert.True(t, newAsset.Final == true)
-
 	// create asset invalid parent
 	msgCreateAsset = MsgCreateAsset{
 		AssetID:  "asset5",
 		Sender:   addr,
 		Name:     "asset 5",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 		Parent:   assetChild1.AssetID,
 	}
 	_, err = keeper.CreateAsset(ctx, msgCreateAsset)
@@ -206,21 +317,21 @@ func TestKeeper(t *testing.T) {
 	// Test Add Quantity
 
 	// add quantity err
-	_, err = keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: assetChild1.AssetID, Sender: addr, Quantity: 50})
+	_, err = keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: assetChild1.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	assert.True(t, err != nil)
 
 	// Test add quantity
-	keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 50})
+	keeper.AddQuantity(ctx, MsgAddQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Quantity == 150)
+	assert.True(t, newAsset.Quantity.Equal(sdk.NewInt(150)))
 
 	// Test subtract quantity
-	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 50})
+	keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(50)})
 	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, newAsset.Quantity == 100)
+	assert.True(t, newAsset.Quantity.Equal(sdk.NewInt(100)))
 
 	// Test subtract quantity error
-	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: 102})
+	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(102)})
 	assert.True(t, err != nil)
 
 	// Test Update Properties
@@ -238,7 +349,7 @@ func TestKeeper(t *testing.T) {
 	props2 = props2.Sort()
 	props = props.Adds(props2...)
 	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-
+	fmt.Printf("%+v", newAsset)
 	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
 	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
 	assert.True(t, newAsset.Properties[1].Name == props[1].Name)
@@ -250,61 +361,247 @@ func TestKeeper(t *testing.T) {
 	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
 	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
 
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset10.AssetID, Sender: addr, Properties: props})
+
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: "adasdas", Sender: addr, Properties: props})
+
 	// invalid issuer
 	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
 	assert.True(t, err != nil)
 
-	// Test CreateReporter
-	msgCreateReporter := MsgCreateReporter{
-		AssetID:    asset.AssetID,
+	// CreateProposal Tests
+	// -------------------------------------------------------
+	msgCreateProposal := MsgCreateProposal{
 		Sender:     addr,
-		Reporter:   addr2,
+		AssetID:    asset.AssetID,
 		Properties: []string{"size"},
+		Recipient:  addr2,
+		Role:       RoleReporter,
 	}
-	keeper.CreateReporter(ctx, msgCreateReporter)
-	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, bytes.Equal(newAsset.Reporters[0].Addr, msgCreateReporter.Reporter))
-	assert.True(t, newAsset.Reporters[0].Properties[0] == msgCreateReporter.Properties[0])
+	keeper.AddProposal(ctx, msgCreateProposal)
+	proposal, found := keeper.GetProposal(ctx, msgCreateProposal.AssetID, msgCreateProposal.Recipient)
+	assert.True(t, found == true)
+	assert.True(t, bytes.Equal(proposal.Issuer, msgCreateProposal.Sender))
+	assert.True(t, bytes.Equal(proposal.Recipient, msgCreateProposal.Recipient))
+	assert.True(t, proposal.Properties[0] == msgCreateProposal.Properties[0])
+	assert.True(t, proposal.Role == msgCreateProposal.Role)
 
-	keeper.CreateReporter(ctx, msgCreateReporter)
-	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, bytes.Equal(newAsset.Reporters[0].Addr, msgCreateReporter.Reporter))
-	assert.True(t, newAsset.Reporters[0].Properties[0] == msgCreateReporter.Properties[0])
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr3,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
 
-	//Test invalid sender
-	msgCreateReporter.Sender = addr4
-	_, err = keeper.CreateReporter(ctx, msgCreateReporter)
+	// invalid sender
+	msgCreateProposal = MsgCreateProposal{
+		Sender:  addr2,
+		AssetID: asset.AssetID,
+	}
+	_, err = keeper.AddProposal(ctx, msgCreateProposal)
 	assert.True(t, err != nil)
 
-	// Tét Transfer asset
+	// invalid asset
+	msgCreateProposal = MsgCreateProposal{
+		Sender:  addr2,
+		AssetID: "adad",
+	}
+	_, err = keeper.AddProposal(ctx, msgCreateProposal)
+	assert.True(t, err != nil)
 
-	// Test invalid sender
-	msgTransfer := MsgTransfer{
-		Assets:    []string{asset.AssetID},
+	// AnswerProposal Tests
+	// -------------------------------------------------------
+
+	// answer role reporter
+
+	// Cancel/invalid owner
+	msgAnswerProposal := MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr2,
+		Response:  StatusCancel,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	// StatusRejected/invalid recipient
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr2,
+		Response:  StatusRejected,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	// Accepted/invalid recipient
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr2,
+		Response:  StatusAccepted,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	// invalid response
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr2,
+		Response:  5,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	// invalid proposal
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr4,
+		Response:  StatusAccepted,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err != nil)
+
+	// valid
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr2,
+		Recipient: addr2,
+		Response:  StatusAccepted,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, bytes.Equal(newAsset.Reporters[0].Addr, msgAnswerProposal.Recipient))
+	assert.True(t, newAsset.Reporters[0].Properties[0] == "size")
+
+	// test validate update property authorization
+	props = Properties{Property{Name: "size", NumberValue: 100, Type: 10}}
+	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
+	assert.True(t, err == nil)
+
+	// update reporter
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"weight"},
+		Recipient:  addr2,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr2,
+		Recipient: addr2,
+		Response:  StatusAccepted,
+	}
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err == nil)
+
+	// create proposal change owner
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr,
+		AssetID:    asset.AssetID,
+		Properties: []string{"size"},
+		Recipient:  addr2,
+		Role:       RoleOwner,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr2,
+		Recipient: addr2,
+		Response:  StatusAccepted,
+	}
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, bytes.Equal(msgAnswerProposal.Recipient, newAsset.Owner))
+
+	// delete proposal
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
 		Sender:    addr3,
 		Recipient: addr3,
+		Response:  StatusAccepted,
 	}
-	_, err = keeper.Transfer(ctx, msgTransfer)
+	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
+	assert.True(t, err == nil)
+	_, found = keeper.GetProposal(ctx, asset.AssetID, addr3)
+	assert.True(t, !found)
+
+	// RevokeReporter Test
+	//--------------------------------------------------------------
+
+	// invalid asset id
+	msgRevokeReporter := MsgRevokeReporter{
+		Sender:   addr2,
+		Reporter: addr3,
+		AssetID:  "adasdas",
+	}
+	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
 	assert.True(t, err != nil)
 
-	msgTransfer = MsgTransfer{
-		Assets:    []string{"adasd"},
-		Sender:    addr,
-		Recipient: addr3,
+	// invalid asset final
+	msgRevokeReporter = MsgRevokeReporter{
+		Sender:   addr2,
+		Reporter: addr3,
+		AssetID:  asset10.AssetID,
 	}
-	_, err = keeper.Transfer(ctx, msgTransfer)
+	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
 	assert.True(t, err != nil)
 
-	msgTransfer = MsgTransfer{
-		Assets:    []string{asset.AssetID},
-		Sender:    addr,
-		Recipient: addr3,
+	// invalid owner
+	msgRevokeReporter = MsgRevokeReporter{
+		Sender:   addr,
+		Reporter: addr3,
+		AssetID:  asset.AssetID,
 	}
-	keeper.Transfer(ctx, msgTransfer)
-	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, bytes.Equal(newAsset.Owner, msgTransfer.Recipient))
-	assert.True(t, newAsset.Reporters == nil)
+	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
+	assert.True(t, err != nil)
 
+	// invalid reporter
+	msgRevokeReporter = MsgRevokeReporter{
+		Sender:   addr2,
+		Reporter: addr,
+		AssetID:  asset.AssetID,
+	}
+	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
+	assert.True(t, err != nil)
+
+	// create reporter test revoke
+	msgCreateProposal = MsgCreateProposal{
+		Sender:     addr2,
+		AssetID:    asset.AssetID,
+		Properties: []string{"weight"},
+		Recipient:  addr3,
+		Role:       RoleReporter,
+	}
+	keeper.AddProposal(ctx, msgCreateProposal)
+	msgAnswerProposal = MsgAnswerProposal{
+		AssetID:   asset.AssetID,
+		Sender:    addr3,
+		Recipient: addr3,
+		Response:  StatusAccepted,
+	}
+	keeper.AnswerProposal(ctx, msgAnswerProposal)
+
+	// valid reporter
+	msgRevokeReporter = MsgRevokeReporter{
+		Sender:   addr2,
+		Reporter: addr3,
+		AssetID:  asset.AssetID,
+	}
+	keeper.RevokeReporter(ctx, msgRevokeReporter)
+	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
+	assert.True(t, len(newAsset.Reporters) == 0)
 }
 
 func TestFinalize(t *testing.T) {
@@ -316,19 +613,9 @@ func TestFinalize(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
-
-	// invalid asset
-	msgCreateReporter := MsgCreateReporter{
-		AssetID:    "dasdasd",
-		Sender:     addr,
-		Reporter:   addr2,
-		Properties: []string{"size"},
-	}
-	_, err := keeper.CreateReporter(ctx, msgCreateReporter)
-	assert.True(t, err != nil)
 
 	msgFinalize := MsgFinalize{
 		Sender:  addr,
@@ -341,7 +628,7 @@ func TestFinalize(t *testing.T) {
 		Sender:  addr,
 		AssetID: msgCreateAsset.AssetID,
 	}
-	_, err = keeper.Finalize(ctx, msgFinalize)
+	_, err := keeper.Finalize(ctx, msgFinalize)
 	assert.True(t, err != nil)
 
 }
@@ -355,7 +642,7 @@ func TestSubtractQuantity(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -363,7 +650,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity := MsgSubtractQuantity{
 		AssetID:  "45345",
 		Sender:   addr,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err := keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -372,7 +659,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity = MsgSubtractQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -381,7 +668,7 @@ func TestSubtractQuantity(t *testing.T) {
 	msgSubtractQuantity = MsgSubtractQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.SubtractQuantity(ctx, msgSubtractQuantity)
 	assert.True(t, err != nil)
@@ -406,7 +693,7 @@ func TestAddQuantity(t *testing.T) {
 		Sender:   addr,
 		Name:     "asset 1",
 		Unit:     "kg",
-		Quantity: 100,
+		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
 
@@ -414,7 +701,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity := MsgAddQuantity{
 		AssetID:  "45345",
 		Sender:   addr,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err := keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -423,7 +710,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity = MsgAddQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -432,7 +719,7 @@ func TestAddQuantity(t *testing.T) {
 	msgAddQuantity = MsgAddQuantity{
 		AssetID:  msgCreateAsset.AssetID,
 		Sender:   addr2,
-		Quantity: 102,
+		Quantity: sdk.NewInt(102),
 	}
 	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
 	assert.True(t, err != nil)
@@ -444,131 +731,10 @@ func TestAddQuantity(t *testing.T) {
 	keeper.Finalize(ctx, msgFinalize)
 
 	_, err = keeper.AddQuantity(ctx, msgAddQuantity)
-	assert.True(t, err != nil)
-
-}
-
-func TestCreateReporter(t *testing.T) {
-	ctx, _, keeper := createTestInput(t, false, 0)
-
-	// create asset
-	msgCreateAsset := MsgCreateAsset{
-		AssetID:  "asset1",
-		Sender:   addr,
-		Name:     "asset 1",
-		Unit:     "kg",
-		Quantity: 100,
-	}
-	keeper.CreateAsset(ctx, msgCreateAsset)
-
-	// invalid asset
-	msgCreateReporter := MsgCreateReporter{
-		AssetID:    "dasdasd",
-		Sender:     addr,
-		Reporter:   addr2,
-		Properties: []string{"size"},
-	}
-	_, err := keeper.CreateReporter(ctx, msgCreateReporter)
-	assert.True(t, err != nil)
-
-	msgFinalize := MsgFinalize{
-		Sender:  addr,
-		AssetID: msgCreateAsset.AssetID,
-	}
-	keeper.Finalize(ctx, msgFinalize)
-
-	msgCreateReporter = MsgCreateReporter{
-		AssetID:    msgCreateAsset.AssetID,
-		Sender:     addr,
-		Reporter:   addr2,
-		Properties: []string{"size"},
-	}
-	_, err = keeper.CreateReporter(ctx, msgCreateReporter)
 	assert.True(t, err != nil)
 
 }
 
 func TestRevokeReporter(t *testing.T) {
-	ctx, _, keeper := createTestInput(t, false, 0)
-
-	// create asset
-	msgCreateAsset := MsgCreateAsset{
-		AssetID:  "asset1",
-		Sender:   addr,
-		Name:     "asset 1",
-		Unit:     "kg",
-		Quantity: 100,
-	}
-	keeper.CreateAsset(ctx, msgCreateAsset)
-
-	// create reporter
-	msgCreateReporter := MsgCreateReporter{
-		AssetID:    msgCreateAsset.AssetID,
-		Sender:     addr,
-		Reporter:   addr2,
-		Properties: []string{"size"},
-	}
-	keeper.CreateReporter(ctx, msgCreateReporter)
-
-	// asset not found
-	msgRevokeReporter := MsgRevokeReporter{
-		AssetID:  "add3",
-		Sender:   addr,
-		Reporter: addr2,
-	}
-	_, err := keeper.RevokeReporter(ctx, msgRevokeReporter)
-	assert.True(t, err != nil)
-
-	// invalid owner
-	msgRevokeReporter = MsgRevokeReporter{
-		AssetID:  msgCreateAsset.AssetID,
-		Sender:   addr2,
-		Reporter: addr,
-	}
-	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
-	assert.True(t, err != nil)
-
-	// invalid reporter
-	msgRevokeReporter = MsgRevokeReporter{
-		AssetID:  msgCreateAsset.AssetID,
-		Sender:   addr,
-		Reporter: addr4,
-	}
-	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
-	assert.True(t, err != nil)
-
-	msgRevokeReporter = MsgRevokeReporter{
-		AssetID:  msgCreateAsset.AssetID,
-		Sender:   addr,
-		Reporter: addr2,
-	}
-	keeper.RevokeReporter(ctx, msgRevokeReporter)
-	newAsset, _ := keeper.GetAsset(ctx, asset.AssetID)
-	assert.True(t, len(newAsset.Reporters) == 0)
-
-	// create reporter
-	msgCreateReporter = MsgCreateReporter{
-		AssetID:    msgCreateAsset.AssetID,
-		Sender:     addr,
-		Reporter:   addr2,
-		Properties: []string{"size"},
-	}
-	keeper.CreateReporter(ctx, msgCreateReporter)
-
-	msgFinalize := MsgFinalize{
-		Sender:  addr,
-		AssetID: msgCreateAsset.AssetID,
-	}
-	keeper.Finalize(ctx, msgFinalize)
-
-	// invalid asset
-	// invalid reporter
-	msgRevokeReporter = MsgRevokeReporter{
-		AssetID:  msgCreateAsset.AssetID,
-		Sender:   addr,
-		Reporter: addr2,
-	}
-	_, err = keeper.RevokeReporter(ctx, msgRevokeReporter)
-	assert.True(t, err != nil)
 
 }

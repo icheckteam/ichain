@@ -49,13 +49,13 @@ func (k Keeper) setOrder(ctx sdk.Context, order Order) {
 	store.Set(orderKey, bz)
 }
 
-func (k Keeper) setOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+func (k Keeper) setOrderByAccountIndex(ctx sdk.Context, addr sdk.AccAddress, orderID string) {
 	store := ctx.KVStore(k.storeKey)
 	bz, _ := k.cdc.MarshalBinary(orderID)
 	store.Set(GetAccountOrderKey(addr, orderID), bz)
 }
 
-func (k Keeper) removeOrderByAccountIndex(ctx sdk.Context, addr sdk.Address, orderID string) {
+func (k Keeper) removeOrderByAccountIndex(ctx sdk.Context, addr sdk.AccAddress, orderID string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetAccountOrderKey(addr, orderID))
 }
