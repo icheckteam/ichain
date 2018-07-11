@@ -99,6 +99,16 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		k.setAssetByParentIndex(ctx, newAsset)
 	}
 
+	k.addInventory(ctx, newAsset.Owner, sdk.Coin{
+		Denom:  newAsset.GetRoot(),
+		Amount: newAsset.Quantity,
+	})
+
+	k.subtractInventory(ctx, newAsset.Owner, sdk.Coin{
+		Denom:  newAsset.GetRoot(),
+		Amount: sdk.NewInt(1),
+	})
+
 	return tags, nil
 }
 

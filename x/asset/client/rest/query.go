@@ -152,6 +152,118 @@ func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Co
 	return items, nil
 }
 
+func QueryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars["address"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		kvs, err := ctx.QuerySubspace(cdc, asset.GetInventoryByAccountKey(address), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
+			return
+		}
+
+		assets := make([]asset.Asset, len(kvs))
+		for index, kv := range kvs {
+			a := asset.Asset{}
+			var assetId string
+
+			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
+			res, err := ctx.QueryStore(asset.GetInventoryKey(address, assetId), storeName)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+			err = cdc.UnmarshalBinary(res, &a)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
+			assets[index] = a
+		}
+		output, err := cdc.MarshalJSON(assets)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+func QueryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars["address"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		kvs, err := ctx.QuerySubspace(cdc, asset.GetReporterAssetsKey(address), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
+			return
+		}
+
+		assets := make([]asset.Asset, len(kvs))
+		for index, kv := range kvs {
+			a := asset.Asset{}
+			var assetId string
+
+			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
+			res, err := ctx.QueryStore(asset.GetReporterAssetKey(address, assetId), storeName)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+			err = cdc.UnmarshalBinary(res, &a)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
+			assets[index] = a
+		}
+		output, err := cdc.MarshalJSON(assets)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
 func QueryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -171,6 +283,62 @@ func QueryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
 				return
 			}
+			proposals[index] = proposal
+		}
+		output, err := cdc.MarshalJSON(proposals)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+func QueryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars["address"])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		kvs, err := ctx.QuerySubspace(cdc, asset.GetProposalsAccountKey(address), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
+			return
+		}
+
+		proposals := make([]asset.Proposal, len(kvs))
+		for index, kv := range kvs {
+			proposal := asset.Proposal{}
+			var assetId string
+
+			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
+			res, err := ctx.QueryStore(asset.GetProposalAccountKey(address, assetId), storeName)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+			err = cdc.UnmarshalBinary(res, &proposal)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				return
+			}
+
 			proposals[index] = proposal
 		}
 		output, err := cdc.MarshalJSON(proposals)

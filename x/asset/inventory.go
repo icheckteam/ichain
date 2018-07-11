@@ -14,7 +14,7 @@ func (k Keeper) getInventory(ctx sdk.Context, addr sdk.AccAddress, assetID strin
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetInventoryKey(addr, assetID))
 	if b == nil {
-		return sdk.Coin{Amount: sdk.NewInt(0)}, false
+		return
 	}
 	k.cdc.MustUnmarshalBinary(b, &amount)
 	found = true
@@ -27,13 +27,22 @@ func (k Keeper) deleteInventory(ctx sdk.Context, addr sdk.AccAddress, assetID st
 }
 
 func (k Keeper) addInventory(ctx sdk.Context, addr sdk.AccAddress, addAmount sdk.Coin) {
-	amount, _ := k.getInventory(ctx, addr, addAmount.Denom)
+	amount, found := k.getInventory(ctx, addr, addAmount.Denom)
+
+	if !found {
+		amount = sdk.NewCoin(addAmount.Denom, 0)
+	}
+
 	amount = amount.Plus(addAmount)
 	k.setInventory(ctx, addr, amount)
 }
 
 func (k Keeper) subtractInventory(ctx sdk.Context, addr sdk.AccAddress, subAmount sdk.Coin) {
-	amount, _ := k.getInventory(ctx, addr, subAmount.Denom)
+	amount, found := k.getInventory(ctx, addr, subAmount.Denom)
+	if !found {
+		return
+	}
+
 	amount = amount.Minus(subAmount)
 
 	if amount.IsZero() {

@@ -73,10 +73,10 @@ func GetReporterAssetsKey(addr sdk.AccAddress) []byte {
 
 // GetProposalAccountKey ...
 func GetProposalAccountKey(addr sdk.AccAddress, assetID string) []byte {
-	return append(GetProposalsAccount(addr), []byte(assetID)...)
+	return append(GetProposalsAccountKey(addr), []byte(assetID)...)
 }
 
 // GetProposalsAccount ...
-func GetProposalsAccount(addr sdk.AccAddress) []byte {
+func GetProposalsAccountKey(addr sdk.AccAddress) []byte {
 	return append(ProposalsAccountKey, []byte(addr.String())...)
 }
