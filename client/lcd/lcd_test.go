@@ -111,6 +111,17 @@ func TestKeys(t *testing.T) {
 }
 
 func TestVersion(t *testing.T) {
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{})
+	defer cleanup()
+
+	// node info
+	res, body := Request(t, port, "GET", "/version", nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	reg, err := regexp.Compile(`\d+\.\d+\.\d+(-dev)?`)
+	require.Nil(t, err)
+	match := reg.MatchString(body)
+	require.True(t, match, body)
 
 }
 
@@ -712,7 +723,7 @@ func doDelegate(t *testing.T, port, seed, name, password string, delegatorAddr, 
 			{
 				"delegator_addr": "%s",
 				"validator_addr": "%s",
-				"bond": { "denom": "%s", "amount": "60" }
+				"delegation": { "denom": "%s", "amount": "60" }
 			}
 		],
 		"begin_unbondings": [],
