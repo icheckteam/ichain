@@ -84,8 +84,7 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "080dd5b97a90005cac0c730a81fd1d6864b9fd3e"
-  version = "v0.20.0"
+  revision = "e56379821c2c8a46c9dc396defde5a569e5ed0ee"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -585,6 +584,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "03ec41e9691ee4874f1432bb85e30b76596152c096d370fc53bf896ce7a63fc4"
+  inputs-digest = "21b3916fd6b5ff5646a6986a48003f73007334ff1870816c52fed4ac05afd150"
   solver-name = "gps-cdcl"
   solver-version = 1

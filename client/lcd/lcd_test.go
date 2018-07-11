@@ -350,6 +350,7 @@ func TestTxs(t *testing.T) {
 func TestValidatorsQuery(t *testing.T) {
 	cleanup, pks, port := InitializeTestLCD(t, 2, []sdk.AccAddress{})
 	defer cleanup()
+
 	require.Equal(t, 2, len(pks))
 
 	validators := getValidators(t, port)

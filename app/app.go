@@ -99,8 +99,8 @@ func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
 	// define the accountMapper
 	app.accountMapper = auth.NewAccountMapper(
 		app.cdc,
-		app.keyAccount,      // target store
-		&types.AppAccount{}, // prototype
+		app.keyAccount,        // target store
+		types.ProtoAppAccount, // prototype
 	)
 
 	// add handlers

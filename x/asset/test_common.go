@@ -68,9 +68,9 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
 	cdc := makeTestCodec()
 	accountMapper := auth.NewAccountMapper(
-		cdc,                 // amino codec
-		keyMain,             // target store
-		&types.AppAccount{}, // prototype
+		cdc,                   // amino codec
+		keyMain,               // target store
+		types.ProtoAppAccount, // prototype
 	)
 	assetKeeper := NewKeeper(keyAsset, cdc)
 	return ctx, accountMapper, assetKeeper
