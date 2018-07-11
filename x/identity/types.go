@@ -8,9 +8,8 @@ import (
 
 // Identity
 type Identity struct {
-	ID       int64          `json:"id"`    // id of the identity
-	Owner    sdk.AccAddress `json:"owner"` // owner of the identity
-	Defaults bool           `json:"defaults"`
+	ID    int64          `json:"id"`    // id of the identity
+	Owner sdk.AccAddress `json:"owner"` // owner of the identity
 }
 
 type Cert struct {

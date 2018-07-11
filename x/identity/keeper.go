@@ -35,9 +35,9 @@ func (k Keeper) SetIdentity(ctx sdk.Context, identity Identity) {
 	store.Set(KeyIdentity(identity.ID), bz)
 }
 
-func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identityID int64) {
+func (k Keeper) SetClaimedIdentity(ctx sdk.Context, account sdk.AccAddress, identity Identity) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(identityID)
+	bz := k.cdc.MustMarshalBinary(identity)
 	store.Set(KeyClaimedIdentity(account), bz)
 }
 
@@ -161,7 +161,7 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 			// special handling for owner
 			if value.Property == "owner" {
 				if bytes.Equal(msg.Certifier, ident.Owner) {
-					k.SetClaimedIdentity(ctx, msg.Certifier, ident.ID)
+					k.SetClaimedIdentity(ctx, msg.Certifier, ident)
 				}
 			}
 

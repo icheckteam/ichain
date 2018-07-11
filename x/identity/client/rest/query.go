@@ -16,6 +16,43 @@ import (
 
 const storeName = "identity"
 
+func claimedIdentHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		res, err := ctx.QueryStore(identity.KeyClaimedIdentity(address), storeName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
+			return
+		}
+
+		var ident identity.Identity
+		err = cdc.UnmarshalBinary(res, &ident)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't decode ident id. Error: %s", err.Error())))
+			return
+		}
+
+		output, err := cdc.MarshalJSON(ident)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
 func identsByAccountHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
