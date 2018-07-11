@@ -1,7 +1,6 @@
 package asset
 
 import (
-	"encoding/json"
 	"sort"
 	"strings"
 
@@ -20,61 +19,13 @@ type Property struct {
 	Location     Location     `json:"location_value,omitempty"`
 }
 
-func (msg Property) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Name         string          `json:"name"`
-		Type         PropertyType    `json:"type"`
-		BytesValue   []byte          `json:"bytes_value,omitempty"`
-		StringValue  string          `json:"string_value,omitempty"`
-		BooleanValue bool            `json:"boolean_value,omitempty"`
-		NumberValue  int64           `json:"number_value,omitempty"`
-		EnumValue    []string        `json:"enum_value,omitempty"`
-		Location     json.RawMessage `json:"location_value,omitempty"`
-	}{
-		Name:         msg.Name,
-		Type:         msg.Type,
-		BytesValue:   msg.BytesValue,
-		StringValue:  msg.StringValue,
-		BooleanValue: msg.BooleanValue,
-		NumberValue:  msg.NumberValue,
-		EnumValue:    msg.EnumValue,
-		Location:     msg.Location.GetSignBytes(),
-	})
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(b)
-}
-
 type Location struct {
 	Latitude  int64 `json:"latitude"`
 	Longitude int64 `json:"longitude"`
 }
 
-func (msg Location) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		Latitude  int64 `json:"latitude"`
-		Longitude int64 `json:"longitude"`
-	}{
-		Latitude:  msg.Latitude,
-		Longitude: msg.Longitude,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(b)
-}
-
 // list all properties
 type Properties []Property
-
-func (msg Properties) GetSignBytes() []json.RawMessage {
-	props := []json.RawMessage{}
-	for _, p := range msg {
-		props = append(props, p.GetSignBytes())
-	}
-	return props
-}
 
 func (propertiesA Properties) Adds(othersB ...Property) Properties {
 	sum := ([]Property)(nil)

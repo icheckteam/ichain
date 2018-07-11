@@ -14,6 +14,9 @@ var (
 	AccountProposalsKey = []byte{0x04} // prefix for each key to an account a proposal
 	ReportersKey        = []byte{0x05}
 	PropertiesKey       = []byte{0x06}
+	InventoryKey        = []byte{0x07}
+	ReporterAssetsKey   = []byte{0x08}
+	ProposalsAccountKey = []byte{0x09}
 )
 
 // GetAssetKey get the key for the record with address
@@ -46,4 +49,34 @@ func GetProposalKey(assetID string, recipient sdk.AccAddress) []byte {
 
 func GetProposalsKey(assetID string) []byte {
 	return append(ProposalsKey, []byte(assetID)...)
+}
+
+// GetInventoryKey ...
+func GetInventoryKey(addr sdk.AccAddress, assetID string) []byte {
+	return append(GetInventoryByAccountKey(addr), []byte(assetID)...)
+}
+
+// GetInventoryKey ...
+func GetInventoryByAccountKey(addr sdk.AccAddress) []byte {
+	return append(InventoryKey, []byte(addr.String())...)
+}
+
+// GetInventoryKey ...
+func GetReporterAssetKey(addr sdk.AccAddress, assetID string) []byte {
+	return append(GetReporterAssetsKey(addr), []byte(assetID)...)
+}
+
+// GetInventoryKey ...
+func GetReporterAssetsKey(addr sdk.AccAddress) []byte {
+	return append(ReporterAssetsKey, []byte(addr.String())...)
+}
+
+// GetProposalAccountKey ...
+func GetProposalAccountKey(addr sdk.AccAddress, assetID string) []byte {
+	return append(GetProposalsAccount(addr), []byte(assetID)...)
+}
+
+// GetProposalsAccount ...
+func GetProposalsAccount(addr sdk.AccAddress) []byte {
+	return append(ProposalsAccountKey, []byte(addr.String())...)
 }

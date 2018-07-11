@@ -31,15 +31,21 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		materialsToSave = append(materialsToSave, m)
 	}
 	asset.Materials = asset.Materials.Plus(msg.Amount.Sort())
-	materialsToSave = append(materialsToSave, asset)
 	tags := sdk.NewTags(
 		TagAsset, []byte(asset.ID),
 		TagSender, []byte(msg.Sender.String()),
 	)
-	for _, meterialToSave := range materialsToSave {
+	for index, meterialToSave := range materialsToSave {
+		// subtract inventory
+		k.subtractInventory(ctx, asset.Owner, sdk.Coin{
+			Denom:  asset.GetRoot(),
+			Amount: msg.Amount[index].Amount,
+		})
+
 		k.setAsset(ctx, meterialToSave)
 		tags = tags.AppendTag(TagAsset, []byte(meterialToSave.ID))
 	}
-
+	k.setAsset(ctx, asset)
+	tags = tags.AppendTag(TagAsset, []byte(asset.ID))
 	return tags, nil
 }

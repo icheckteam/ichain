@@ -31,6 +31,13 @@ func (a Asset) IsOwner(addr sdk.AccAddress) bool {
 	return bytes.Equal(a.Owner, addr)
 }
 
+func (a Asset) GetRoot() string {
+	if len(a.Root) == 0 {
+		return a.ID
+	}
+	return a.Root
+}
+
 // CheckUpdateAttributeAuthorization returns whether the address is authorized to update the attribute
 func (a Asset) CheckUpdateAttributeAuthorization(address sdk.AccAddress, prop Property) bool {
 	if a.IsOwner(address) {
