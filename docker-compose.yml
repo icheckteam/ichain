@@ -3,21 +3,21 @@ version: '3'
 services:
   ichaindnode0:
     container_name: ichaindnode0
-    image: "icheckteam/ichaindnode"
+    image: icheckteam/ichaindnode
     ports:
       - "26656-26657:26656-26657"
     environment:
       - ID=0
       - LOG=$${LOG:-ichaind.log}
     volumes:
-      - ./build:/ichaind:Z
+      - ./build:/ichaind
     networks:
       localnet:
         ipv4_address: 192.168.10.2
 
   ichaindnode1:
     container_name: ichaindnode1
-    image: "icheckteam/ichaindnode"
+    image: icheckteam/ichaindnode
     ports:
       - "26659-26660:26656-26657"
     environment:
@@ -31,7 +31,7 @@ services:
 
   ichaindnode2:
     container_name: ichaindnode2
-    image: "icheckteam/ichaindnode"
+    image: icheckteam/ichaindnode
     environment:
       - ID=2
       - LOG=$${LOG:-ichaind.log}
@@ -45,7 +45,7 @@ services:
 
   ichaindnode3:
     container_name: ichaindnode3
-    image: "icheckteam/ichaindnode"
+    image: icheckteam/ichaindnode
     environment:
       - ID=3
       - LOG=$${LOG:-ichaind.log}
@@ -63,5 +63,4 @@ networks:
     ipam:
       driver: default
       config:
-      -
-subnet: 192.168.10.0/16
+        - subnet: 192.168.10.0/16
