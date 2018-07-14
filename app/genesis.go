@@ -130,15 +130,14 @@ func GaiaAppGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (genesisState
 		}
 		acc := types.NewGenesisAccount(&accAuth)
 		genaccs[i] = acc
-		stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens + freeFermionsAcc // increase the supply
-
+		stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens.Add(sdk.NewRat(freeFermionsAcc)) // increase the supply
 		// add the validator
 		if len(genTx.Name) > 0 {
 			desc := stake.NewDescription(genTx.Name, "", "", "")
 			validator := stake.NewValidator(genTx.Address,
 				sdk.MustGetAccPubKeyBech32(genTx.PubKey), desc)
 
-			stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens + freeFermionVal // increase the supply
+			stakeData.Pool.LooseTokens = stakeData.Pool.LooseTokens.Add(sdk.NewRat(freeFermionVal)) // increase the supply
 
 			// add some new shares to the validator
 			var issuedDelShares sdk.Rat

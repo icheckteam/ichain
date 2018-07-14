@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -75,12 +76,16 @@ type IchainApp struct {
 }
 
 // NewIchainApp  new ichain application
-func NewIchainApp(logger log.Logger, db dbm.DB) *IchainApp {
+func NewIchainApp(logger log.Logger, db dbm.DB, traceStore io.Writer, baseAppOptions ...func(*bam.BaseApp)) *IchainApp {
 	// Create app-level codec for txs and accounts.
 	var cdc = MakeCodec()
+
+	bApp := bam.NewBaseApp(appName, cdc, logger, db, baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
+
 	// create your application object
 	var app = &IchainApp{
-		BaseApp:          bam.NewBaseApp(appName, cdc, logger, db),
+		BaseApp:          bApp,
 		cdc:              cdc,
 		keyMain:          sdk.NewKVStoreKey("main"),
 		keyAccount:       sdk.NewKVStoreKey("acc"),

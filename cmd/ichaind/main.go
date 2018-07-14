@@ -2,14 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	dbm "github.com/tendermint/tendermint/libs/db"
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/icheckteam/ichain/app"
 )
@@ -33,11 +36,11 @@ func main() {
 	executor.Execute()
 }
 
-func newApp(logger log.Logger, db dbm.DB) abci.Application {
-	return app.NewIchainApp(logger, db)
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+	return app.NewIchainApp(logger, db, traceStore, baseapp.SetPruning(viper.GetString("pruning")))
 }
 
-func exportAppState(logger log.Logger, db dbm.DB) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	bapp := app.NewIchainApp(logger, db)
+func exportAppState(logger log.Logger, db dbm.DB, traceStore io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+	bapp := app.NewIchainApp(logger, db, traceStore)
 	return bapp.ExportAppStateJSON()
 }
