@@ -20,6 +20,8 @@ type Cert struct {
 	Trust      bool           `json:"trust"`
 	Data       Metadata       `json:"data"`
 	Confidence bool           `json:"confidence"`
+	Expires    int64          `json:"expires"`
+	CreatedAt  int64          `json:"created_at"`
 }
 
 type CertValue struct {
@@ -27,6 +29,7 @@ type CertValue struct {
 	Type       string   `json:"type"`
 	Data       Metadata `json:"data"`
 	Confidence bool     `json:"confidence"`
+	Expires    int64    `json:"expires"`
 }
 
 // quick validity check
@@ -38,21 +41,11 @@ func (msg CertValue) ValidateBasic() sdk.Error {
 }
 
 func (msg CertValue) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(struct {
-		Property   string   `json:"property"`
-		Type       string   `json:"type"`
-		Data       Metadata `json:"data"`
-		Confidence bool     `json:"confidence"`
-	}{
-		Property:   msg.Property,
-		Type:       msg.Type,
-		Data:       msg.Data,
-		Confidence: msg.Confidence,
-	})
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 type Certs []Cert
