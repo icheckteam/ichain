@@ -99,15 +99,12 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		k.setAssetByParentIndex(ctx, newAsset)
 	}
 
-	k.addInventory(ctx, newAsset.Owner, sdk.Coin{
-		Denom:  newAsset.GetRoot(),
-		Amount: newAsset.Quantity,
-	})
-
-	k.subtractInventory(ctx, newAsset.Owner, sdk.Coin{
-		Denom:  newAsset.GetRoot(),
-		Amount: sdk.NewInt(1),
-	})
+	if len(newAsset.Parent) == 0 {
+		k.addInventory(ctx, newAsset.Owner, sdk.Coin{
+			Denom:  newAsset.GetRoot(),
+			Amount: newAsset.Quantity,
+		})
+	}
 
 	return tags, nil
 }
@@ -232,7 +229,7 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 
 	// delete all index for reporter
 	for _, reporter := range asset.Reporters {
-		k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+		k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
 	}
 
 	// subtract inventory
