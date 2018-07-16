@@ -14,6 +14,7 @@ type Identity struct {
 
 type Cert struct {
 	ID         string         `json:"id"`
+	Context    string         `json:"context"`
 	Property   string         `json:"property"`
 	Certifier  sdk.AccAddress `json:"certifier"`
 	Type       string         `json:"type"`
@@ -22,14 +23,18 @@ type Cert struct {
 	Confidence bool           `json:"confidence"`
 	Expires    int64          `json:"expires"`
 	CreatedAt  int64          `json:"created_at"`
+	Revocation Revocation     `json:"revocation"`
 }
 
 type CertValue struct {
-	Property   string   `json:"property"`
-	Type       string   `json:"type"`
-	Data       Metadata `json:"data"`
-	Confidence bool     `json:"confidence"`
-	Expires    int64    `json:"expires"`
+	ID         string     `json:"id"`
+	Context    string     `json:"context"`
+	Property   string     `json:"property"`
+	Type       string     `json:"type"`
+	Data       Metadata   `json:"data"`
+	Confidence bool       `json:"confidence"`
+	Expires    int64      `json:"expires"`
+	Revocation Revocation `json:"revocation"`
 }
 
 // quick validity check
@@ -72,4 +77,9 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 type Trust struct {
 	Trustor  sdk.AccAddress `json:"trustor"`
 	Trusting sdk.AccAddress `json:"trusting"`
+}
+
+type Revocation struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
 }

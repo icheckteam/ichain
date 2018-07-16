@@ -134,5 +134,5 @@ func TestMsgSetCertsGetSignBytes(t *testing.T) {
 		IdentityID: 1,
 		Values:     []CertValue{CertValue{Property: "owner", Type: "realname", Confidence: true}},
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetCerts\",\"value\":{\"certifier\":\"cosmosaccaddr1v9jxgu333rmgrm\",\"identity_id\":\"1\",\"values\":[{\"confidence\":true,\"data\":null,\"property\":\"owner\",\"type\":\"realname\"}]}}")
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetCerts\",\"value\":{\"certifier\":\"cosmosaccaddr1v9jxgu333rmgrm\",\"identity_id\":\"1\",\"values\":[{\"confidence\":true,\"context\":\"\",\"data\":null,\"expires\":\"0\",\"id\":\"\",\"property\":\"owner\",\"revocation\":{\"id\":\"\",\"type\":\"\"},\"type\":\"realname\"}]}}")
 }
