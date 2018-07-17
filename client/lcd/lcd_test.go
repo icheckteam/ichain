@@ -1101,9 +1101,9 @@ func doCreateAsset(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"name": "test",
@@ -1111,7 +1111,7 @@ func doCreateAsset(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"quantity": "100",
 		"unit": "kg",
 		"properties": [
-			{"name": "size", "type": 4, "number_value": 50}
+			{"name": "size", "type": "4", "number_value": "50"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1136,13 +1136,13 @@ func doUpdateProperties(t *testing.T, port, seed, name, password string, addr sd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"properties": [
-			{"name": "size", "type": 4, "number_value": 50}
+			{"name": "size", "type": "4", "number_value": "50"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1167,9 +1167,9 @@ func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.Ac
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"amount": [
@@ -1197,9 +1197,9 @@ func doAddQuantity(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"quantity": "5"
@@ -1225,9 +1225,9 @@ func doSubtractQuantity(t *testing.T, port, seed, name, password string, addr sd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"quantity": "5"
@@ -1253,9 +1253,9 @@ func doFinalizeAsset(t *testing.T, port, seed, name, password string, addr sdk.A
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1281,14 +1281,14 @@ func doCreateProposal(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"recipient": "%s",
 		"properties": ["size"],
-		"role": 1
+		"role": "1"
 	}`, name, password, accnum, sequence, chainID, recipient))
 
 	res, body := Request(t, port, "POST", "/assets/test/proposals", jsonStr)
@@ -1312,12 +1312,12 @@ func doAnswerProposal(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"response": 1
+		"response": "1"
 	}`, name, password, accnum, sequence, chainID))
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/test/proposals/%s/answer", recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -1339,9 +1339,9 @@ func doRevokeReporter(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1448,9 +1448,9 @@ func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting 
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"trust": true
@@ -1476,9 +1476,9 @@ func doCreateIdentity(t *testing.T, port, seed, name, password string, addr sdk.
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1503,9 +1503,9 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"values": [

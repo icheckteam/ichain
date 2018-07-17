@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -27,7 +26,7 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m createAssetBody
 		body, err := ioutil.ReadAll(r.Body)
-		err = json.Unmarshal(body, &m)
+		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
