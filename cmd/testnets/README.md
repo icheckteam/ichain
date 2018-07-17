@@ -1,0 +1,344 @@
+# Connect to the `ichain` Testnet
+
+Note: We are aware this documentation is a work in progress. We are actively
+working to improve the tooling and the documentation to make this process as painless as
+possible. In the meantime, join the [Chat](https://t.me/ichainproject)
+for technical support, and [open issues](https://github.com/icheckteam/ichain) if you run into any! Thanks very much for your patience and support. :)
+
+## Setting Up a New Node
+
+These instructions are for setting up a brand new full node from scratch. If you ran a full node on a previous testnet, please skip to [Upgrading From Previous Testnet](#upgrading-from-previous-testnet).
+
+### Install Go
+
+Install `go` by following the [official docs](https://golang.org/doc/install).
+**Go 1.10+** is required for the Cosmos SDK. Remember to properly setup your `$GOPATH`, `$GOBIN`, and `$PATH` variables, for example:
+
+```bash
+mkdir -p $HOME/go/bin
+echo "export GOPATH=$HOME/go" >> ~/.bash_profile
+echo "export GOBIN=$GOPATH/bin" >> ~/.bash_profile
+echo "export PATH=$PATH:$GOBIN" >> ~/.bash_profile
+```
+
+### Install Ichain
+
+Next, let's install the testnet's version of the Cosmos SDK.
+
+```bash
+mkdir -p $GOPATH/src/github.com/icheckteam
+cd $GOPATH/src/github.com/icheckteam
+git clone https://github.com/icheckteam/ichain
+cd ichain && git checkout v0.2.1
+make get_tools && make get_vendor_deps && make install
+```
+
+That will install the `ichaind` and `ichaincli` binaries. Verify that everything is OK:
+
+```bash
+$ ichaind version
+0.19.0-c6711810
+
+$ ichaincli version
+0.2.1
+```
+
+### Node Setup
+
+Create the required configuration files, and initialize the node:
+
+```bash
+ichaind init --name <your_custom_name>
+```
+
+> *NOTE:* Note that only ASCII characters are supported for the `--name`. Using Unicode renders your node unreachable.
+
+You can also edit this `name` in the `~/.ichaind/config/config.toml` file:
+
+```toml
+# A custom human readable name for this node
+moniker = "<your_custom_name>"
+```
+
+Your full node has been initialized! Please skip to [Genesis & Seeds](#genesis--seeds).
+
+## Upgrading From Previous Testnet
+
+These instructions are for full nodes that have ran on previous testnets and would like to upgrade to the latest testnet.
+
+### Reset Data
+
+First, remove the outdated files and reset the data.
+
+```bash
+rm $HOME/.ichaind/config/addrbook.json $HOME/.ichaind/config/genesis.json
+ichaind unsafe_reset_all
+```
+
+Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before,
+your node will still try to connect to them, but may fail if they haven't also
+been upgraded.
+
+**WARNING:** Make sure that every node has a unique `priv_validator.json`. Do not copy the `priv_validator.json` from an old node to multiple new nodes. Running two nodes with the same `priv_validator.json` will cause you to double sign.
+
+### Software Upgrade
+
+Now it is time to upgrade the software:
+
+```bash
+cd $GOPATH/src/github.com/icheckteam/ichain
+git fetch --all && git checkout v0.2.1
+make update_tools && make get_vendor_deps && make install
+```
+
+Your full node has been cleanly upgraded!
+
+## Genesis & Seeds
+
+### Copy the Genesis File
+
+Copy the testnet's `genesis.json` file and place it in `gaiad`'s config directory.
+
+```bash
+mkdir -p $HOME/.gaiad/config
+cp -a $GOPATH/src/github.com/icheckteam/testnets/genesis.json $HOME/.ichaind/config/genesis.json
+```
+
+### Add Seed Nodes
+
+Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.gaiad/config/config.toml`. Here are some seed nodes you can use:
+
+```toml
+# Comma separated list of seed nodes to connect to
+seeds = "7c439fdf98b1485d083d28091e973c6f335c48ed@125.212.225.51:4399"
+```
+
+If those seeds aren't working, you can find more seeds and persistent peers on the [Ichain Explorer](http://125.212.225.51:4397). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
+
+For more information on seeds and peers, [read this](https://github.com/tendermint/tendermint/blob/develop/docs/using-tendermint.md#peers).
+
+## Run a Full Node
+
+Start the full node with this command:
+
+```bash
+ichaind start
+```
+
+Check that everything is running smoothly:
+
+```bash
+ichaincli status
+```
+
+View the status of the network with the [Ichain Explorer](http://125.212.225.51:4397). Once your full node syncs up to the current block height, you should see it appear on the [list of full nodes](http://125.212.225.51:4397/validators). If it doesn't show up, that's ok--the Explorer does not connect to every node.
+
+## Generating Keys
+
+### A Note on Keys in Cosmos:
+
+There are three types of key representations that are used in this tutorial:
+
+- `cosmosaccaddr`
+  * Derived from account keys generated by `ichaincli keys add`
+  * Used to receive funds
+  * e.g. `cosmosaccaddr15h6vd5f0wqps26zjlwrc6chah08ryu4hzzdwhc`
+
+- `cosmosaccpub`
+  * Derived from account keys generated by `ichaincli keys add`
+  * e.g. `cosmosaccpub1zcjduc3q7fu03jnlu2xpl75s2nkt7krm6grh4cc5aqth73v0zwmea25wj2hsqhlqzm`
+
+- `cosmosvalpub`
+  * Generated when the node is created with `gaiad init`.
+  * Get this value with `ichaind tendermint show_validator`
+  * e.g. `cosmosvalpub1zcjduc3qcyj09qc03elte23zwshdx92jm6ce88fgc90rtqhjx8v0608qh5ssp0w94c`
+
+### Key Generation
+
+You'll need an account private and public key pair \(a.k.a. `sk, pk` respectively\) to be able to receive funds, send txs, bond tx, etc.
+
+To generate a new key \(default _ed25519_ elliptic curve\):
+
+```bash
+ichaincli keys add <account_name>
+```
+
+Next, you will have to create a passphrase to protect the key on disk. The output of the above command will contain a _seed phrase_. Save the _seed phrase_ in a safe place in case you forget the password!
+
+If you check your private keys, you'll now see `<account_name>`:
+
+```bash
+ichaincli keys show <account_name>
+```
+
+You can see all your available keys by typing:
+
+```bash
+ichaincli keys list
+```
+
+View the validator pubkey for your node by typing:
+
+```bash
+ichaincli tendermint show_validator
+```
+
+**WARNING:** We strongly recommend NOT using the same passphrase for multiple keys. The Ichain team will not be responsible for the loss of funds.
+
+## Run a Validator Node
+
+Your `cosmosvalpub` can be used to create a new validator by staking tokens. You can find your validator pubkey by running:
+
+```bash
+ichaind tendermint show_validator
+```
+
+Next, craft your `ichaincli stake create-validator` command:
+
+```bash
+ichaincli stake create-validator \
+  --amount=5tomato \
+  --pubkey=$(gaiad tendermint show_validator) \
+  --address-validator=<account_cosmosaccaddr>
+  --moniker=<choose_a_moniker> \
+  --chain-id=ichain \
+  --name=<key_name>
+```
+
+You can add more information to the validator, such as`--website`, `--keybase-sig`, or `--details`. Here's how:
+
+```bash
+ichaincli stake edit-validator \
+  --details="To the ichain!" \
+  --website="https://icheck.vn"
+```
+
+View the validator's information with this command:
+
+```bash
+ichaincli stake validator \
+  --address-validator=<account_cosmosaccaddr> \
+  --chain-id=ichain
+```
+
+Your validator is active if the following command returns anything:
+
+```bash
+ichaincli advanced tendermint validator-set | grep "$(ichaincli tendermint show_validator)"
+```
+
+You should also be able to see your validator on the [Explorer](http://125.212.225.51:4397/validators). You are looking for the `bech32` encoded `address` in the `~/.ichaind/config/priv_validator.json` file.
+
+> _*Note:*_ To be in the validator set, you need to have more total voting power than the 100th validator. This is not normally an issue.
+
+### Problem #1: My validator has `voting_power: 0`
+
+Your validator has become auto-unbonded. In `ichain`, we unbond validators if they do not vote on `50` of the last `100` blocks. Since blocks are proposed every ~2 seconds, a validator unresponsive for ~100 seconds will become unbonded. This usually happens when your `ichaind` process crashes.
+
+Here's how you can return the voting power back to your validator. First, if `ichaind` is not running, start it up again:
+
+```bash
+ichaind start
+```
+
+Wait for your full node to catch up to the latest block. Next, run the following command. Note that `<cosmosaccaddr>` is the address of your validator account, and `<name>` is the name of the validator account. You can find this info by running `ichaincli keys list`.
+
+```bash
+ichaincli stake unrevoke <cosmosaccaddr> --chain-id=ichain --name=<name>
+```
+
+**WARNING:** If you don't wait for `ichaind` to sync before running `unrevoke`, you will receive an error message telling you your validator is still jailed.
+
+Lastly, check your validator again to see if your voting power is back.
+
+```bash
+ichaincli status
+```
+
+You may notice that your voting power is less than it used to be. That's because you got slashed for downtime!
+
+### Problem #2: My `ichaind` crashes because of `too many open files`
+
+The default number of files Linux can open (per-process) is `1024`. `gaiad` is known to open more than `1024` files. This causes the process to crash. A quick fix is to run `ulimit -n 4096` (increase the number of open files allowed) and then restart the process with `gaiad start`. If you are using `systemd` or another process manager to launch `gaiad` this may require some configuration at that level. A sample `systemd` file to fix this issue is below:
+
+```toml
+# /etc/systemd/system/ichaincli.service
+[Unit]
+Description=Ichain Node
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu
+ExecStart=/home/ubuntu/go/bin/ichaind start
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
+### Bond Tokens
+```bash
+ichaincli stake delegate \
+  --amount=10tomato \
+  --address-delegator=<account_cosmosaccaddr> \
+  --address-validator=$(ichaincli tendermint show_validator) \
+  --name=<key_name> \
+  --chain-id=ichain
+```
+
+While tokens are bonded, they are pooled with all the other bonded tokens in the network. Validators and delegators obtain a percentage of shares that equal their stake in this pool.
+### Unbond Tokens
+
+If for any reason the validator misbehaves, or you want to unbond a certain amount of tokens, use this following command. You can unbond a specific amount of`shares`\(eg:`12.1`\) or all of them \(`MAX`\).
+
+```bash
+ichaincli stake unbond \
+  --address-delegator=<account_cosmosaccaddr> \
+  --address-validator=$(ichaind tendermint show_validator) \
+  --shares=MAX \
+  --name=<key_name> \
+  --chain-id=ichain
+```
+
+You can check your balance and your stake delegation to see that the unbonding went through successfully.
+
+```bash
+ichaincli account <account_cosmosaccaddr>
+
+ichaincli stake delegation \
+  --address-delegator=<account_cosmosaccaddr> \
+  --address-validator=$(ichaind tendermint show_validator) \
+  --chain-id=ichain
+```
+
+## Other Operations
+
+### Send Tokens
+
+```bash
+ichaincli send \
+  --amount=10tomato \
+  --chain-id=ichain \
+  --name=<key_name> \
+  --to=<destination_cosmosaccaddr>
+```
+
+> _*Note:*_ The `--amount` flag accepts the format `--amount=<value|coin_name>`.
+
+Now, view the updated balances of the origin and destination accounts:
+
+```bash
+ichaincli account <account_cosmosaccaddr>
+ichaincli account <destination_cosmosaccaddr>
+```
+
+You can also check your balance at a given block by using the `--block` flag:
+
+```bash
+ichaincli account <account_cosmosaccaddr> --block=<block_height>
+```

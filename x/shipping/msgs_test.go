@@ -69,7 +69,7 @@ func TestCreateOrderMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"ichain/CreateOrderMsg\",\"value\":{\"carrier\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\",\"id\":\"1\",\"issuer\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"receiver\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgzxdzhqs\",\"transported_assets\":[{\"id\":\"tomato\"}]}}")
+	assert.Equal(t, string(res), "{\"type\":\"shipping/CreateOrderMsg\",\"value\":{\"carrier\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgpg7hpw0\",\"id\":\"1\",\"issuer\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"receiver\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgzxdzhqs\",\"transported_assets\":[{\"id\":\"tomato\"}]}}")
 }
 
 // ----------------------------------------
@@ -117,7 +117,7 @@ func TestConfirmOrderMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"ichain/ConfirmOrderMsg\",\"value\":{\"carrier_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\",\"order_id\":\"1\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"shipping/ConfirmOrderMsg\",\"value\":{\"carrier_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\",\"order_id\":\"1\"}}")
 }
 
 // ----------------------------------------
@@ -171,7 +171,7 @@ func TestCompleteOrderMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"ichain/CompleteOrderMsg\",\"value\":{\"order_id\":\"1\",\"receiver_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"shipping/CompleteOrderMsg\",\"value\":{\"order_id\":\"1\",\"receiver_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\"}}")
 }
 
 // ----------------------------------------
@@ -225,5 +225,5 @@ func TestCancelOrderMsgGetSignBytes(t *testing.T) {
 
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"ichain/CancelOrderMsg\",\"value\":{\"issuer_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\",\"order_id\":\"2\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"shipping/CancelOrderMsg\",\"value\":{\"issuer_id\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgrmmkzaz\",\"order_id\":\"2\"}}")
 }

@@ -30,6 +30,11 @@ Ichain is a blockchain based on tendermint. Ichain makes deploying, multiple net
 - Multiple networks connection
 - Identification of digital identity.
 
+## Ichain Testnet
+
+For more information on connecting to the testnet, see
+[cmd/testnets](/cmd/testnets)
+
 ## Install
 
 See the [install instructions](/docs/install.md)
