@@ -82,8 +82,23 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		}
 
 		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
+
+		// clone data
 		newAsset.Unit = parent.Unit
+		newAsset.Type = parent.Type
+		newAsset.Subtype = parent.Subtype
 		k.setAsset(ctx, parent)
+	}
+
+	// index type/subtype for asset
+	if len(msg.Parent) == 0 && len(msg.Properties) > 0 {
+		for _, prop := range msg.Properties {
+			if prop.Name == "type" {
+				newAsset.Type = prop.StringValue
+			} else if prop.Name == "subtype" {
+				newAsset.Subtype = prop.StringValue
+			}
+		}
 	}
 
 	if len(msg.Properties) > 0 {
