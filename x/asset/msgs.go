@@ -197,9 +197,9 @@ func (msg MsgSubtractQuantity) GetSignBytes() []byte {
 
 // MsgAddMaterials ...
 type MsgAddMaterials struct {
-	AssetID   string         `json:"asset_id"`
-	Sender    sdk.AccAddress `json:"sender"`
-	Materials Materials      `json:"materials"`
+	AssetID string         `json:"asset_id"`
+	Sender  sdk.AccAddress `json:"sender"`
+	Amount  sdk.Coins      `json:"amount"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
@@ -214,15 +214,15 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 	if len(msg.AssetID) == 0 {
 		return ErrMissingField("asset_id")
 	}
-	if len(msg.Materials) == 0 {
-		return ErrMissingField("asset_id")
+	if len(msg.Amount) == 0 {
+		return ErrMissingField("amount")
 	}
-	for i, material := range msg.Materials {
-		if len(material.AssetID) == 0 {
-			return ErrMissingField(fmt.Sprintf("materials[%d].asset_id is required", i))
+	for i, coin := range msg.Amount {
+		if len(coin.Denom) == 0 {
+			return ErrMissingField(fmt.Sprintf("amount[%d].denom is required", i))
 		}
-		if material.Quantity.IsZero() {
-			return ErrMissingField(fmt.Sprintf("materials[%d].quantity is required", i))
+		if coin.Amount.IsZero() {
+			return ErrMissingField(fmt.Sprintf("amount[%d].amount is required", i))
 		}
 	}
 

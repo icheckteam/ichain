@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -24,7 +23,7 @@ func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 
 		var m finalizeBody
 		body, err := ioutil.ReadAll(r.Body)
-		err = json.Unmarshal(body, &m)
+		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

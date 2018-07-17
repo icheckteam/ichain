@@ -82,8 +82,23 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		}
 
 		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
+
+		// clone data
 		newAsset.Unit = parent.Unit
+		newAsset.Type = parent.Type
+		newAsset.Subtype = parent.Subtype
 		k.setAsset(ctx, parent)
+	}
+
+	// index type/subtype for asset
+	if len(msg.Parent) == 0 && len(msg.Properties) > 0 {
+		for _, prop := range msg.Properties {
+			if prop.Name == "type" {
+				newAsset.Type = prop.StringValue
+			} else if prop.Name == "subtype" {
+				newAsset.Subtype = prop.StringValue
+			}
+		}
 	}
 
 	if len(msg.Properties) > 0 {
@@ -99,6 +114,13 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		k.setAssetByParentIndex(ctx, newAsset)
 	}
 
+	if len(newAsset.Parent) == 0 {
+		k.addInventory(ctx, newAsset.Owner, sdk.Coin{
+			Denom:  newAsset.GetRoot(),
+			Amount: newAsset.Quantity,
+		})
+	}
+
 	return tags, nil
 }
 
@@ -106,7 +128,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 	ctx.GasMeter().ConsumeGas(costSetAsset, "setAsset")
 	store := ctx.KVStore(k.storeKey)
-	// set main store
 	bz := k.cdc.MustMarshalBinary(asset)
 	store.Set(GetAssetKey(asset.ID), bz)
 }
@@ -166,6 +187,12 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 		return nil, err
 	}
 
+	// add inventory
+	k.addInventory(ctx, asset.Owner, sdk.Coin{
+		Denom:  asset.GetRoot(),
+		Amount: msg.Quantity,
+	})
+
 	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
@@ -186,6 +213,12 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	if err := asset.ValidateSubtractQuantity(msg.Sender, msg.Quantity); err != nil {
 		return nil, err
 	}
+
+	// subtract inventory
+	k.subtractInventory(ctx, asset.Owner, sdk.Coin{
+		Denom:  asset.GetRoot(),
+		Amount: msg.Quantity,
+	})
 
 	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
@@ -211,8 +244,15 @@ func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error)
 
 	// delete all index for reporter
 	for _, reporter := range asset.Reporters {
-		k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+		k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
 	}
+
+	// subtract inventory
+	k.subtractInventory(ctx, asset.Owner, sdk.Coin{
+		Denom:  asset.GetRoot(),
+		Amount: asset.Quantity,
+	})
+
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		TagAsset, []byte(msg.AssetID),

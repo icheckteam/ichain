@@ -33,7 +33,7 @@ func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags
 	if reporter == nil {
 		return nil, ErrInvalidRevokeReporter(msg.Reporter)
 	}
-
+	k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
 	asset.Reporters = append(asset.Reporters[:reporterIndex], asset.Reporters[reporterIndex+1:]...)
 
 	k.setAsset(ctx, asset)
@@ -43,4 +43,15 @@ func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags
 		TagRecipient, []byte(msg.Reporter.String()),
 	)
 	return tags, nil
+}
+
+func (k Keeper) setAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, assetId string) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(assetId)
+	store.Set(GetReporterAssetKey(reporter, assetId), bz)
+}
+
+func (k Keeper) removeAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, assetId string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetReporterAssetKey(reporter, assetId))
 }

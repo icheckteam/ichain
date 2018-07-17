@@ -333,12 +333,12 @@ func TestMsgAddMaterialsValidation(t *testing.T) {
 		valid bool
 		tx    MsgAddMaterials
 	}{
-		{false, MsgAddMaterials{}},                                                                                                   // no asset info
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1"}},                                                                        // missing quantity
-		{false, MsgAddMaterials{Sender: addr1}},                                                                                      // missing id
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(0)}}}}, //
-		{true, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(1)}}}},  //
-		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Materials: Materials{Material{Quantity: sdk.NewInt(1)}}}},               //
+		{false, MsgAddMaterials{}},                                                                    // no asset info
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1"}},                                         // missing quantity
+		{false, MsgAddMaterials{Sender: addr1}},                                                       // missing id
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Amount: sdk.Coins{sdk.NewCoin("1", 0)}}}, //
+		{false, MsgAddMaterials{Sender: addr1, AssetID: "1", Amount: sdk.Coins{sdk.NewCoin("", 1)}}},
+		{true, MsgAddMaterials{Sender: addr1, AssetID: "1", Amount: sdk.Coins{sdk.NewCoin("1", 1)}}},
 	}
 
 	for i, tc := range cases {
@@ -354,13 +354,13 @@ func TestMsgAddMaterialsValidation(t *testing.T) {
 func TestMsgAddMaterialsGetSignBytes(t *testing.T) {
 	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgAddMaterials{
-		Sender:    addr1,
-		AssetID:   "1",
-		Materials: Materials{Material{AssetID: "1", Quantity: sdk.NewInt(1)}},
+		Sender:  addr1,
+		AssetID: "1",
+		Amount:  sdk.Coins{sdk.NewCoin("1", 1)},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"asset/AddMaterials\",\"value\":{\"asset_id\":\"1\",\"materials\":[{\"asset_id\":\"1\",\"quantity\":\"1\"}],\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/AddMaterials\",\"value\":{\"amount\":[{\"amount\":\"1\",\"denom\":\"1\"}],\"asset_id\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestMsgGetSigners(t *testing.T) {

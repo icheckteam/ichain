@@ -14,19 +14,27 @@ type Identity struct {
 
 type Cert struct {
 	ID         string         `json:"id"`
+	Context    string         `json:"context"`
 	Property   string         `json:"property"`
 	Certifier  sdk.AccAddress `json:"certifier"`
 	Type       string         `json:"type"`
 	Trust      bool           `json:"trust"`
 	Data       Metadata       `json:"data"`
 	Confidence bool           `json:"confidence"`
+	Expires    int64          `json:"expires"`
+	CreatedAt  int64          `json:"created_at"`
+	Revocation Revocation     `json:"revocation"`
 }
 
 type CertValue struct {
-	Property   string   `json:"property"`
-	Type       string   `json:"type"`
-	Data       Metadata `json:"data"`
-	Confidence bool     `json:"confidence"`
+	ID         string     `json:"id"`
+	Context    string     `json:"context"`
+	Property   string     `json:"property"`
+	Type       string     `json:"type"`
+	Data       Metadata   `json:"data"`
+	Confidence bool       `json:"confidence"`
+	Expires    int64      `json:"expires"`
+	Revocation Revocation `json:"revocation"`
 }
 
 // quick validity check
@@ -38,21 +46,11 @@ func (msg CertValue) ValidateBasic() sdk.Error {
 }
 
 func (msg CertValue) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(struct {
-		Property   string   `json:"property"`
-		Type       string   `json:"type"`
-		Data       Metadata `json:"data"`
-		Confidence bool     `json:"confidence"`
-	}{
-		Property:   msg.Property,
-		Type:       msg.Type,
-		Data:       msg.Data,
-		Confidence: msg.Confidence,
-	})
+	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
 	}
-	return b
+	return sdk.MustSortJSON(b)
 }
 
 type Certs []Cert
@@ -79,4 +77,9 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 type Trust struct {
 	Trustor  sdk.AccAddress `json:"trustor"`
 	Trusting sdk.AccAddress `json:"trusting"`
+}
+
+type Revocation struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
 }

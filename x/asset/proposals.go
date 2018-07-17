@@ -102,7 +102,7 @@ func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, s
 		Recipient:  msg.Recipient,
 	}
 	k.SetProposal(ctx, asset.ID, proposal)
-
+	k.setProposalAccountIndex(ctx, msg.Recipient, asset.ID)
 	tags := sdk.NewTags(
 		TagAsset, []byte(asset.ID),
 		TagRecipient, []byte(msg.Recipient.String()),
@@ -123,7 +123,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	}
 	// delete proposal
 	k.DeleteProposal(ctx, msg.AssetID, proposal.Recipient)
-
+	k.removeProposalAccountIndex(ctx, msg.Recipient, msg.AssetID)
 	asset, _ := k.GetAsset(ctx, msg.AssetID)
 	if !asset.IsOwner(proposal.Issuer) {
 		// Only delete the proposal
@@ -133,13 +133,25 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	if msg.Response == StatusAccepted {
 		switch proposal.Role {
 		case RoleOwner:
+			// subtract inventory
+			k.subtractInventory(ctx, asset.Owner, sdk.Coin{
+				Denom:  asset.GetRoot(),
+				Amount: asset.Quantity,
+			})
+
 			// update owner
 			asset.Owner = proposal.Recipient
 			asset.Reporters = Reporters{}
 			for _, reporter := range asset.Reporters {
-				k.removeAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+				k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
 			}
 			k.setAssetByAccountIndex(ctx, asset.ID, proposal.Recipient)
+
+			// ADD inventory
+			k.addInventory(ctx, asset.Owner, sdk.Coin{
+				Denom:  asset.GetRoot(),
+				Amount: asset.Quantity,
+			})
 			break
 		case RoleReporter:
 			// add reporter
@@ -157,7 +169,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 					Created:    ctx.BlockHeader().Time,
 				}
 				asset.Reporters = append(asset.Reporters, *reporter)
-				k.setAssetByAccountIndex(ctx, asset.ID, reporter.Addr)
+				k.setAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
 			}
 			break
 		default:
@@ -171,4 +183,14 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 		TagSender, []byte(msg.Recipient.String()),
 	)
 	return tags, nil
+}
+
+func (k Keeper) setProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(assetId)
+	store.Set(GetProposalAccountKey(addr, assetId), bz)
+}
+func (k Keeper) removeProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(GetProposalAccountKey(addr, assetId))
 }

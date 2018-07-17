@@ -21,19 +21,23 @@ type baseBody struct {
 
 func (b baseBody) Validate() error {
 	if b.Name == "" {
-		return errors.New("account_name is required")
+		return errors.New("name required but not specified")
 	}
 	if b.Password == "" {
-		return errors.New("password is required")
+		return errors.New("password required but not specified")
 	}
 	if b.Gas == 0 {
-		return errors.New("gas is required")
+		return errors.New("gas required but not specified")
 	}
 	if len(b.ChainID) == 0 {
-		return errors.New("chain_id is required")
+		return errors.New("chain_id required but not specified")
 	}
-	if b.AccountNumber == 0 {
-		return errors.New("account_number is required")
+	if b.AccountNumber < 0 {
+		return errors.New("account_number required but not specified")
+	}
+
+	if b.Sequence < 0 {
+		return errors.New("sequence required but not specified")
 	}
 	return nil
 }

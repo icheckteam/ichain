@@ -143,16 +143,24 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 			if !found {
 				// new cert
 				cert = Cert{
+					ID:         value.ID,
+					Context:    value.Context,
 					Property:   value.Property,
 					Certifier:  msg.Certifier,
 					Confidence: value.Confidence,
 					Data:       value.Data,
 					Type:       value.Type,
+					Expires:    value.Expires,
+					CreatedAt:  ctx.BlockHeader().Time,
+					Revocation: value.Revocation,
 				}
+			} else if value.Revocation.ID != "" {
+				cert.Revocation = value.Revocation
 			} else {
 				// update cert
 				cert.Data = value.Data
 				cert.Type = value.Type
+				cert.Expires = value.Expires
 			}
 
 			// add cert

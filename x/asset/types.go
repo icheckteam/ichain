@@ -19,7 +19,7 @@ type Asset struct {
 	Root       string         `json:"root"`   // the id of the asset root
 	Final      bool           `json:"final"`
 	Properties Properties     `json:"properties"`
-	Materials  Materials      `json:"materials"`
+	Materials  sdk.Coins      `json:"materials"`
 	Quantity   sdk.Int        `json:"quantity"`
 	Unit       string         `json:"unit"`
 	Created    int64          `json:"created"`
@@ -29,6 +29,13 @@ type Asset struct {
 // IsOwner check is owner of the asset
 func (a Asset) IsOwner(addr sdk.AccAddress) bool {
 	return bytes.Equal(a.Owner, addr)
+}
+
+func (a Asset) GetRoot() string {
+	if len(a.Root) == 0 {
+		return a.ID
+	}
+	return a.Root
 }
 
 // CheckUpdateAttributeAuthorization returns whether the address is authorized to update the attribute

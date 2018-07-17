@@ -1,0 +1,215 @@
+{
+  "genesis_time": "2018-07-17T00:29:06.90358706Z",
+  "chain_id": "ichain",
+  "consensus_params": {
+    "block_size_params": {
+      "max_bytes": "22020096",
+      "max_txs": "10000",
+      "max_gas": "-1"
+    },
+    "tx_size_params": {
+      "max_bytes": "10240",
+      "max_gas": "-1"
+    },
+    "block_gossip_params": {
+      "block_part_size_bytes": "65536"
+    },
+    "evidence_params": {
+      "max_age": "100000"
+    }
+  },
+  "validators": [
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "jxld/OXwNUihmsum5IysFExsUP8xHg0A2gKwGdGZOmc="
+      },
+      "power": "100"
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "0nXAWmi1VqF9qKcht7PsWs5uJxYVWV2Pw4UpDJXRyXg="
+      },
+      "power": "10",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "WIMGlyxzvh3i7qETDO2Z1E33N1PKE3GUnrW1QY5+M3w="
+      },
+      "power": "10",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "RK4gZnNbSZxT8/SOUxPE4B8gdyDQUAsgfmdfWKv8IE4="
+      },
+      "power": "10",
+      "name": ""
+    }
+  ],
+  "app_hash": "",
+  "app_state": {
+    "accounts": [
+      {
+        "address": "cosmosaccaddr174gv4l5tx96hdx879whs49ce94grs34r2005lm",
+        "coins": [
+          {
+            "denom": "tomato",
+            "amount": "9007199254740992"
+          }
+        ]
+      }
+    ],
+    "stake": {
+      "pool": {
+        "loose_tokens": "16200",
+        "bonded_tokens": "0",
+        "inflation_last_time": "0",
+        "inflation": "7/100",
+        "date_last_commission_reset": "0",
+        "prev_bonded_shares": "0"
+      },
+      "params": {
+        "inflation_rate_change": "13/100",
+        "inflation_max": "1/5",
+        "inflation_min": "7/100",
+        "goal_bonded": "67/100",
+        "unbonding_time": "86400",
+        "max_validators": 100,
+        "bond_denom": "tomato"
+      },
+      "validators": [
+        {
+          "owner": "cosmosaccaddr174gv4l5tx96hdx879whs49ce94grs34r2005lm",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "jxld/OXwNUihmsum5IysFExsUP8xHg0A2gKwGdGZOmc="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "thangn",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        },
+        {
+          "owner": "cosmosaccaddr1k5fzw50j7wjcnl0uq6e8mqmc7sh38x7dkxwn2f",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "0nXAWmi1VqF9qKcht7PsWs5uJxYVWV2Pw4UpDJXRyXg="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "ducdv",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        },
+        {
+          "owner": "cosmosaccaddr1rvcuxzn5r40tkt7aqhx8mnm08ugyuws7y3h5hk",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "WIMGlyxzvh3i7qETDO2Z1E33N1PKE3GUnrW1QY5+M3w="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "bada",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        },
+        {
+          "owner": "cosmosaccaddr168zusgwruuww5deznr5du0ecu29d28h7lz88fl",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "RK4gZnNbSZxT8/SOUxPE4B8gdyDQUAsgfmdfWKv8IE4="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "validator",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        }
+      ],
+      "bonds": [
+        {
+          "delegator_addr": "cosmosaccaddr174gv4l5tx96hdx879whs49ce94grs34r2005lm",
+          "validator_addr": "cosmosaccaddr174gv4l5tx96hdx879whs49ce94grs34r2005lm",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr1k5fzw50j7wjcnl0uq6e8mqmc7sh38x7dkxwn2f",
+          "validator_addr": "cosmosaccaddr1k5fzw50j7wjcnl0uq6e8mqmc7sh38x7dkxwn2f",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr1rvcuxzn5r40tkt7aqhx8mnm08ugyuws7y3h5hk",
+          "validator_addr": "cosmosaccaddr1rvcuxzn5r40tkt7aqhx8mnm08ugyuws7y3h5hk",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr168zusgwruuww5deznr5du0ecu29d28h7lz88fl",
+          "validator_addr": "cosmosaccaddr168zusgwruuww5deznr5du0ecu29d28h7lz88fl",
+          "shares": "100",
+          "height": "0"
+        }
+      ]
+    }
+  }
+}

@@ -22,4 +22,7 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb 
 	r.HandleFunc("/assets/{id}/proposals", QueryProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 	r.HandleFunc("/assets/{id}/proposals/{recipient}/answer", AnswerProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/accounts/{address}/assets", QueryAccountAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/inventory", QueryInventoryHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/proposals", QueryAccountProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/report-assets", QueryReporterAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 }

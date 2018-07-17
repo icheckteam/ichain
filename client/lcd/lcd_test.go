@@ -7,21 +7,22 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/icheckteam/ichain/x/asset"
-	"github.com/icheckteam/ichain/x/identity"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/common"
 	p2p "github.com/tendermint/tendermint/p2p"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	"github.com/tendermint/tmlibs/common"
+
+	"github.com/icheckteam/ichain/client/rpc"
+	"github.com/icheckteam/ichain/x/asset"
+	"github.com/icheckteam/ichain/x/identity"
 
 	client "github.com/cosmos/cosmos-sdk/client"
-	keys "github.com/cosmos/cosmos-sdk/client/keys"
-	rpc "github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	tests "github.com/cosmos/cosmos-sdk/tests"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -29,7 +30,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/stake"
-	stakerest "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 )
 
 func init() {
@@ -55,7 +55,7 @@ func TestKeys(t *testing.T) {
 	newPassword := "0987654321"
 
 	// add key
-	jsonStr := []byte(fmt.Sprintf(`{"name":"%s", "password":"%s"}`, newName, newPassword))
+	jsonStr := []byte(fmt.Sprintf(`{"name":"%s", "password":"%s", "seed":"%s"}`, newName, newPassword, seed))
 	res, body = Request(t, port, "POST", "/keys", jsonStr)
 
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -66,6 +66,11 @@ func TestKeys(t *testing.T) {
 	addr2Bech32 := resp.Address.String()
 	_, err = sdk.AccAddressFromBech32(addr2Bech32)
 	require.NoError(t, err, "Failed to return a correct bech32 address")
+
+	// test if created account is the correct account
+	expectedInfo, _ := GetKB(t).CreateKey(newName, seed, newPassword)
+	expectedAccount := sdk.AccAddress(expectedInfo.GetPubKey().Address().Bytes())
+	assert.Equal(t, expectedAccount.String(), addr2Bech32)
 
 	// existing keys
 	res, body = Request(t, port, "GET", "/keys", nil)
@@ -123,7 +128,6 @@ func TestVersion(t *testing.T) {
 	require.Nil(t, err)
 	match := reg.MatchString(body)
 	require.True(t, match, body)
-
 }
 
 func TestNodeStatus(t *testing.T) {
@@ -325,7 +329,7 @@ func TestTxs(t *testing.T) {
 
 	// XXX should this move into some other testfile for txs in general?
 	// test if created TX hash is the correct hash
-	require.Equal(t, resultTx.Hash, indexedTxs[0].Hash)
+	require.Equal(t, resultTx.Hash.String(), indexedTxs[0].Hash.String())
 
 	// query sender
 	// also tests url decoding
@@ -350,7 +354,6 @@ func TestTxs(t *testing.T) {
 func TestValidatorsQuery(t *testing.T) {
 	cleanup, pks, port := InitializeTestLCD(t, 2, []sdk.AccAddress{})
 	defer cleanup()
-
 	require.Equal(t, 2, len(pks))
 
 	validators := getValidators(t, port)
@@ -439,7 +442,7 @@ func TestSubmitProposal(t *testing.T) {
 
 	// query proposal
 	proposal := getProposal(t, port, proposalID)
-	require.Equal(t, "Test", proposal.Title)
+	require.Equal(t, "Test", proposal.GetTitle())
 }
 
 func TestDeposit(t *testing.T) {
@@ -461,7 +464,7 @@ func TestDeposit(t *testing.T) {
 
 	// query proposal
 	proposal := getProposal(t, port, proposalID)
-	require.Equal(t, "Test", proposal.Title)
+	require.Equal(t, "Test", proposal.GetTitle())
 
 	// create SubmitProposal TX
 	resultTx = doDeposit(t, port, seed, name, password, addr, proposalID)
@@ -469,7 +472,7 @@ func TestDeposit(t *testing.T) {
 
 	// query proposal
 	proposal = getProposal(t, port, proposalID)
-	require.True(t, proposal.TotalDeposit.IsEqual(sdk.Coins{sdk.NewCoin("steak", 10)}))
+	require.True(t, proposal.GetTotalDeposit().IsEqual(sdk.Coins{sdk.NewCoin("steak", 10)}))
 
 	// query deposit
 	deposit := getDeposit(t, port, proposalID, addr)
@@ -495,7 +498,7 @@ func TestVote(t *testing.T) {
 
 	// query proposal
 	proposal := getProposal(t, port, proposalID)
-	require.Equal(t, "Test", proposal.Title)
+	require.Equal(t, "Test", proposal.GetTitle())
 
 	// create SubmitProposal TX
 	resultTx = doDeposit(t, port, seed, name, password, addr, proposalID)
@@ -503,7 +506,7 @@ func TestVote(t *testing.T) {
 
 	// query proposal
 	proposal = getProposal(t, port, proposalID)
-	require.Equal(t, gov.StatusToString(gov.StatusVotingPeriod), proposal.Status)
+	require.Equal(t, gov.StatusVotingPeriod, proposal.GetStatus())
 
 	// create SubmitProposal TX
 	resultTx = doVote(t, port, seed, name, password, addr, proposalID)
@@ -511,7 +514,7 @@ func TestVote(t *testing.T) {
 
 	vote := getVote(t, port, proposalID, addr)
 	require.Equal(t, proposalID, vote.ProposalID)
-	require.Equal(t, gov.VoteOptionToString(gov.OptionYes), vote.Option)
+	require.Equal(t, gov.OptionYes, vote.Option)
 }
 
 func TestUnrevoke(t *testing.T) {
@@ -572,31 +575,31 @@ func TestProposalsQuery(t *testing.T) {
 
 	// Test query all proposals
 	proposals := getProposalsAll(t, port)
-	require.Equal(t, proposalID1, (proposals[0]).ProposalID)
-	require.Equal(t, proposalID2, (proposals[1]).ProposalID)
-	require.Equal(t, proposalID3, (proposals[2]).ProposalID)
+	require.Equal(t, proposalID1, (proposals[0]).GetProposalID())
+	require.Equal(t, proposalID2, (proposals[1]).GetProposalID())
+	require.Equal(t, proposalID3, (proposals[2]).GetProposalID())
 
 	// Test query deposited by addr1
 	proposals = getProposalsFilterDepositer(t, port, addr)
-	require.Equal(t, proposalID1, (proposals[0]).ProposalID)
+	require.Equal(t, proposalID1, (proposals[0]).GetProposalID())
 
 	// Test query deposited by addr2
 	proposals = getProposalsFilterDepositer(t, port, addr2)
-	require.Equal(t, proposalID2, (proposals[0]).ProposalID)
-	require.Equal(t, proposalID3, (proposals[1]).ProposalID)
+	require.Equal(t, proposalID2, (proposals[0]).GetProposalID())
+	require.Equal(t, proposalID3, (proposals[1]).GetProposalID())
 
 	// Test query voted by addr1
 	proposals = getProposalsFilterVoter(t, port, addr)
-	require.Equal(t, proposalID2, (proposals[0]).ProposalID)
-	require.Equal(t, proposalID3, (proposals[1]).ProposalID)
+	require.Equal(t, proposalID2, (proposals[0]).GetProposalID())
+	require.Equal(t, proposalID3, (proposals[1]).GetProposalID())
 
 	// Test query voted by addr2
 	proposals = getProposalsFilterVoter(t, port, addr2)
-	require.Equal(t, proposalID3, (proposals[0]).ProposalID)
+	require.Equal(t, proposalID3, (proposals[0]).GetProposalID())
 
 	// Test query voted and deposited by addr1
 	proposals = getProposalsFilterVoterDepositer(t, port, addr, addr)
-	require.Equal(t, proposalID2, (proposals[0]).ProposalID)
+	require.Equal(t, proposalID2, (proposals[0]).GetProposalID())
 }
 
 //_____________________________________________________________________________
@@ -759,7 +762,7 @@ func doBeginUnbonding(t *testing.T, port, seed, name, password string,
 		"password": "%s",
 		"account_number": "%d",
 		"sequence": "%d",
-		"gas": "10000",
+		"gas": "20000",
 		"chain_id": "%s",
 		"delegations": [],
 		"begin_unbondings": [
@@ -824,78 +827,78 @@ func doBeginRedelegation(t *testing.T, port, seed, name, password string,
 	return results[0]
 }
 
-func getValidators(t *testing.T, port string) []stakerest.StakeValidatorOutput {
+func getValidators(t *testing.T, port string) []stake.BechValidator {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", "/stake/validators", nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var validators []stakerest.StakeValidatorOutput
+	var validators []stake.BechValidator
 	err := cdc.UnmarshalJSON([]byte(body), &validators)
 	require.Nil(t, err)
 	return validators
 }
 
-func getProposal(t *testing.T, port string, proposalID int64) gov.ProposalRest {
+func getProposal(t *testing.T, port string, proposalID int64) gov.Proposal {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals/%d", proposalID), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var proposal gov.ProposalRest
+	var proposal gov.Proposal
 	err := cdc.UnmarshalJSON([]byte(body), &proposal)
 	require.Nil(t, err)
 	return proposal
 }
 
-func getDeposit(t *testing.T, port string, proposalID int64, depositerAddr sdk.AccAddress) gov.DepositRest {
+func getDeposit(t *testing.T, port string, proposalID int64, depositerAddr sdk.AccAddress) gov.Deposit {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals/%d/deposits/%s", proposalID, depositerAddr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var deposit gov.DepositRest
+	var deposit gov.Deposit
 	err := cdc.UnmarshalJSON([]byte(body), &deposit)
 	require.Nil(t, err)
 	return deposit
 }
 
-func getVote(t *testing.T, port string, proposalID int64, voterAddr sdk.AccAddress) gov.VoteRest {
+func getVote(t *testing.T, port string, proposalID int64, voterAddr sdk.AccAddress) gov.Vote {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals/%d/votes/%s", proposalID, voterAddr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var vote gov.VoteRest
+	var vote gov.Vote
 	err := cdc.UnmarshalJSON([]byte(body), &vote)
 	require.Nil(t, err)
 	return vote
 }
 
-func getProposalsAll(t *testing.T, port string) []gov.ProposalRest {
+func getProposalsAll(t *testing.T, port string) []gov.Proposal {
 	res, body := Request(t, port, "GET", "/gov/proposals", nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
-	var proposals []gov.ProposalRest
+	var proposals []gov.Proposal
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
 }
 
-func getProposalsFilterDepositer(t *testing.T, port string, depositerAddr sdk.AccAddress) []gov.ProposalRest {
+func getProposalsFilterDepositer(t *testing.T, port string, depositerAddr sdk.AccAddress) []gov.Proposal {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals?depositer=%s", depositerAddr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
-	var proposals []gov.ProposalRest
+	var proposals []gov.Proposal
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
 }
 
-func getProposalsFilterVoter(t *testing.T, port string, voterAddr sdk.AccAddress) []gov.ProposalRest {
+func getProposalsFilterVoter(t *testing.T, port string, voterAddr sdk.AccAddress) []gov.Proposal {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals?voter=%s", voterAddr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
-	var proposals []gov.ProposalRest
+	var proposals []gov.Proposal
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
 }
 
-func getProposalsFilterVoterDepositer(t *testing.T, port string, voterAddr, depositerAddr sdk.AccAddress) []gov.ProposalRest {
+func getProposalsFilterVoterDepositer(t *testing.T, port string, voterAddr, depositerAddr sdk.AccAddress) []gov.Proposal {
 	res, body := Request(t, port, "GET", fmt.Sprintf("/gov/proposals?depositer=%s&voter=%s", depositerAddr, voterAddr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
-	var proposals []gov.ProposalRest
+	var proposals []gov.Proposal
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
@@ -997,7 +1000,6 @@ func doVote(t *testing.T, port, seed, name, password string, proposerAddr sdk.Ac
 
 	return results
 }
-
 func TestCreateAsset(t *testing.T) {
 
 	name, password := "test", "1234567890"
@@ -1099,9 +1101,9 @@ func doCreateAsset(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"name": "test",
@@ -1109,7 +1111,7 @@ func doCreateAsset(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"quantity": "100",
 		"unit": "kg",
 		"properties": [
-			{"name": "size", "type": 4, "number_value": 50}
+			{"name": "size", "type": "4", "number_value": "50"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1134,13 +1136,13 @@ func doUpdateProperties(t *testing.T, port, seed, name, password string, addr sd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"properties": [
-			{"name": "size", "type": 4, "number_value": 50}
+			{"name": "size", "type": "4", "number_value": "50"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1165,13 +1167,13 @@ func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.Ac
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"materials": [
-			{"asset_id": "test", "quantity": "5"}
+		"amount": [
+			{"denom": "test", "amount": "5"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1195,9 +1197,9 @@ func doAddQuantity(t *testing.T, port, seed, name, password string, addr sdk.Acc
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"quantity": "5"
@@ -1223,9 +1225,9 @@ func doSubtractQuantity(t *testing.T, port, seed, name, password string, addr sd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"quantity": "5"
@@ -1251,9 +1253,9 @@ func doFinalizeAsset(t *testing.T, port, seed, name, password string, addr sdk.A
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1279,14 +1281,14 @@ func doCreateProposal(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"recipient": "%s",
 		"properties": ["size"],
-		"role": 1
+		"role": "1"
 	}`, name, password, accnum, sequence, chainID, recipient))
 
 	res, body := Request(t, port, "POST", "/assets/test/proposals", jsonStr)
@@ -1310,12 +1312,12 @@ func doAnswerProposal(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"response": 1
+		"response": "1"
 	}`, name, password, accnum, sequence, chainID))
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/test/proposals/%s/answer", recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -1337,9 +1339,9 @@ func doRevokeReporter(t *testing.T, port, seed, name, password string, addr, rec
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1446,9 +1448,9 @@ func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting 
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"trust": true
@@ -1474,9 +1476,9 @@ func doCreateIdentity(t *testing.T, port, seed, name, password string, addr sdk.
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		}
 	}`, name, password, accnum, sequence, chainID))
@@ -1501,9 +1503,9 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 		"base_req": {
 			"name": "%s",
 			"password": "%s",
-			"account_number": %d,
-			"sequence": %d,
-			"gas": 10000,
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
 			"chain_id": "%s"
 		},
 		"values": [
