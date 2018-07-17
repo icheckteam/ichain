@@ -7,9 +7,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	govcmd "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
@@ -18,6 +15,9 @@ import (
 	stakecmd "github.com/cosmos/cosmos-sdk/x/stake/client/cli"
 
 	"github.com/icheckteam/ichain/app"
+	"github.com/icheckteam/ichain/client/lcd"
+	"github.com/icheckteam/ichain/client/rpc"
+	"github.com/icheckteam/ichain/client/tx"
 	"github.com/icheckteam/ichain/version"
 )
 
@@ -46,7 +46,7 @@ func main() {
 		Short: "Tendermint state querying subcommands",
 	}
 	tendermintCmd.AddCommand(
-		rpc.BlockCommand(),
+		rpc.BlockCommand(cdc),
 		rpc.ValidatorCommand(),
 	)
 	tx.AddCommands(tendermintCmd, cdc)
