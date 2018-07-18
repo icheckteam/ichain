@@ -13,6 +13,7 @@ type baseBody struct {
 	Sequence      int64  `json:"sequence"`
 	AccountNumber int64  `json:"account_number"`
 	Gas           int64  `json:"gas"`
+	Memo          string `json:"memo"`
 }
 
 func (b baseBody) Validate() error {

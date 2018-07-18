@@ -17,6 +17,7 @@ type baseBody struct {
 	Sequence      int64  `json:"sequence"`
 	AccountNumber int64  `json:"account_number"`
 	Gas           int64  `json:"gas"`
+	Memo          string `json:"memo"`
 }
 
 func (b baseBody) Validate() error {
@@ -47,6 +48,11 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	ctx = ctx.WithAccountNumber(m.AccountNumber)
 	ctx = ctx.WithSequence(m.Sequence)
 	ctx = ctx.WithChainID(m.ChainID)
+
+	if len(m.Memo) > 0 {
+		ctx.WithMemo(m.Memo)
+	}
+
 	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
