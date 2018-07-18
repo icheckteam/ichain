@@ -107,7 +107,7 @@ Fetch the testnet's `genesis.json` file and place it in `ichaind`'s config direc
 
 ```bash
 mkdir -p $HOME/.ichaind/config
-curl https://gist.githubusercontent.com/cwgoes/311da6ba05be6e113185a716538a44c3/raw/7b6e784cf29761b5781488006313bd69d164aa6c/chris-final.json > $HOME/.ichaind/config/genesis.json
+curl https://raw.githubusercontent.com/icheckteam/ichain/master/cmd/testnets/genesis.json > $HOME/.ichaind/config/genesis.json
 ```
 
 ### Add Seed Nodes
