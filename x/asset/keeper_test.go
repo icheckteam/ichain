@@ -2,7 +2,6 @@ package asset
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,12 +15,17 @@ var (
 	addr4 = sdk.AccAddress([]byte("addr4"))
 
 	asset = MsgCreateAsset{
-		AssetID:    "asset1",
-		Sender:     addr,
-		Name:       "asset 1",
-		Unit:       "kg",
-		Quantity:   sdk.NewInt(100),
-		Properties: Properties{Property{Name: "size", StringValue: "34343"}},
+		AssetID:  "asset1",
+		Sender:   addr,
+		Name:     "asset 1",
+		Unit:     "kg",
+		Quantity: sdk.NewInt(100),
+		Properties: Properties{
+			Property{Name: "size", StringValue: "size"},
+			Property{Name: "barcode", StringValue: "barcode"},
+			Property{Name: "type", StringValue: "type"},
+			Property{Name: "subtype", StringValue: "subtype"},
+		},
 	}
 
 	asset2 = MsgCreateAsset{
@@ -90,6 +94,9 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
 	assert.True(t, newAsset.Unit == "kg")
+	assert.True(t, newAsset.Description.Barcode == "barcode")
+	assert.True(t, newAsset.Description.Type == "type")
+	assert.True(t, newAsset.Description.Subtype == "subtype")
 	assert.True(t, newAsset.Properties[0].Name == asset.Properties[0].Name)
 	assert.True(t, newAsset.Properties[0].StringValue == asset.Properties[0].StringValue)
 
@@ -334,45 +341,6 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.SubtractQuantity(ctx, MsgSubtractQuantity{AssetID: asset.AssetID, Sender: addr, Quantity: sdk.NewInt(102)})
 	assert.True(t, err != nil)
 
-	// Test Update Properties
-	props := Properties{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
-	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
-	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	props = props.Sort()
-	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
-	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
-	assert.True(t, newAsset.Properties[1].Name == props[1].Name)
-	assert.True(t, newAsset.Properties[1].NumberValue == props[1].NumberValue)
-
-	props2 := Properties{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
-	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props2})
-	props2 = props2.Sort()
-	props = props.Adds(props2...)
-	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
-	fmt.Printf("%+v", newAsset)
-	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
-	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
-	assert.True(t, newAsset.Properties[1].Name == props[1].Name)
-	assert.True(t, newAsset.Properties[1].NumberValue == props[1].NumberValue)
-	assert.True(t, newAsset.Properties[2].Name == props[2].Name)
-	assert.True(t, newAsset.Properties[2].NumberValue == props[2].NumberValue)
-
-	// Invalid property type
-	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
-	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
-
-	// invalid asset
-	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
-	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset10.AssetID, Sender: addr, Properties: props})
-
-	// invalid asset
-	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
-	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: "adasdas", Sender: addr, Properties: props})
-
-	// invalid issuer
-	_, err = keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
-	assert.True(t, err != nil)
-
 	// CreateProposal Tests
 	// -------------------------------------------------------
 	msgCreateProposal := MsgCreateProposal{
@@ -602,6 +570,57 @@ func TestKeeper(t *testing.T) {
 	keeper.RevokeReporter(ctx, msgRevokeReporter)
 	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
 	assert.True(t, len(newAsset.Reporters) == 0)
+}
+
+func TestKeeperUpdateProperties(t *testing.T) {
+	ctx, _, keeper := createTestInput(t, false, 0)
+	// create asset
+	msgCreateAsset := MsgCreateAsset{
+		AssetID:  "asset1",
+		Sender:   addr,
+		Name:     "asset 1",
+		Unit:     "kg",
+		Quantity: sdk.NewInt(100),
+	}
+	keeper.CreateAsset(ctx, msgCreateAsset)
+
+	// Test Update Properties
+	props := Properties{Property{Name: "weight", NumberValue: 100}, Property{Name: "size", NumberValue: 2}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
+	newAsset, _ := keeper.GetAsset(ctx, msgCreateAsset.AssetID)
+	props = props.Sort()
+	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
+	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
+	assert.True(t, newAsset.Properties[1].Name == props[1].Name)
+	assert.True(t, newAsset.Properties[1].NumberValue == props[1].NumberValue)
+
+	props2 := Properties{Property{Name: "weight", NumberValue: 150}, Property{Name: "shock", NumberValue: 2}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props2})
+	props2 = props2.Sort()
+	props = props.Adds(props2...)
+	newAsset, _ = keeper.GetAsset(ctx, asset.AssetID)
+	assert.True(t, newAsset.Properties[0].Name == props[0].Name)
+	assert.True(t, newAsset.Properties[0].NumberValue == props[0].NumberValue)
+	assert.True(t, newAsset.Properties[1].Name == props[1].Name)
+	assert.True(t, newAsset.Properties[1].NumberValue == props[1].NumberValue)
+	assert.True(t, newAsset.Properties[2].Name == props[2].Name)
+	assert.True(t, newAsset.Properties[2].NumberValue == props[2].NumberValue)
+
+	// Invalid property type
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr, Properties: props})
+
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset10.AssetID, Sender: addr, Properties: props})
+
+	// invalid asset
+	props = Properties{Property{Name: "weight", NumberValue: 100, Type: 10}}
+	keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: "adasdas", Sender: addr, Properties: props})
+
+	// invalid issuer
+	_, err := keeper.UpdateProperties(ctx, MsgUpdateProperties{AssetID: asset.AssetID, Sender: addr2, Properties: props})
+	assert.True(t, err != nil)
 }
 
 func TestFinalize(t *testing.T) {

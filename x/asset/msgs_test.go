@@ -171,9 +171,15 @@ func TestUpdateAttrMsgGet(t *testing.T) {
 func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
 	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgUpdateProperties{
-		Sender:     addr1,
-		AssetID:    "1",
-		Properties: props,
+		Sender:  addr1,
+		AssetID: "1",
+		Properties: Properties{
+			Property{
+				Name:        "weight",
+				Type:        3,
+				NumberValue: 100,
+			},
+		},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results

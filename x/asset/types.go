@@ -9,21 +9,20 @@ import (
 
 // Asset asset infomation
 type Asset struct {
-	ID         string         `json:"id"`
-	Type       string         `json:"type"`
-	Subtype    string         `json:"subtype"`
-	Name       string         `json:"name"`
-	Owner      sdk.AccAddress `json:"owner"`
-	Reporters  Reporters      `json:"reporters"`
-	Parent     string         `json:"parent"` // the id of the asset parent
-	Root       string         `json:"root"`   // the id of the asset root
-	Final      bool           `json:"final"`
-	Properties Properties     `json:"properties"`
-	Materials  sdk.Coins      `json:"materials"`
-	Quantity   sdk.Int        `json:"quantity"`
-	Unit       string         `json:"unit"`
-	Created    int64          `json:"created"`
-	Height     int64          `json:"height"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Owner       sdk.AccAddress `json:"owner"`
+	Reporters   Reporters      `json:"reporters"`
+	Description Description    `json:"description"`
+	Parent      string         `json:"parent"` // the id of the asset parent
+	Root        string         `json:"root"`   // the id of the asset root
+	Final       bool           `json:"final"`
+	Properties  Properties     `json:"properties"`
+	Materials   sdk.Coins      `json:"materials"`
+	Quantity    sdk.Int        `json:"quantity"`
+	Unit        string         `json:"unit"`
+	Created     int64          `json:"created"`
+	Height      int64          `json:"height"`
 }
 
 // IsOwner check is owner of the asset
@@ -133,4 +132,10 @@ func (a Asset) ValidateUpdateProperties(sender sdk.AccAddress, properties Proper
 	}
 
 	return nil
+}
+
+type Description struct {
+	Type    string `json:"type"`
+	Subtype string `json:"subtype"`
+	Barcode string `json:"barcode"`
 }
