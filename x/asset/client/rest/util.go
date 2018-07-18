@@ -15,7 +15,7 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	ctx = ctx.WithChainID(m.ChainID)
 
 	if len(m.Memo) > 0 {
-		ctx.WithMemo(m.Memo)
+		ctx = ctx.WithMemo(m.Memo)
 	}
 
 	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
