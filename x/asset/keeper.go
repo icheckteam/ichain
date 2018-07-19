@@ -85,6 +85,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 		// clone data
 		newAsset.Description = parent.Description
+		newAsset.Materials = parent.Materials
+		newAsset.Properties = parent.Properties
 		k.setAsset(ctx, parent)
 	}
 
