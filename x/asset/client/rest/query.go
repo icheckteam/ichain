@@ -23,6 +23,11 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+type AssetOutput struct {
+	Asset     asset.Asset            `json:"asset"`
+	Materials map[string]asset.Asset `json:"material_by_id"`
+}
+
 ///////////////////////////
 // REST
 
@@ -31,7 +36,7 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		a, err := queryAsset(ctx, storeName, cdc, vars["id"])
+		record, err := queryAsset(ctx, storeName, cdc, vars["id"])
 
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -39,7 +44,21 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 			return
 		}
 
-		output, err := cdc.MarshalJSON(a)
+		assetOutput := AssetOutput{
+			Asset:     *record,
+			Materials: map[string]asset.Asset{},
+		}
+		for _, material := range record.Materials {
+			record, err := queryAsset(ctx, storeName, cdc, material.Denom)
+			assetOutput.Materials[record.ID] = *record
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
+				return
+			}
+		}
+
+		output, err := cdc.MarshalJSON(assetOutput)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -109,6 +128,19 @@ func queryAsset(ctx context.CoreContext, storeName string, cdc *wire.Codec, asse
 		return nil, err
 	}
 	return &a, nil
+}
+
+func queryAssetsByIds(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID []string) (map[string]asset.Asset, error) {
+	records := map[string]asset.Asset{}
+
+	for _, id := range assetID {
+		record, err := queryAsset(ctx, storeName, cdc, id)
+		if err != nil {
+			return nil, err
+		}
+		records[id] = *record
+	}
+	return records, nil
 }
 
 func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]asset.Asset, error) {
@@ -366,11 +398,21 @@ func HistortyHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Code
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		recordId := vars["id"]
-		history, err := queryHistory(ctx, storeName, cdc, recordId, 0)
+		history, indexRecord, err := queryHistory(ctx, storeName, cdc, recordId, 0)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
+		}
+		history.AssetByID = map[string]asset.Asset{}
+		for _, id := range indexRecord {
+			record, err := queryAsset(ctx, storeName, cdc, id)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			history.AssetByID[record.ID] = *record
 		}
 
 		output, err := cdc.MarshalJSON(history)
@@ -384,35 +426,50 @@ func HistortyHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Code
 	}
 }
 
-func queryHistory(ctx context.CoreContext, storeName string, cdc *wire.Codec, recordID string, fromHeight int64) (historyOutput, error) {
+func queryHistory(ctx context.CoreContext, storeName string, cdc *wire.Codec, recordID string, fromHeight int64) (historyOutput, []string, error) {
 	historyOutput := historyOutput{}
 	record, err := queryAsset(ctx, storeName, cdc, recordID)
 	if err != nil {
-		return historyOutput, err
+		return historyOutput, nil, err
 	}
-	history, err := searchTxs(ctx, cdc, recordID, fromHeight)
+	history, indexRecord, err := searchTxs(ctx, cdc, recordID, fromHeight)
 	if err != nil {
-		return historyOutput, err
+		return historyOutput, nil, err
 	}
 
 	if record.Parent != "" {
-		otherHistory, err := queryHistory(ctx, storeName, cdc, record.Parent, record.Height)
+		otherHistory, otherIndexRecord, err := queryHistory(ctx, storeName, cdc, record.Parent, record.Height)
 		if err != nil {
-			return historyOutput, err
+			return historyOutput, nil, err
 		}
 		history.Properties = append(history.Properties, otherHistory.Properties...)
 		history.Quantity = append(history.Quantity, otherHistory.Quantity...)
 		history.Transfers = append(history.Transfers, otherHistory.Transfers...)
+
+		indexRecord = append(indexRecord, otherIndexRecord...)
+
 	}
-	return history, nil
+	return history, unique(indexRecord), nil
 }
 
-func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHeight int64) (historyOutput, error) {
+func unique(intSlice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHeight int64) (historyOutput, []string, error) {
 	history := historyOutput{}
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {
-		return history, err
+		return history, nil, err
 	}
 
 	prove := !viper.GetBool(client.FlagTrustNode)
@@ -421,16 +478,18 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 	perPage := 300
 	res, err := node.TxSearch(fmt.Sprintf("asset_id='%s'", assetID), prove, page, perPage)
 	if err != nil {
-		return history, err
+		return history, nil, err
 	}
 
 	infos, err := formatTxResults(cdc, res.Txs)
 	if err != nil {
-		return history, err
+		return history, nil, err
 	}
 
 	proposals := map[string]asset.MsgCreateProposal{}
 	recordAmount := map[string]sdk.Int{}
+	allRecords := []string{}
+	allRecordsIndex := map[string]bool{}
 
 	for index, info := range infos {
 		if info.Height < fromHeight {
@@ -438,13 +497,17 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 		}
 		block, err := getBlock(ctx, &info.Height)
 		if err != nil {
-			return history, err
+			return history, nil, err
 		}
 		infos[index].Time = block.Block.Time.Unix()
-
+		allRecords = append(allRecords)
 	}
 
 	sort.SliceStable(infos, func(i, j int) bool { return infos[i].Time < infos[j].Time })
+
+	allRecordsIndex[assetID] = true
+	allRecords = append(allRecords, assetID)
+
 	for _, info := range infos {
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
@@ -453,6 +516,12 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 				actionType := "add"
 				if len(msg.Parent) > 0 && msg.Parent == assetID {
 					actionType = "subtract"
+
+					if allRecordsIndex[msg.Parent] == false {
+						allRecordsIndex[msg.Parent] = true
+						allRecords = append(allRecords, msg.Parent)
+					}
+
 				}
 				history.Quantity = append(history.Quantity, historyChangeQuantityOutput{
 					Sender: msg.Sender,
@@ -499,6 +568,12 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 					if msg.AssetID == assetID {
 						actionType = "subtract"
 					}
+
+					if allRecordsIndex[amount.Denom] == false {
+						allRecordsIndex[amount.Denom] = true
+						allRecords = append(allRecords, amount.Denom)
+					}
+
 					history.Quantity = append(history.Quantity, historyChangeQuantityOutput{
 						Sender: msg.Sender,
 						Type:   actionType,
@@ -522,8 +597,7 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 
 		}
 	}
-
-	return history, nil
+	return history, allRecords, nil
 }
 
 // historyOutput
@@ -532,6 +606,7 @@ type historyOutput struct {
 	Quantity   []historyChangeQuantityOutput `json:"quantity"`
 	Properties []historyUpdateProperty       `json:"properties"`
 	Materials  []historyAddMaterial          `json:"materials"`
+	AssetByID  map[string]asset.Asset        `json:"asset_by_id"`
 }
 
 type historyTransferOutput struct {
