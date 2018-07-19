@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
-	"github.com/pkg/errors"
 )
 
 const storeName = "identity"
@@ -51,6 +50,16 @@ func claimedIdentHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Handle
 
 		w.Write(output)
 	}
+}
+
+func queryClaimed(ctx context.CoreContext, cdc *wire.Codec, addr sdk.AccAddress) (identity.Identity, error) {
+	ident := identity.Identity{}
+	res, err := ctx.QueryStore(identity.KeyClaimedIdentity(addr), storeName)
+	if err != nil {
+		return ident, err
+	}
+	err = cdc.UnmarshalBinary(res, &ident)
+	return ident, err
 }
 
 func identsByAccountHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
@@ -110,91 +119,130 @@ func identsByAccountHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 	}
 }
 
-func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+// queryAccountCertsHandlerFn ...
+func queryAccountCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		bechCertifier := vars["certifier"]
-		property := vars["property"]
-		trust := vars["trust"] == "1"
-		var err error
-		var certifierAddr sdk.AccAddress
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		ident, err := queryClaimed(ctx, cdc, address)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		certs, err := queryCertsByIdent(ctx, cdc, ident.ID, vars)
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		output, err := cdc.MarshalJSON(certs)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+func queryCertsByIdent(ctx context.CoreContext, cdc *wire.Codec, ident int64, vars map[string]string) (identity.Certs, error) {
+	bechCertifier := vars["certifier"]
+	property := vars["property"]
+	trust := vars["trust"] == "1"
+	var err error
+	var certifierAddr sdk.AccAddress
+
+	if len(bechCertifier) != 0 {
+		certifierAddr, err = sdk.AccAddressFromBech32(bechCertifier)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(int64(ident), property), storeName)
+	if err != nil {
+		return nil, err
+	}
+
+	validators, err := getValidators(ctx, cdc)
+	if err != nil {
+		return nil, err
+	}
+	certs := []identity.Cert{}
+	for _, kv := range kvs {
+		cert := identity.Cert{}
+		err = cdc.UnmarshalBinary(kv.Value, &cert)
+		if err != nil {
+			return nil, err
+		}
 
 		if len(bechCertifier) != 0 {
-			certifierAddr, err = sdk.AccAddressFromBech32(bechCertifier)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				err := errors.Errorf("'%s' needs to be bech32 encoded", "certifier")
-				w.Write([]byte(err.Error()))
-				return
+			if !bytes.Equal(certifierAddr, cert.Certifier) {
+				continue
 			}
 		}
 
+		if len(property) != 0 {
+			if property != cert.Property {
+				continue
+			}
+		}
+
+		// check trust
+		for _, validator := range validators {
+			if bytes.Equal(validator.Owner, cert.Certifier) {
+				cert.Trust = true
+				break
+			}
+		}
+
+		if cert.Trust == false {
+			for _, validator := range validators {
+				if hasTrust(ctx, cdc, validator.Owner, cert.Certifier) {
+					cert.Trust = true
+					break
+				}
+			}
+		}
+
+		if len(vars["trust"]) != 0 {
+			if cert.Trust != trust {
+				continue
+			}
+		}
+
+		certs = append(certs, cert)
+	}
+	return certs, nil
+}
+
+func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
 		identID, err := strconv.Atoi(vars[RestIdentityID])
+
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't decode ident_id. Error: %s", err.Error())))
 			return
 		}
-		kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(int64(identID), vars["property"]), storeName)
+
+		certs, err := queryCertsByIdent(ctx, cdc, int64(identID), vars)
+
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
+			w.Write([]byte(fmt.Sprintf("couldn't query certs. Error: %s", err.Error())))
 			return
-		}
-
-		validators, err := getValidators(ctx, cdc)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't query validatorss. Error: %s", err.Error())))
-			return
-		}
-		certs := []identity.Cert{}
-		for _, kv := range kvs {
-			cert := identity.Cert{}
-			err = cdc.UnmarshalBinary(kv.Value, &cert)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode cert. Error: %s", err.Error())))
-				return
-			}
-
-			if len(bechCertifier) != 0 {
-				if !bytes.Equal(certifierAddr, cert.Certifier) {
-					continue
-				}
-			}
-
-			if len(property) != 0 {
-				if property != cert.Property {
-					continue
-				}
-			}
-
-			// check trust
-			for _, validator := range validators {
-				if bytes.Equal(validator.Owner, cert.Certifier) {
-					cert.Trust = true
-					break
-				}
-			}
-
-			if cert.Trust == false {
-				for _, validator := range validators {
-					if hasTrust(ctx, cdc, validator.Owner, cert.Certifier) {
-						cert.Trust = true
-						break
-					}
-				}
-			}
-
-			if len(vars["trust"]) != 0 {
-				if cert.Trust != trust {
-					continue
-				}
-			}
-
-			certs = append(certs, cert)
 		}
 
 		output, err := cdc.MarshalJSON(certs)

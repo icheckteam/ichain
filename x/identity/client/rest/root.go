@@ -22,6 +22,7 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb 
 	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/claimed", RestAccount), claimedIdentHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/identities", RestAccount), identsByAccountHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/certs", RestAccount), queryAccountCertsHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc("/identities", CreateIdentityHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/identities/{identityID}/certs", SetCertsHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/identities/{identityID}/certs", certsHandlerFn(ctx, cdc)).Methods("GET")

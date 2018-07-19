@@ -509,6 +509,9 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 	allRecords = append(allRecords, assetID)
 
 	for _, info := range infos {
+		if info.Height < fromHeight {
+			continue
+		}
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgCreateAsset:
