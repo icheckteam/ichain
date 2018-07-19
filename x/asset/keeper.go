@@ -226,7 +226,7 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
-		TagRecipient, []byte(asset.ID),
+		TagAsset, []byte(asset.ID),
 		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil

@@ -4,13 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/gorilla/mux"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+
 	"github.com/icheckteam/ichain/x/asset"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/common"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 ///////////////////////////
@@ -350,4 +360,271 @@ func QueryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 
 		w.Write(output)
 	}
+}
+
+func HistortyHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		recordId := vars["id"]
+		history, err := queryHistory(ctx, storeName, cdc, recordId, 0)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		output, err := cdc.MarshalJSON(history)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(output)
+	}
+}
+
+func queryHistory(ctx context.CoreContext, storeName string, cdc *wire.Codec, recordID string, fromHeight int64) (historyOutput, error) {
+	historyOutput := historyOutput{}
+	record, err := queryAsset(ctx, storeName, cdc, recordID)
+	if err != nil {
+		return historyOutput, err
+	}
+	history, err := searchTxs(ctx, cdc, recordID, fromHeight)
+	if err != nil {
+		return historyOutput, err
+	}
+
+	if record.Parent != "" {
+		otherHistory, err := queryHistory(ctx, storeName, cdc, record.Parent, record.Height)
+		if err != nil {
+			return historyOutput, err
+		}
+		history.Properties = append(history.Properties, otherHistory.Properties...)
+		history.Quantity = append(history.Quantity, otherHistory.Quantity...)
+		history.Transfers = append(history.Transfers, otherHistory.Transfers...)
+	}
+	return history, nil
+}
+
+func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHeight int64) (historyOutput, error) {
+	history := historyOutput{}
+	// get the node
+	node, err := ctx.GetNode()
+	if err != nil {
+		return history, err
+	}
+
+	prove := !viper.GetBool(client.FlagTrustNode)
+	// TODO: take these as args
+	page := 0
+	perPage := 300
+	res, err := node.TxSearch(fmt.Sprintf("asset_id='%s'", assetID), prove, page, perPage)
+	if err != nil {
+		return history, err
+	}
+
+	infos, err := formatTxResults(cdc, res.Txs)
+	if err != nil {
+		return history, err
+	}
+
+	proposals := map[string]asset.MsgCreateProposal{}
+	recordAmount := map[string]sdk.Int{}
+
+	for index, info := range infos {
+		if info.Height < fromHeight {
+			continue
+		}
+		block, err := getBlock(ctx, &info.Height)
+		if err != nil {
+			return history, err
+		}
+		infos[index].Time = block.Block.Time.Unix()
+
+	}
+
+	sort.SliceStable(infos, func(i, j int) bool { return infos[i].Time < infos[j].Time })
+	for _, info := range infos {
+		for _, msg := range info.Tx.GetMsgs() {
+			switch msg := msg.(type) {
+			case asset.MsgCreateAsset:
+				recordAmount[msg.AssetID] = msg.Quantity
+				actionType := "add"
+				if len(msg.Parent) > 0 && msg.Parent == assetID {
+					actionType = "subtract"
+				}
+				history.Quantity = append(history.Quantity, historyChangeQuantityOutput{
+					Sender: msg.Sender,
+					Type:   actionType,
+					Amount: msg.Quantity,
+					Time:   info.Time,
+					Memo:   info.Tx.Memo,
+				})
+				break
+			case asset.MsgCreateProposal:
+				proposals[msg.Recipient.String()] = msg
+				break
+			case asset.MsgAnswerProposal:
+				proposal := proposals[msg.Recipient.String()]
+				if msg.Response == asset.StatusAccepted {
+					// index transfer asset
+					if proposal.Role == asset.RoleOwner {
+						history.Transfers = append(history.Transfers, historyTransferOutput{
+							Sender:    proposal.Sender,
+							Recipient: proposal.Recipient,
+							Time:      info.Time,
+							Memo:      info.Tx.Memo,
+							Amount:    recordAmount[msg.AssetID],
+						})
+					}
+				}
+				break
+			case asset.MsgUpdateProperties:
+				for _, property := range msg.Properties {
+					history.Properties = append(history.Properties, historyUpdateProperty{
+						Sender: msg.Sender,
+						Type:   asset.PropertyTypeToString(property.Type),
+						Name:   property.Name,
+						Value:  property.GetValue(),
+						Time:   info.Time,
+						Memo:   info.Tx.Memo,
+					})
+				}
+				break
+			case asset.MsgAddMaterials:
+
+				for _, amount := range msg.Amount {
+					actionType := "add"
+					if msg.AssetID == assetID {
+						actionType = "subtract"
+					}
+					history.Quantity = append(history.Quantity, historyChangeQuantityOutput{
+						Sender: msg.Sender,
+						Type:   actionType,
+						Amount: amount.Amount,
+						Time:   info.Time,
+						Memo:   info.Tx.Memo,
+					})
+
+					history.Materials = append(history.Materials, historyAddMaterial{
+						Amount:  amount.Amount,
+						AssetID: amount.Denom,
+						Sender:  msg.Sender,
+						Time:    info.Time,
+						Memo:    info.Tx.Memo,
+					})
+				}
+				break
+			default:
+				break
+			}
+
+		}
+	}
+
+	return history, nil
+}
+
+// historyOutput
+type historyOutput struct {
+	Transfers  []historyTransferOutput       `json:"transfers"`
+	Quantity   []historyChangeQuantityOutput `json:"quantity"`
+	Properties []historyUpdateProperty       `json:"properties"`
+	Materials  []historyAddMaterial          `json:"materials"`
+}
+
+type historyTransferOutput struct {
+	Sender    sdk.AccAddress `json:"sender"`
+	Recipient sdk.AccAddress `json:"recipient"`
+	Time      int64          `json:"time"`
+	Memo      string         `json:"memo"`
+	Amount    sdk.Int        `json:"amount"`
+}
+
+type historyChangeQuantityOutput struct {
+	Sender sdk.AccAddress `json:"sender"`
+	Amount sdk.Int        `json:"amount"`
+	Type   string         `json:"type"`
+	Time   int64          `json:"time"`
+	Memo   string         `json:"memo"`
+}
+
+type historyUpdateProperty struct {
+	Sender sdk.AccAddress `json:"sender"`
+	Name   string         `json:"name"`
+	Type   string         `json:"type"`
+	Value  interface{}    `json:"value"`
+	Time   int64          `json:"time"`
+	Memo   string         `json:"memo"`
+}
+
+type historyAddMaterial struct {
+	Sender  sdk.AccAddress `json:"sender"`
+	Amount  sdk.Int        `json:"amount"`
+	AssetID string         `json:"asset_id"`
+	Time    int64          `json:"time"`
+	Memo    string         `json:"memo"`
+}
+
+func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) (txInfos, error) {
+	var err error
+	out := make(txInfos, len(res))
+	for i := range res {
+		out[i], err = formatTxResult(cdc, res[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func getBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
+	// get the node
+	node, err := ctx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: actually honor the --select flag!
+	// header -> BlockchainInfo
+	// header, tx -> Block
+	// results -> BlockResults
+	return node.Block(height)
+}
+
+func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
+	// TODO: verify the proof if requested
+	tx, err := parseTx(cdc, res.Tx)
+	if err != nil {
+		return txInfo{}, err
+	}
+
+	info := txInfo{
+		Hash:   res.Hash,
+		Height: res.Height,
+		Tx:     tx,
+		Result: res.TxResult,
+	}
+	return info, nil
+}
+
+// txInfo is used to prepare info to display
+type txInfo struct {
+	Hash   common.HexBytes        `json:"hash"`
+	Height int64                  `json:"height"`
+	Tx     auth.StdTx             `json:"tx"`
+	Result abci.ResponseDeliverTx `json:"result"`
+	Time   int64                  `json:"time"`
+}
+
+type txInfos []txInfo
+
+func parseTx(cdc *wire.Codec, txBytes []byte) (auth.StdTx, error) {
+	var tx auth.StdTx
+	err := cdc.UnmarshalBinary(txBytes, &tx)
+	if err != nil {
+		return tx, err
+	}
+	return tx, nil
 }

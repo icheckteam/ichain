@@ -19,6 +19,44 @@ type Property struct {
 	Location     Location     `json:"location_value,omitempty"`
 }
 
+func PropertyTypeToString(t PropertyType) string {
+	switch t {
+	case PropertyTypeBoolean:
+		return "boolean"
+	case PropertyTypeBytes:
+		return "bytes"
+	case PropertyTypeEnum:
+		return "enum"
+	case PropertyTypeLocation:
+		return "location"
+	case PropertyTypeNumber:
+		return "number"
+	case PropertyTypeString:
+		return "string"
+	default:
+		return "Unknown"
+	}
+}
+
+func (p Property) GetValue() interface{} {
+	switch p.Type {
+	case PropertyTypeBoolean:
+		return p.BooleanValue
+	case PropertyTypeBytes:
+		return p.BytesValue
+	case PropertyTypeEnum:
+		return p.EnumValue
+	case PropertyTypeLocation:
+		return p.Location
+	case PropertyTypeNumber:
+		return p.NumberValue
+	case PropertyTypeString:
+		return p.StringValue
+	default:
+		return "Unknown"
+	}
+}
+
 type Location struct {
 	Latitude  int64 `json:"latitude"`
 	Longitude int64 `json:"longitude"`
