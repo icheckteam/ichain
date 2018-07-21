@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,147 +14,7 @@ import (
 
 const storeName = "identity"
 
-func claimedIdentHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		res, err := ctx.QueryStore(identity.KeyClaimedIdentity(address), storeName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
-			return
-		}
-
-		var ident identity.Identity
-		err = cdc.UnmarshalBinary(res, &ident)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't decode ident id. Error: %s", err.Error())))
-			return
-		}
-
-		output, err := cdc.MarshalJSON(ident)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
-	}
-}
-
-func queryClaimed(ctx context.CoreContext, cdc *wire.Codec, addr sdk.AccAddress) (identity.Identity, error) {
-	ident := identity.Identity{}
-	res, err := ctx.QueryStore(identity.KeyClaimedIdentity(addr), storeName)
-	if err != nil {
-		return ident, err
-	}
-	err = cdc.UnmarshalBinary(res, &ident)
-	return ident, err
-}
-
-func identsByAccountHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		kvs, err := ctx.QuerySubspace(cdc, identity.KeyIdentitiesByOwnerIndex(address), storeName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't query idents. Error: %s", err.Error())))
-			return
-		}
-
-		idents := make([]identity.Identity, len(kvs))
-		for i, kv := range kvs {
-			var identID int64
-			err = cdc.UnmarshalBinary(kv.Value, &identID)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("couldn't decode ident id. Error: %s", err.Error())))
-				return
-			}
-
-			res, err := ctx.QueryStore(identity.KeyIdentity(identID), "identity")
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("couldn't query ident. Error: %s", err.Error())))
-				return
-			}
-
-			ident := identity.Identity{}
-			err = cdc.UnmarshalBinary(res, &ident)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
-				return
-			}
-
-			idents[i] = ident
-		}
-
-		output, err := cdc.MarshalJSON(idents)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
-	}
-}
-
-// queryAccountCertsHandlerFn ...
-func queryAccountCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		ident, err := queryClaimed(ctx, cdc, address)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		certs, err := queryCertsByIdent(ctx, cdc, ident.ID, vars)
-
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		output, err := cdc.MarshalJSON(certs)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
-	}
-}
-
-func queryCertsByIdent(ctx context.CoreContext, cdc *wire.Codec, ident int64, vars map[string]string) (identity.Certs, error) {
+func queryCertsByOwner(ctx context.CoreContext, cdc *wire.Codec, owner sdk.AccAddress, vars map[string]string) (identity.Certs, error) {
 	bechCertifier := vars["certifier"]
 	property := vars["property"]
 	trust := vars["trust"] == "1"
@@ -169,7 +28,7 @@ func queryCertsByIdent(ctx context.CoreContext, cdc *wire.Codec, ident int64, va
 		}
 	}
 
-	kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(int64(ident), property), storeName)
+	kvs, err := ctx.QuerySubspace(cdc, identity.KeyCerts(owner), storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -226,18 +85,18 @@ func queryCertsByIdent(ctx context.CoreContext, cdc *wire.Codec, ident int64, va
 	return certs, nil
 }
 
-func certsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func queryCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		identID, err := strconv.Atoi(vars[RestIdentityID])
 
+		address, err := sdk.AccAddressFromBech32(vars["address"])
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't decode ident_id. Error: %s", err.Error())))
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
 			return
 		}
 
-		certs, err := queryCertsByIdent(ctx, cdc, int64(identID), vars)
+		certs, err := queryCertsByOwner(ctx, cdc, address, vars)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

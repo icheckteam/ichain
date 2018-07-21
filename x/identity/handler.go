@@ -11,8 +11,6 @@ import (
 func NewHandler(k Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case MsgCreateIdentity:
-			return handleCreateIdentity(ctx, k, msg)
 		case MsgSetCerts:
 			return handleSetCerts(ctx, k, msg)
 		case MsgSetTrust:
@@ -22,14 +20,6 @@ func NewHandler(k Keeper) sdk.Handler {
 			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
-}
-
-func handleCreateIdentity(ctx sdk.Context, k Keeper, msg MsgCreateIdentity) sdk.Result {
-	err := k.AddIdentity(ctx, msg)
-	if err != nil {
-		return err.Result()
-	}
-	return sdk.Result{}
 }
 
 func handleSetTrust(ctx sdk.Context, k Keeper, msg MsgSetTrust) sdk.Result {

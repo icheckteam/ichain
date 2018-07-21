@@ -13,29 +13,6 @@ func TestKeeper(t *testing.T) {
 	// Add Identity
 	// ----------------------------------------------------
 
-	// valid
-	msgCreateIdentity := MsgCreateIdentity{
-		Sender: addr1,
-	}
-	keeper.AddIdentity(ctx, msgCreateIdentity)
-	identity, found := keeper.GetIdentity(ctx, 1)
-	assert.True(t, found)
-	assert.True(t, identity.ID == 1)
-	assert.True(t, bytes.Equal(identity.Owner, msgCreateIdentity.Sender))
-
-	msgCreateIdentity = MsgCreateIdentity{
-		Sender: addr1,
-	}
-	keeper.AddIdentity(ctx, msgCreateIdentity)
-	identity, found = keeper.GetIdentity(ctx, 2)
-	assert.True(t, found)
-	assert.True(t, identity.ID == 2)
-	assert.True(t, bytes.Equal(identity.Owner, msgCreateIdentity.Sender))
-
-	// get identity not found
-	_, found = keeper.GetIdentity(ctx, 3)
-	assert.True(t, !found)
-
 	// Add Trust
 	// ----------------------------------------------------
 
@@ -58,32 +35,10 @@ func TestKeeper(t *testing.T) {
 
 	// Add Certs
 	// ----------------------------------------------------
-	msgSetCerts := MsgSetCerts{Certifier: addr1, IdentityID: 1, Values: []CertValue{CertValue{Property: "owner", Confidence: true}}}
+	msgSetCerts := MsgSetCerts{Certifier: addr1, Recipient: addr1, Values: []CertValue{CertValue{Property: "owner", Confidence: true}}}
 	keeper.AddCerts(ctx, msgSetCerts)
-	cert, found := keeper.GetCert(ctx, 1, "owner", addr1)
+	cert, found := keeper.GetCert(ctx, addr1, "owner", addr1)
 	assert.True(t, found)
 	assert.True(t, bytes.Equal(cert.Certifier, addr1))
-
-	// Claim identity
-	msgSetCerts = MsgSetCerts{Certifier: addr1, IdentityID: 1, Values: []CertValue{CertValue{Property: "owner", Confidence: true}}}
-	keeper.AddCerts(ctx, msgSetCerts)
-	found = keeper.HasClaimedIdentity(ctx, addr1, 1)
-	assert.True(t, found)
-
-	msgSetCerts = MsgSetCerts{Certifier: addr1, IdentityID: 1, Values: []CertValue{CertValue{Property: "owner", Confidence: false}}}
-	keeper.AddCerts(ctx, msgSetCerts)
-	_, found = keeper.GetCert(ctx, 1, "owner", addr1)
-	assert.True(t, !found)
-
-	// unClaim identity
-	msgSetCerts = MsgSetCerts{Certifier: addr1, IdentityID: 1, Values: []CertValue{CertValue{Property: "owner", Confidence: false}}}
-	keeper.AddCerts(ctx, msgSetCerts)
-	found = keeper.HasClaimedIdentity(ctx, addr1, 1)
-	assert.True(t, !found)
-
-	// invalid identity id
-	msgSetCerts = MsgSetCerts{Certifier: addr2, IdentityID: 1000, Values: []CertValue{CertValue{Property: "owner", Confidence: false}}}
-	err := keeper.AddCerts(ctx, msgSetCerts)
-	assert.True(t, err != nil)
 
 }

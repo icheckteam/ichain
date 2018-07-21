@@ -1400,44 +1400,20 @@ func TestAddTrust(t *testing.T) {
 
 }
 
-func TestCreateIdentity(t *testing.T) {
-	name, password := "test", "1234567890"
-	addr, seed := CreateAddr(t, name, password, GetKB(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
-	defer cleanup()
-
-	// AddTrust tests
-	resultTx := doCreateIdentity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	identities := getIdentsByAccount(t, port, addr)
-	assert.Equal(t, identities[0].ID, int64(1))
-
-}
-
 func TestAddCerts(t *testing.T) {
 	name, password := "test", "1234567890"
 	addr, seed := CreateAddr(t, name, password, GetKB(t))
 	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
 	defer cleanup()
 
-	// CreateIdentity
-	resultTx := doCreateIdentity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-
 	// AddCerts tests
-	resultTx = doAddCerts(t, port, seed, name, password, addr)
+	resultTx := doAddCerts(t, port, seed, name, password, addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
 	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
 
-	certs := getCertsByIdentity(t, port)
+	certs := getCertsByOwner(t, port)
 	assert.Equal(t, len(certs), 2)
-
-	ident := getClaimedIdentity(t, port, addr)
-	assert.Equal(t, ident.ID, int64(1))
 }
 
 func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
@@ -1468,33 +1444,6 @@ func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting 
 	return resultTx
 }
 
-func doCreateIdentity(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
-	acc := getAccount(t, port, addr)
-	accnum := acc.GetAccountNumber()
-	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
-	// send
-	jsonStr := []byte(fmt.Sprintf(`{
-		"base_req": {
-			"name": "%s",
-			"password": "%s",
-			"account_number": "%d",
-			"sequence": "%d",
-			"gas": "10000",
-			"chain_id": "%s"
-		}
-	}`, name, password, accnum, sequence, chainID))
-
-	res, body := Request(t, port, "POST", "/identities", jsonStr)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
-	require.Nil(t, err)
-
-	return resultTx
-}
-
 func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
@@ -1513,7 +1462,6 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 		"values": [
 			{
 				"property": "company",
-				"type": "demo",
 				"data": {
 					"demo": "1212"
 				},
@@ -1526,7 +1474,7 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 		]
 	}`, name, password, accnum, sequence, chainID))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/identities/1/certs"), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/accounts/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs"), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -1546,32 +1494,12 @@ func getTrusts(t *testing.T, port string, trustor sdk.AccAddress) []identity.Tru
 	return trusts
 }
 
-func getIdentsByAccount(t *testing.T, port string, addr sdk.AccAddress) []identity.Identity {
+func getCertsByOwner(t *testing.T, port string) []identity.Cert {
 	// get the account to get the sequence
-	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/identities", addr), nil)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var identities []identity.Identity
-	err := cdc.UnmarshalJSON([]byte(body), &identities)
-	require.Nil(t, err)
-	return identities
-}
-
-func getCertsByIdentity(t *testing.T, port string) []identity.Cert {
-	// get the account to get the sequence
-	res, body := Request(t, port, "GET", "/identities/1/certs", nil)
+	res, body := Request(t, port, "GET", "/accounts/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs", nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	var certs []identity.Cert
 	err := cdc.UnmarshalJSON([]byte(body), &certs)
 	require.Nil(t, err)
 	return certs
-}
-
-func getClaimedIdentity(t *testing.T, port string, addr sdk.AccAddress) identity.Identity {
-	// get the account to get the sequence
-	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/claimed", addr), nil)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var ident identity.Identity
-	err := cdc.UnmarshalJSON([]byte(body), &ident)
-	require.Nil(t, err)
-	return ident
 }
