@@ -124,6 +124,15 @@
             "amount": "1000"
           }
         ]
+      },
+      {
+        "address": "cosmosaccaddr12elaeqfdu2n50n2xxml4puawfxmj7ugwekuke3",
+        "coins": [
+          {
+            "denom": "tomato",
+            "amount": "1000"
+          }
+        ]
       }
     ],
     "stake": {
