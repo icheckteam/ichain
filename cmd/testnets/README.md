@@ -116,10 +116,10 @@ Your node needs to know how to find peers. You'll need to add healthy seed nodes
 
 ```toml
 # Comma separated list of seed nodes to connect to
-seeds = "f9f52c691ee698f4c4cf880f72a58e8736115cc4@125.212.225.51:4399"
+seeds = "f9f52c691ee698f4c4cf880f72a58e8736115cc4@139.162.14.220:26656"
 ```
 
-If those seeds aren't working, you can find more seeds and persistent peers on the [Ichain Explorer](http://125.212.225.51:4397/nodes). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
+If those seeds aren't working, you can find more seeds and persistent peers on the [Ichain Explorer](http://139.162.14.220:26657/nodes). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.
 
 For more information on seeds and peers, [read this](https://github.com/tendermint/tendermint/blob/develop/docs/using-tendermint.md#peers).
 
