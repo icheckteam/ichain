@@ -1,6 +1,7 @@
 package lcd
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -1542,6 +1543,8 @@ func doAppSignAndVerify(t *testing.T, port string) {
 	res, body := Request(t, port, "POST", "/apps/sign", jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
-	res, body = Request(t, port, "POST", "/apps/verify", []byte(body))
+	b, _ := base64.StdEncoding.DecodeString(body)
+
+	res, body = Request(t, port, "POST", "/apps/verify", b)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 }

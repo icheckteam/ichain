@@ -1,6 +1,7 @@
 package signature
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -89,11 +90,14 @@ func SignHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	w.Write(output)
+
+	b64 := base64.StdEncoding.EncodeToString(output)
+	w.Write([]byte(b64))
 }
 
 type VerifyOutput struct {
-	Status bool
+	Status  bool
+	Address string
 }
 
 func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +117,8 @@ func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output := VerifyOutput{
-		Status: verify(m),
+		Status:  verify(m),
+		Address: m.Msg.PubKey.Address().String(),
 	}
 
 	b, err := json.Marshal(output)
