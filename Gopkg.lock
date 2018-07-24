@@ -43,7 +43,6 @@
     "client",
     "client/context",
     "client/keys",
-    "client/rpc",
     "crypto",
     "crypto/keys",
     "crypto/keys/bcrypt",
@@ -577,6 +576,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b39bd1db2a072c17e9b000a7c7b5ea07cc62a60180541cbd44bd5fe2d0d56ac0"
+  inputs-digest = "7079f4e651108162ca563e0bdf3eee56879354e9b240ff69cd37d5d16cf33783"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1450,6 +1450,7 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 	sequence := acc.GetSequence()
 	chainID := viper.GetString(client.FlagChainID)
 	// send
+
 	jsonStr := []byte(fmt.Sprintf(`{
 		"base_req": {
 			"name": "%s",
@@ -1468,8 +1469,25 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 				"confidence": true
 			},
 			{
-				"property": "owner",
-				"confidence": true
+				"id":"",
+				"context":"",
+				"property":"entity.person",
+				"data":{  
+					"address_line_1":"Hoang Liet Hoang Mai",
+					"address_line_2":"",
+					"city":"Hanoi",
+					"corp_num":"",
+					"country":"",
+					"effective_date":"",
+					"end_date":"",
+					"first_name":"Thang",
+					"last_name":"Nguyen",
+					"legal_entity_id":"",
+					"org_type":"",
+					"postal_code":"",
+					"province":"Hà Nội"
+				},
+				"confidence":true
 			}
 		]
 	}`, name, password, accnum, sequence, chainID))
@@ -1502,4 +1520,28 @@ func getCertsByOwner(t *testing.T, port string) []identity.Cert {
 	err := cdc.UnmarshalJSON([]byte(body), &certs)
 	require.Nil(t, err)
 	return certs
+}
+
+func TestAppLogin(t *testing.T) {
+	name, password := "test", "1234567890"
+	addr, _ := CreateAddr(t, name, password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
+	defer cleanup()
+	doAppSignAndVerify(t, port)
+
+}
+
+func doAppSignAndVerify(t *testing.T, port string) {
+	jsonStr := []byte(fmt.Sprintf(`{
+		"name": "test",
+		"password": "1234567890",
+		"nonce": "1040091",
+		"app_login_api": "demo"
+	}`))
+
+	res, body := Request(t, port, "POST", "/apps/sign", jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+
+	res, body = Request(t, port, "POST", "/apps/verify", []byte(body))
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
 }

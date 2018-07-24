@@ -25,6 +25,7 @@ import (
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 
 	"github.com/icheckteam/ichain/client/rpc"
+	"github.com/icheckteam/ichain/client/signature"
 	"github.com/icheckteam/ichain/client/tx"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
@@ -110,6 +111,8 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	stake.RegisterRoutes(ctx, r, cdc, kb)
 	slashing.RegisterRoutes(ctx, r, cdc, kb)
 	gov.RegisterRoutes(ctx, r, cdc)
+
+	signature.RegisterRoutes(r)
 
 	asset.RegisterRoutes(ctx, r, cdc, kb, "asset")
 	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
