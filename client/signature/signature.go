@@ -96,8 +96,8 @@ func SignHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type VerifyOutput struct {
-	Status  bool
-	Address string
+	Status  bool           `json:"status"`
+	Address sdk.AccAddress `json:"address"`
 }
 
 func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +118,7 @@ func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
 
 	output := VerifyOutput{
 		Status:  verify(m),
-		Address: m.Msg.PubKey.Address().String(),
+		Address: sdk.AccAddress(m.Msg.PubKey.Address()),
 	}
 
 	b, err := json.Marshal(output)
@@ -132,9 +132,6 @@ func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verify(m Claim) bool {
-	if m.Msg.Expires < time.Now().Unix() {
-		return false
-	}
 	return m.Msg.PubKey.VerifyBytes(m.Msg.Bytes(), m.Signature)
 }
 

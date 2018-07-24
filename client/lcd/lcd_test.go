@@ -1536,8 +1536,7 @@ func doAppSignAndVerify(t *testing.T, port string) {
 	jsonStr := []byte(fmt.Sprintf(`{
 		"name": "test",
 		"password": "1234567890",
-		"nonce": "1040091",
-		"app_login_api": "demo"
+		"nonce": "7_tKYK2eRacnzPZDHDm7jxqLMRxFTPZ5KKZ_ZXdvuLU="
 	}`))
 
 	res, body := Request(t, port, "POST", "/apps/sign", jsonStr)
@@ -1546,5 +1545,5 @@ func doAppSignAndVerify(t *testing.T, port string) {
 	b, _ := base64.StdEncoding.DecodeString(body)
 
 	res, body = Request(t, port, "POST", "/apps/verify", b)
-	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	require.Equal(t, http.StatusForbidden, res.StatusCode, body)
 }
