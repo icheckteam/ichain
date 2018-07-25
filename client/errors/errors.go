@@ -26,6 +26,11 @@ var errorCodes map[sdk.CodeType]string = map[sdk.CodeType]string{
 	asset.CodeMissingField:          "missing_fields",
 	asset.CodeProposalNotFound:      "proposal_not_found",
 	asset.CodeUnknownAsset:          "unknow_asset",
+	bank.CodeInvalidInput:           "invalid_input",
+	bank.CodeInvalidOutput:          "invalid_output",
+	sdk.CodeInvalidCoins:            "invalid_coin",
+	sdk.CodeMemoTooLarge:            "memo_too_large",
+	sdk.CodeInsufficientCoins:       "insufficient_coins",
 }
 
 var codespaces map[sdk.CodespaceType]string = map[sdk.CodespaceType]string{
