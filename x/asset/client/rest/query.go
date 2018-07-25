@@ -1,10 +1,11 @@
 package rest
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
+
+	"github.com/icheckteam/ichain/client/errors"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"

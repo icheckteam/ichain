@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/client/errors"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -18,35 +19,27 @@ type subtractAssetQuantityBody struct {
 }
 
 func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m subtractAssetQuantityBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		err = m.BaseReq.Validate()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		if m.Quantity.IsZero() {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("quantity is required"))
-			return
+			return errors.New("quantity is required")
 		}
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 		// build message
 
@@ -57,5 +50,6 @@ func SubtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 		}
 
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
+		return nil
+	})
 }

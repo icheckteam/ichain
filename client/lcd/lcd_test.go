@@ -1545,5 +1545,5 @@ func doAppSignAndVerify(t *testing.T, port string) {
 	b, _ := base64.StdEncoding.DecodeString(body)
 
 	res, body = Request(t, port, "POST", "/apps/verify", b)
-	require.Equal(t, http.StatusForbidden, res.StatusCode, body)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
 }
