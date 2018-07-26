@@ -57,6 +57,14 @@
       },
       "power": "10",
       "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "lGZuiUTINE+7NAQfjDDxFQZoqRpWEpXcSNUDjLsGI0U="
+      },
+      "power": "10",
+      "name": ""
     }
   ],
   "app_hash": "",
@@ -127,6 +135,15 @@
       },
       {
         "address": "cosmosaccaddr12elaeqfdu2n50n2xxml4puawfxmj7ugwekuke3",
+        "coins": [
+          {
+            "denom": "tomato",
+            "amount": "1000"
+          }
+        ]
+      },
+      {
+        "address": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
         "coins": [
           {
             "denom": "tomato",
@@ -278,6 +295,30 @@
           "commission_change_rate": "0",
           "commission_change_today": "0",
           "prev_bonded_tokens": "0"
+        },{
+          "owner": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "lGZuiUTINE+7NAQfjDDxFQZoqRpWEpXcSNUDjLsGI0U="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "validator",
+            "identity": "",
+            "website": "",
+            "details": ""
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
         }
       ],
       "bonds": [
@@ -308,6 +349,12 @@
         {
           "delegator_addr": "cosmosaccaddr16f08hlqh26x2mgkvellkxhnkl4r6qxhkff0k9c",
           "validator_addr": "cosmosaccaddr16f08hlqh26x2mgkvellkxhnkl4r6qxhkff0k9c",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+          "validator_addr": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
           "shares": "100",
           "height": "0"
         }
