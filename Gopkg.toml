@@ -26,7 +26,7 @@
 
 [[override]]
   name = "github.com/cosmos/cosmos-sdk"
-  version ="=0.22.0"
+  version ="=0.23.0"
 
 [[constraint]]
   name = "github.com/bgentry/speakeasy"
@@ -66,7 +66,7 @@
 
 [[override]]
   name = "github.com/tendermint/tendermint"
-  version = "=0.22.2"
+  version = "=v0.22.6"
 
 [[constraint]]
   name = "github.com/bartekn/go-bip39"
@@ -75,8 +75,6 @@
 [[constraint]]
   name = "github.com/zondax/ledger-goclient"
   revision = "39ba4728c137c75718a21f9b4b3280fa31b9139b"
-
-
 
 [prune]
   go-tests = true
