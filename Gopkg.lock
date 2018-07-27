@@ -79,8 +79,8 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "f05d76184c9a1e3148e638430c258053470e43f5"
-  version = "v0.23.0"
+  revision = "02d52e43261191f4a0ded4501cc3585640c6272b"
+  version = "v0.23.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -456,8 +456,8 @@
     "types",
     "version"
   ]
-  revision = "5fdbcd70df57b71ffba71e1ff5f00d617852a9c0"
-  version = "v0.22.6"
+  revision = "18acd77e409f24b6191e3d3488ad5a646ad5d60c"
+  version = "v0.22.7"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -579,6 +579,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b1aa4ad9d22a309d9aa5d471d13131608a87b30914f85a3d267be1aa3b134d31"
+  inputs-digest = "9c95b93a3212ac420088eeb5f1f336a13c97ec4af1fc7fba837af888f3fbc05b"
   solver-name = "gps-cdcl"
   solver-version = 1

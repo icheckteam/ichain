@@ -5,5 +5,6 @@ import (
 )
 
 const (
+	// DefaultCodespace ...
 	DefaultCodespace sdk.CodespaceType = 12
 )

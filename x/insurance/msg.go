@@ -60,7 +60,7 @@ func (msg MsgCreateContract) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// MsgCreateClaim
+// MsgCreateClaim  msg create claim
 // --------------------------------------------------
 type MsgCreateClaim struct {
 	ContractID string         `json:"contract_id"`
@@ -68,6 +68,7 @@ type MsgCreateClaim struct {
 	Recipient  sdk.AccAddress `json:"recipient"`
 }
 
+// NewMsgCreateClaim new msg create claim
 func NewMsgCreateClaim(issuer, recipient sdk.AccAddress, contractID string) MsgCreateClaim {
 	return MsgCreateClaim{
 		ContractID: contractID,
