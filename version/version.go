@@ -1,11 +1,16 @@
-//nolint
 package version
 
+// Maj ...
 const Maj = "0"
-const Min = "22"
-const Fix = "0"
 
-const Version = "0.22.0-dev"
+// Min ...
+const Min = "22"
+
+// Fix ...
+const Fix = "1"
+
+// Version ...
+const Version = "0.22.1-dev"
 
 // GitCommit set by build flags
 var GitCommit = ""
