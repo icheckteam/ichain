@@ -39,11 +39,11 @@ func KeyTrusts(trustor sdk.AccAddress) []byte {
 }
 
 // Key for getting a cert from the store
-func KeyCert(identityID int64, property string, certifier sdk.AccAddress) []byte {
-	return append(KeyCerts(identityID, property), []byte(fmt.Sprintf(":%s", certifier.String()))...)
+func KeyCert(addr sdk.AccAddress, property string, certifier sdk.AccAddress) []byte {
+	return append(KeyCerts(addr), []byte(fmt.Sprintf(":%s:%s", property, certifier.String()))...)
 }
 
 // Key for getting all certs from the store
-func KeyCerts(identityID int64, property string) []byte {
-	return []byte(fmt.Sprintf("identity:%d:%s", identityID, property))
+func KeyCerts(addr sdk.AccAddress) []byte {
+	return []byte(fmt.Sprintf("identity:%s", addr.String()))
 }

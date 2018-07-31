@@ -7,7 +7,7 @@ import (
 // name to idetify transaction types
 const MsgType = "identity"
 
-var _, _, _ sdk.Msg = &MsgSetTrust{}, &MsgCreateIdentity{}, &MsgSetCerts{}
+var _, _ sdk.Msg = &MsgSetTrust{}, &MsgSetCerts{}
 
 // MsgSetTrust struct for set trust
 type MsgSetTrust struct {
@@ -51,53 +51,18 @@ func (msg MsgSetTrust) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// MsgCreateIdentity struct for create identity
-type MsgCreateIdentity struct {
-	Sender sdk.AccAddress `json:"sender"`
-}
-
-func NewMsgCreateIdentity(sender sdk.AccAddress) MsgCreateIdentity {
-	return MsgCreateIdentity{
-		Sender: sender,
-	}
-}
-
-//nolint
-func (msg MsgCreateIdentity) Type() string { return MsgType }
-func (msg MsgCreateIdentity) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Sender}
-}
-
-// get the bytes for the message signer to sign on
-func (msg MsgCreateIdentity) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(b)
-}
-
-// quick validity check
-func (msg MsgCreateIdentity) ValidateBasic() sdk.Error {
-	if msg.Sender == nil {
-		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
-	}
-
-	return nil
-}
-
 // MsgSetCerts struct for set certs
 type MsgSetCerts struct {
-	Certifier  sdk.AccAddress `json:"certifier"`
-	IdentityID int64          `json:"identity_id"`
-	Values     []CertValue    `json:"values"`
+	Certifier sdk.AccAddress `json:"certifier"`
+	Recipient sdk.AccAddress `json:"recipient"`
+	Values    []CertValue    `json:"values"`
 }
 
-func NewMsgSetCerts(certifier sdk.AccAddress, identityID int64, values []CertValue) MsgSetCerts {
+func NewMsgSetCerts(certifier sdk.AccAddress, recipient sdk.AccAddress, values []CertValue) MsgSetCerts {
 	return MsgSetCerts{
-		Certifier:  certifier,
-		IdentityID: identityID,
-		Values:     values,
+		Certifier: certifier,
+		Recipient: recipient,
+		Values:    values,
 	}
 }
 
@@ -121,8 +86,8 @@ func (msg MsgSetCerts) ValidateBasic() sdk.Error {
 	if msg.Certifier == nil {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil certifier address")
 	}
-	if msg.IdentityID == 0 {
-		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil identity id")
+	if msg.Recipient == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil recipient  address")
 	}
 	for _, value := range msg.Values {
 		if err := value.ValidateBasic(); err != nil {

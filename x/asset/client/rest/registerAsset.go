@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/icheckteam/ichain/client/errors"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -23,46 +24,34 @@ type createAssetBody struct {
 
 // Create asset REST handler
 func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		var m createAssetBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		err = m.BaseReq.Validate()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		if m.Name == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("name is required"))
-			return
+			return errors.New("name is required")
 		}
 
 		if m.Quantity.IsZero() {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("quantity is required"))
-			return
+			return errors.New("quantity is required")
 		}
 
 		if m.AssetID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("asset.id is required"))
-			return
+			return errors.New("asset.id is required")
 		}
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
+			return errors.New("asset.id is required")
 		}
 
 		// build message
@@ -76,5 +65,6 @@ func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			Unit:       m.Unit,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
+		return nil
+	})
 }

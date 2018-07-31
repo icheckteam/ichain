@@ -107,7 +107,7 @@ Fetch the testnet's `genesis.json` file and place it in `ichaind`'s config direc
 
 ```bash
 mkdir -p $HOME/.ichaind/config
-curl https://gist.githubusercontent.com/cwgoes/311da6ba05be6e113185a716538a44c3/raw/7b6e784cf29761b5781488006313bd69d164aa6c/chris-final.json > $HOME/.ichaind/config/genesis.json
+curl https://raw.githubusercontent.com/icheckteam/ichain/master/cmd/testnets/genesis.json > $HOME/.ichaind/config/genesis.json
 ```
 
 ### Add Seed Nodes
@@ -116,7 +116,7 @@ Your node needs to know how to find peers. You'll need to add healthy seed nodes
 
 ```toml
 # Comma separated list of seed nodes to connect to
-seeds = "e05e089e552ba96568d32e9c60eba637d3cc7bb6@125.212.225.51:4399"
+seeds = "21b79d54570ead7af4a0c2456e1497d646e6db7f@139.162.14.220:26656"
 ```
 
 If those seeds aren't working, you can find more seeds and persistent peers on the [Ichain Explorer](http://125.212.225.51:4397/nodes). Open the the `Full Nodes` pane and select nodes that do not have private (`10.x.x.x`) or [local IP addresses](https://en.wikipedia.org/wiki/Private_network). The `Persistent Peer` field contains the connection string. For best results use 4-6.

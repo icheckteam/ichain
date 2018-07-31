@@ -3,7 +3,6 @@ package rest
 import (
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/icheckteam/ichain/x/identity"
@@ -87,51 +86,16 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			return
 		}
 
-		identityID, err := strconv.Atoi(vars["identityID"])
+		address, err := sdk.AccAddressFromBech32(vars["address"])
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		msg := identity.MsgSetCerts{
-			Certifier:  sdk.AccAddress(info.GetPubKey().Address()),
-			IdentityID: int64(identityID),
-			Values:     m.Values,
-		}
-		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
-}
-
-// CreateIdentityHandlerFn
-func CreateIdentityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var m msgCreateIdentityBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		info, err := kb.Get(m.BaseReq.Name)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		msg := identity.MsgCreateIdentity{
-			Sender: sdk.AccAddress(info.GetPubKey().Address()),
+			Certifier: sdk.AccAddress(info.GetPubKey().Address()),
+			Recipient: address,
+			Values:    m.Values,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}

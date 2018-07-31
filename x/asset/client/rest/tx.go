@@ -9,62 +9,49 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
+	"github.com/icheckteam/ichain/client/errors"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
 // CreateProposalHandlerFn
 func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgCreateCreateProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		err = m.BaseReq.Validate()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		if m.Recipient == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("recipient is required"))
-			return
+			return errors.New("recipient is required")
 		}
 
 		switch m.Role {
 		case asset.RoleOwner, asset.RoleReporter:
 			break
 		default:
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("invalid role"))
-			return
+			return errors.New("invalid role")
 		}
 
 		if m.Role == asset.RoleReporter && len(m.Properties) == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("properties is required"))
-			return
+			return errors.New("properties is required")
 		}
 
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 		address, err := sdk.AccAddressFromBech32(m.Recipient)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 		msg := asset.MsgCreateProposal{
 			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
@@ -74,50 +61,41 @@ func CreateProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			Recipient:  address,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
+		return nil
+	})
 }
 
 // AnswerProposalHandlerFn
 func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgAnswerProposalBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		err = m.BaseReq.Validate()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		switch m.Response {
 		case asset.StatusAccepted, asset.StatusCancel, asset.StatusRejected:
 			break
 		default:
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("invalid reponse"))
-			return
+			return errors.New("invalid response")
 		}
 
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 		recipient, err := sdk.AccAddressFromBech32(vars["recipient"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 		msg := asset.MsgAnswerProposal{
 			Sender:    sdk.AccAddress(info.GetPubKey().Address()),
@@ -126,5 +104,7 @@ func AnswerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			AssetID:   vars["id"],
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
+		return nil
+
+	})
 }

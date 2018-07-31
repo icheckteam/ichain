@@ -6,18 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Identity
-type Identity struct {
-	ID    int64          `json:"id"`    // id of the identity
-	Owner sdk.AccAddress `json:"owner"` // owner of the identity
-}
-
 type Cert struct {
 	ID         string         `json:"id"`
 	Context    string         `json:"context"`
 	Property   string         `json:"property"`
 	Certifier  sdk.AccAddress `json:"certifier"`
-	Type       string         `json:"type"`
+	Owner      sdk.AccAddress `json:"owner"`
 	Trust      bool           `json:"trust"`
 	Data       Metadata       `json:"data"`
 	Confidence bool           `json:"confidence"`
@@ -30,7 +24,6 @@ type CertValue struct {
 	ID         string     `json:"id"`
 	Context    string     `json:"context"`
 	Property   string     `json:"property"`
-	Type       string     `json:"type"`
 	Data       Metadata   `json:"data"`
 	Confidence bool       `json:"confidence"`
 	Expires    int64      `json:"expires"`
