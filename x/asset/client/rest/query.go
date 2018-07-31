@@ -111,7 +111,7 @@ func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Code
 	}
 }
 
-func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc)
@@ -121,7 +121,7 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, storeName st
 			return
 		}
 
-		output, err := cdc.MarshalJSON(filterTxUpdateProperties(info))
+		output, err := cdc.MarshalJSON(filterTxUpdateProperties(info, vars["name"]))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -153,13 +153,16 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec) (tx
 	return info, nil
 }
 
-func filterTxUpdateProperties(infos txInfos) []historyUpdateProperty {
+func filterTxUpdateProperties(infos txInfos, name string) []historyUpdateProperty {
 	history := []historyUpdateProperty{}
 	for _, info := range infos {
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgUpdateProperties:
 				for _, p := range msg.Properties {
+					if name != "" && name != p.Name {
+						continue
+					}
 					history = append(history, historyUpdateProperty{
 						Type:  asset.PropertyTypeToString(p.Type),
 						Name:  p.Name,
