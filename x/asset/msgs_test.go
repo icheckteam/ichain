@@ -572,7 +572,8 @@ func TestAnswerProposalMsgValidation(t *testing.T) {
 		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 3}},
 		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 3}},
 		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 5, Sender: addr2}},
-		{true, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1, Sender: addr2}},
+		{false, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1, Sender: addr2}},
+		{true, MsgAnswerProposal{AssetID: "1", Recipient: addrs[0], Response: 1, Sender: addr2, Role: RoleOwner}},
 	}
 
 	for i, tc := range cases {
@@ -606,5 +607,5 @@ func TestAnswerProposalMsgGetSignBytes(t *testing.T) {
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"asset/AnswerProposal\",\"value\":{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\",\"sender\":\"cosmosaccaddr16y6p2v\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/AnswerProposal\",\"value\":{\"asset_id\":\"1\",\"recipient\":\"cosmosaccaddr15ky9du8a2wlstz6fpx3p4mqpjyrm5cgq4gr5na\",\"response\":\"0\",\"role\":\"0\",\"sender\":\"cosmosaccaddr16y6p2v\"}}")
 }

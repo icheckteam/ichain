@@ -444,6 +444,7 @@ func TestKeeper(t *testing.T) {
 		Sender:    addr2,
 		Recipient: addr2,
 		Response:  StatusAccepted,
+		Role:      RoleReporter,
 	}
 	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
 	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
@@ -469,6 +470,7 @@ func TestKeeper(t *testing.T) {
 		Sender:    addr2,
 		Recipient: addr2,
 		Response:  StatusAccepted,
+		Role:      RoleReporter,
 	}
 	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
 	assert.True(t, err == nil)
@@ -488,6 +490,7 @@ func TestKeeper(t *testing.T) {
 		Sender:    addr2,
 		Recipient: addr2,
 		Response:  StatusAccepted,
+		Role:      RoleOwner,
 	}
 	keeper.AnswerProposal(ctx, msgAnswerProposal)
 	newAsset, _ = keeper.GetAsset(ctx, msgAnswerProposal.AssetID)
@@ -499,6 +502,7 @@ func TestKeeper(t *testing.T) {
 		Sender:    addr3,
 		Recipient: addr3,
 		Response:  StatusAccepted,
+		Role:      RoleReporter,
 	}
 	_, err = keeper.AnswerProposal(ctx, msgAnswerProposal)
 	assert.True(t, err == nil)

@@ -94,39 +94,109 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 // TxsHandlerFn ...
 func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var output []byte
 		vars := mux.Vars(r)
-		node, err := ctx.GetNode()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't get current Node information. Error: %s", err.Error())))
-			return
-		}
-
-		query := fmt.Sprintf("asset_id='%s'", vars["id"])
-		page := 0
-		perPage := 500
-		prove := false
-		res, err := node.TxSearch(query, prove, page, perPage)
-		if err != nil {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		info, err := formatTxResults(cdc, res.Txs)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("couldn't query txs. Error: %s", err.Error())))
-			return
-		}
-		// success
-		output, err = cdc.MarshalJSON(info)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
-		w.Write(output) // write
+		output, err := cdc.MarshalJSON(info)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(output)
 	}
+}
+
+func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		output, err := cdc.MarshalJSON(filterTxUpdateProperties(info))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(output)
+	}
+}
+
+func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec) (txInfos, error) {
+
+	node, err := ctx.GetNode()
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf("asset_id='%s'", assetID)
+	page := 0
+	perPage := 500
+	prove := false
+	res, err := node.TxSearch(query, prove, page, perPage)
+	if err != nil {
+		return nil, err
+	}
+	info, err := formatTxResults(cdc, res.Txs)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+func filterTxUpdateProperties(infos txInfos) []historyUpdateProperty {
+	history := []historyUpdateProperty{}
+	for _, info := range infos {
+		for _, msg := range info.Tx.GetMsgs() {
+			switch msg := msg.(type) {
+			case asset.MsgUpdateProperties:
+				for _, p := range msg.Properties {
+					history = append(history, historyUpdateProperty{
+						Type:  asset.PropertyTypeToString(p.Type),
+						Name:  p.Name,
+						Value: p.GetValue(),
+						Time:  info.Time,
+						Memo:  info.Tx.Memo,
+					})
+				}
+				break
+			default:
+				break
+			}
+		}
+	}
+	return history
+}
+
+func filterTxChangeOwner(infos txInfos) []historyTransferOutput {
+	history := []historyTransferOutput{}
+	for _, info := range infos {
+		for _, msg := range info.Tx.GetMsgs() {
+			switch msg := msg.(type) {
+			case asset.MsgAnswerProposal:
+				if msg.Role == asset.RoleOwner {
+					history = append(history, historyTransferOutput{
+						Time:  info.Time,
+						Memo:  info.Tx.Memo,
+						Owner: msg.Sender,
+					})
+				}
+				break
+			default:
+				break
+			}
+		}
+	}
+	return history
 }
 
 func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -396,7 +466,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 			return
 		}
 
-		proposals := make([]asset.Proposal, len(kvs))
+		proposals := make([]ProposalOutput, len(kvs))
 		for index, kv := range kvs {
 			proposal := asset.Proposal{}
 			var assetID string
@@ -421,7 +491,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 				return
 			}
 
-			proposals[index] = proposal
+			proposals[index] = ToProposalOutput(proposal, assetID)
 		}
 		output, err := cdc.MarshalJSON(proposals)
 		if err != nil {
@@ -584,11 +654,9 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 					// index transfer asset
 					if proposal.Role == asset.RoleOwner {
 						history.Transfers = append(history.Transfers, historyTransferOutput{
-							Sender:    proposal.Sender,
-							Recipient: proposal.Recipient,
-							Time:      info.Time,
-							Memo:      info.Tx.Memo,
-							Amount:    recordAmount[msg.AssetID],
+							Owner: proposal.Sender,
+							Time:  info.Time,
+							Memo:  info.Tx.Memo,
 						})
 					}
 				}
@@ -596,12 +664,12 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, assetID string, fromHei
 			case asset.MsgUpdateProperties:
 				for _, property := range msg.Properties {
 					history.Properties = append(history.Properties, historyUpdateProperty{
-						Sender: msg.Sender,
-						Type:   asset.PropertyTypeToString(property.Type),
-						Name:   property.Name,
-						Value:  property.GetValue(),
-						Time:   info.Time,
-						Memo:   info.Tx.Memo,
+						Reporter: msg.Sender,
+						Type:     asset.PropertyTypeToString(property.Type),
+						Name:     property.Name,
+						Value:    property.GetValue(),
+						Time:     info.Time,
+						Memo:     info.Tx.Memo,
 					})
 				}
 				break
@@ -654,11 +722,9 @@ type historyOutput struct {
 }
 
 type historyTransferOutput struct {
-	Sender    sdk.AccAddress `json:"sender"`
-	Recipient sdk.AccAddress `json:"recipient"`
-	Time      int64          `json:"time"`
-	Memo      string         `json:"memo"`
-	Amount    sdk.Int        `json:"amount"`
+	Owner sdk.AccAddress `json:"recipient"`
+	Time  int64          `json:"time"`
+	Memo  string         `json:"memo"`
 }
 
 type historyChangeQuantityOutput struct {
@@ -670,12 +736,12 @@ type historyChangeQuantityOutput struct {
 }
 
 type historyUpdateProperty struct {
-	Sender sdk.AccAddress `json:"sender"`
-	Name   string         `json:"name"`
-	Type   string         `json:"type"`
-	Value  interface{}    `json:"value"`
-	Time   int64          `json:"time"`
-	Memo   string         `json:"memo"`
+	Reporter sdk.AccAddress `json:"reporter"`
+	Name     string         `json:"name"`
+	Type     string         `json:"type"`
+	Value    interface{}    `json:"value"`
+	Time     int64          `json:"time"`
+	Memo     string         `json:"memo"`
 }
 
 type historyAddMaterial struct {

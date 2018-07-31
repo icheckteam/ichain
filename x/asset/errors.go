@@ -20,8 +20,13 @@ const (
 	CodeInvalidAssetQuantity  sdk.CodeType      = 508
 	CodeAssetAlreadyFinal     sdk.CodeType      = 509
 	CodeProposalNotFound      sdk.CodeType      = 510
+	CodeInvalidRole           sdk.CodeType      = 511
 	DefaultCodespace          sdk.CodespaceType = 10
 )
+
+func ErrInvalidRole(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeInvalidRole, msg)
+}
 
 func ErrAssetNotFound(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset {%s} not found", assetID))

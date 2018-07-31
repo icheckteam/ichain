@@ -1320,7 +1320,8 @@ func doAnswerProposal(t *testing.T, port, seed, name, password string, addr, rec
 			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"response": "1"
+		"response": "1",
+		"role": "1"
 	}`, name, password, accnum, sequence, chainID))
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/test/proposals/%s/answer", recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)

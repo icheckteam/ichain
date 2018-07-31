@@ -19,6 +19,10 @@ type Proposal struct {
 }
 
 func (p Proposal) ValidateAnswer(msg MsgAnswerProposal) sdk.Error {
+	if p.Role != msg.Role {
+		return ErrInvalidRole("")
+	}
+
 	switch msg.Response {
 	case StatusCancel:
 		if !bytes.Equal(msg.Sender, p.Issuer) {

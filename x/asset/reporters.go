@@ -25,7 +25,7 @@ func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags
 		return nil, ErrAssetAlreadyFinal(asset.ID)
 	}
 	if !asset.IsOwner(msg.Sender) {
-		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to create", msg.Sender))
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to revoke", msg.Sender))
 	}
 
 	reporter, reporterIndex := asset.GetReporter(msg.Reporter)

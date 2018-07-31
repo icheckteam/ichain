@@ -348,6 +348,7 @@ type MsgAnswerProposal struct {
 	Sender    sdk.AccAddress `json:"sender"`
 	Recipient sdk.AccAddress `json:"recipient"`
 	Response  ProposalStatus `json:"response"`
+	Role      ProposalRole   `json:"role"`
 }
 
 func (msg MsgAnswerProposal) Type() string                            { return msgType }
@@ -364,6 +365,9 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Sender) == 0 {
 		return ErrMissingField("sender")
+	}
+	if msg.Role == 0 {
+		return ErrMissingField("role")
 	}
 	switch msg.Response {
 	case StatusAccepted, StatusCancel, StatusRejected:

@@ -102,6 +102,7 @@ func answerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			Recipient: recipient,
 			Response:  m.Response,
 			AssetID:   vars["id"],
+			Role:      m.Role,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 		return nil
