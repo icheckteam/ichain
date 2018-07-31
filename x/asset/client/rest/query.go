@@ -24,6 +24,7 @@ import (
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
+// AssetOutput ..
 type AssetOutput struct {
 	Asset     asset.Asset            `json:"asset"`
 	Materials map[string]asset.Asset `json:"material_by_id"`
@@ -33,7 +34,7 @@ type AssetOutput struct {
 // REST
 
 // get key REST handler
-func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
+func queryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -70,7 +71,7 @@ func QueryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 	}
 }
 
-func QueryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		items, err := queryAccountAssets(ctx, storeName, cdc, vars["address"])
@@ -90,7 +91,45 @@ func QueryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 	}
 }
 
-func QueryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+// TxsHandlerFn ...
+func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var output []byte
+		vars := mux.Vars(r)
+		node, err := ctx.GetNode()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Couldn't get current Node information. Error: %s", err.Error())))
+			return
+		}
+
+		query := fmt.Sprintf("asset_id='%s'", vars["id"])
+		page := 0
+		perPage := 500
+		prove := false
+		res, err := node.TxSearch(query, prove, page, perPage)
+		if err != nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		info, err := formatTxResults(cdc, res.Txs)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't query txs. Error: %s", err.Error())))
+			return
+		}
+		// success
+		output, err = cdc.MarshalJSON(info)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.Write(output) // write
+	}
+}
+
+func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		items, err := queryAssetChildrens(ctx, storeName, cdc, vars["id"])
@@ -195,7 +234,7 @@ func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Co
 	return items, nil
 }
 
-func QueryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -216,16 +255,16 @@ func QueryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 		assets := make([]asset.Asset, len(kvs))
 		for index, kv := range kvs {
 			a := asset.Asset{}
-			var assetId string
+			var assetID string
 
-			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			err = cdc.UnmarshalBinary(kv.Value, &assetID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
 				return
 			}
 
-			res, err := ctx.QueryStore(asset.GetInventoryKey(address, assetId), storeName)
+			res, err := ctx.QueryStore(asset.GetInventoryKey(address, assetID), storeName)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
@@ -251,7 +290,7 @@ func QueryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 	}
 }
 
-func QueryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -272,16 +311,16 @@ func QueryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 		assets := make([]asset.Asset, len(kvs))
 		for index, kv := range kvs {
 			a := asset.Asset{}
-			var assetId string
+			var assetID string
 
-			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			err = cdc.UnmarshalBinary(kv.Value, &assetID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
 				return
 			}
 
-			res, err := ctx.QueryStore(asset.GetReporterAssetKey(address, assetId), storeName)
+			res, err := ctx.QueryStore(asset.GetReporterAssetKey(address, assetID), storeName)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
@@ -307,7 +346,7 @@ func QueryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 	}
 }
 
-func QueryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		kvs, err := ctx.QuerySubspace(cdc, asset.GetProposalsKey(vars["asset_id"]), storeName)
@@ -339,7 +378,7 @@ func QueryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 	}
 }
 
-func QueryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -360,16 +399,16 @@ func QueryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 		proposals := make([]asset.Proposal, len(kvs))
 		for index, kv := range kvs {
 			proposal := asset.Proposal{}
-			var assetId string
+			var assetID string
 
-			err = cdc.UnmarshalBinary(kv.Value, &assetId)
+			err = cdc.UnmarshalBinary(kv.Value, &assetID)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
 				return
 			}
 
-			res, err := ctx.QueryStore(asset.GetProposalAccountKey(address, assetId), storeName)
+			res, err := ctx.QueryStore(asset.GetProposalAccountKey(address, assetID), storeName)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
@@ -395,11 +434,12 @@ func QueryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 	}
 }
 
+// HistortyHandlerFn ...
 func HistortyHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		recordId := vars["id"]
-		history, indexRecord, err := queryHistory(ctx, storeName, cdc, recordId, 0)
+		recordID := vars["id"]
+		history, indexRecord, err := queryHistory(ctx, storeName, cdc, recordID, 0)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

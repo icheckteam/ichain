@@ -23,7 +23,7 @@ type createAssetBody struct {
 }
 
 // Create asset REST handler
-func CreateAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		var m createAssetBody
 		body, err := ioutil.ReadAll(r.Body)

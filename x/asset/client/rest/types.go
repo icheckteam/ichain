@@ -54,6 +54,7 @@ type msgAnswerProposalBody struct {
 	AssetID  string               `json:"asset_id"`
 }
 
+// ProposalOutput ...
 type ProposalOutput struct {
 	Role       asset.ProposalRole   `json:"role"`       // The role assigned to the recipient
 	Status     asset.ProposalStatus `json:"status"`     // The response of the recipient
