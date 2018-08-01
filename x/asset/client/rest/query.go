@@ -14,11 +14,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 
+	"github.com/icheckteam/ichain/client/tx"
 	"github.com/icheckteam/ichain/x/asset"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/common"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // AssetOutput ..
@@ -77,7 +74,7 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		info, err := queryAssetTxs(ctx, vars["id"], cdc)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -96,7 +93,7 @@ func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Code
 func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		info, err := queryAssetTxs(ctx, vars["id"], cdc)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -113,14 +110,17 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Co
 	}
 }
 
-func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec) (txInfos, error) {
-
+func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, height int64) ([]tx.TxInfo, error) {
+	record, err := getRecord(ctx, assetID, cdc)
+	if err != nil {
+		return nil, err
+	}
 	node, err := ctx.GetNode()
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("asset_id='%s'", assetID)
+	query := fmt.Sprintf("asset_id='%s'", record.ID)
 	page := 0
 	perPage := 500
 	prove := false
@@ -128,16 +128,32 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec) (tx
 	if err != nil {
 		return nil, err
 	}
-	info, err := formatTxResults(cdc, res.Txs)
+	info, err := tx.FormatTxResults(cdc, res.Txs)
 	if err != nil {
 		return nil, err
 	}
+
+	// load tx from parents ....
+	if record.Parent != "" {
+		txs, err := queryAssetTxs(ctx, record.Parent, cdc, record.Height)
+		if err != nil {
+			return nil, err
+		}
+		for _, tx := range txs {
+			if tx.Height > record.Height {
+				continue
+			}
+			info = append(info, tx)
+		}
+	}
+
 	return info, nil
 }
 
-func filterTxUpdateProperties(infos txInfos, name string) []historyUpdateProperty {
+func filterTxUpdateProperties(infos []tx.TxInfo, name string) []historyUpdateProperty {
 	history := []historyUpdateProperty{}
 	for _, info := range infos {
+		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgUpdateProperties:
@@ -150,7 +166,7 @@ func filterTxUpdateProperties(infos txInfos, name string) []historyUpdatePropert
 						Name:  p.Name,
 						Value: p.GetValue(),
 						Time:  info.Time,
-						Memo:  info.Tx.Memo,
+						Memo:  tx.Memo,
 					})
 				}
 				break
@@ -162,16 +178,17 @@ func filterTxUpdateProperties(infos txInfos, name string) []historyUpdatePropert
 	return history
 }
 
-func filterTxChangeOwner(infos txInfos) []historyTransferOutput {
+func filterTxChangeOwner(infos []tx.TxInfo) []historyTransferOutput {
 	history := []historyTransferOutput{}
 	for _, info := range infos {
+		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgAnswerProposal:
 				if msg.Role == asset.RoleOwner {
 					history = append(history, historyTransferOutput{
 						Time:  info.Time,
-						Memo:  info.Tx.Memo,
+						Memo:  tx.Memo,
 						Owner: msg.Sender,
 					})
 				}
@@ -300,17 +317,13 @@ func queryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 			return
 		}
 
-		proposals := make([]asset.Proposal, len(kvs))
-		for index, kv := range kvs {
-			proposal := asset.Proposal{}
-			err = cdc.UnmarshalBinary(kv.Value, &proposal)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-			proposals[index] = proposal
+		proposals, err := getProposals(ctx, kvs, cdc)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
+			return
 		}
+
 		output, err := cdc.MarshalJSON(proposals)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -358,7 +371,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
 				return
 			}
-			err = cdc.UnmarshalBinary(res, &proposal)
+			proposal, err = asset.UnmarshalProposal(cdc, res)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
@@ -366,6 +379,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 			}
 
 			proposals[index] = ToProposalOutput(proposal, assetID)
+
 		}
 		output, err := cdc.MarshalJSON(proposals)
 		if err != nil {
@@ -416,66 +430,4 @@ type historyAddMaterial struct {
 	AssetID string         `json:"asset_id"`
 	Time    int64          `json:"time"`
 	Memo    string         `json:"memo"`
-}
-
-func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) (txInfos, error) {
-	var err error
-	out := make(txInfos, len(res))
-	for i := range res {
-		out[i], err = formatTxResult(cdc, res[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return out, nil
-}
-
-func getBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
-	// get the node
-	node, err := ctx.GetNode()
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: actually honor the --select flag!
-	// header -> BlockchainInfo
-	// header, tx -> Block
-	// results -> BlockResults
-	return node.Block(height)
-}
-
-func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
-	// TODO: verify the proof if requested
-	tx, err := parseTx(cdc, res.Tx)
-	if err != nil {
-		return txInfo{}, err
-	}
-
-	info := txInfo{
-		Hash:   res.Hash,
-		Height: res.Height,
-		Tx:     tx,
-		Result: res.TxResult,
-	}
-	return info, nil
-}
-
-// txInfo is used to prepare info to display
-type txInfo struct {
-	Hash   common.HexBytes        `json:"hash"`
-	Height int64                  `json:"height"`
-	Tx     auth.StdTx             `json:"tx"`
-	Result abci.ResponseDeliverTx `json:"result"`
-	Time   int64                  `json:"time"`
-}
-
-type txInfos []txInfo
-
-func parseTx(cdc *wire.Codec, txBytes []byte) (auth.StdTx, error) {
-	var tx auth.StdTx
-	err := cdc.UnmarshalBinary(txBytes, &tx)
-	if err != nil {
-		return tx, err
-	}
-	return tx, nil
 }

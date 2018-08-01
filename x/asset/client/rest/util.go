@@ -181,3 +181,15 @@ func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec)
 	}
 	return records, nil
 }
+
+func getProposals(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (asset.Proposals, error) {
+	proposals := make(asset.Proposals, len(kvs))
+	for i, kv := range kvs {
+		proposal, err := asset.UnmarshalProposal(cdc, kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		proposals[i] = proposal
+	}
+	return proposals, nil
+}

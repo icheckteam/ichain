@@ -66,3 +66,9 @@ func UnmarshalRecord(cdc *wire.Codec, value []byte) (record Asset, err error) {
 	err = cdc.UnmarshalBinary(value, &record)
 	return
 }
+
+// UnmarshalProposal ...
+func UnmarshalProposal(cdc *wire.Codec, value []byte) (proposal Proposal, err error) {
+	err = cdc.UnmarshalBinary(value, &proposal)
+	return
+}
