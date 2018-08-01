@@ -1,8 +1,6 @@
 package asset
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -190,7 +188,7 @@ func (msg MsgSubtractQuantity) GetSignBytes() []byte {
 type MsgAddMaterials struct {
 	AssetID string         `json:"asset_id"`
 	Sender  sdk.AccAddress `json:"sender"`
-	Amount  sdk.Coins      `json:"amount"`
+	Amount  Materials      `json:"amount"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
@@ -208,15 +206,9 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 	if len(msg.Amount) == 0 {
 		return ErrMissingField("amount")
 	}
-	for i, coin := range msg.Amount {
-		if len(coin.Denom) == 0 {
-			return ErrMissingField(fmt.Sprintf("amount[%d].denom is required", i))
-		}
-		if coin.Amount.IsZero() {
-			return ErrMissingField(fmt.Sprintf("amount[%d].amount is required", i))
-		}
+	if err := msg.Amount.ValidateBasic(); err != nil {
+		return err
 	}
-
 	return nil
 }
 

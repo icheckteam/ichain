@@ -20,9 +20,9 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 	// validate material amount
 	cached := map[string]Asset{}
 	for _, amount := range msg.Amount {
-		m, found := k.GetAsset(ctx, amount.Denom)
+		m, found := k.GetAsset(ctx, amount.RecordID)
 		if !found {
-			return nil, ErrAssetNotFound(amount.Denom)
+			return nil, ErrAssetNotFound(amount.RecordID)
 		}
 		if !m.IsOwner(msg.Sender) {
 			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
@@ -39,11 +39,11 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 
 	// update record and material
 	for _, amount := range msg.Amount {
-		record := cached[amount.Denom]
+		record := cached[amount.RecordID]
 		record.Quantity = record.Quantity.Sub(amount.Amount)
 		k.SetAsset(ctx, record)
-		k.AddMaterial(ctx, msg.AssetID, Material{Amount: amount.Amount, RecordID: amount.Denom})
-		tags = tags.AppendTag(TagAsset, []byte(amount.Denom))
+		k.AddMaterial(ctx, msg.AssetID, amount)
+		tags = tags.AppendTag(TagAsset, []byte(amount.RecordID))
 	}
 
 	return tags, nil
@@ -51,8 +51,32 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 
 // Material ...
 type Material struct {
-	RecordID string
-	Amount   sdk.Int
+	RecordID string  `json:"record_id"`
+	Amount   sdk.Int `json:"amount"`
+}
+
+// ValidateBasic ...
+func (m Material) ValidateBasic() sdk.Error {
+	if m.RecordID == "" {
+		return ErrInvalidField("material.record_id is required")
+	}
+	if m.Amount.IsZero() {
+		return ErrInvalidField("material.amount is required")
+	}
+	return nil
+}
+
+// Materials ...
+type Materials []Material
+
+// ValidateBasic ...
+func (ms Materials) ValidateBasic() sdk.Error {
+	for _, m := range ms {
+		if err := m.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SetMaterial ...

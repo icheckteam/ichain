@@ -15,8 +15,8 @@ import (
 )
 
 type addMaterialsBody struct {
-	BaseReq baseBody  `json:"base_req"`
-	Amount  sdk.Coins `json:"amount"`
+	BaseReq baseBody         `json:"base_req"`
+	Amount  []asset.Material `json:"amount"`
 }
 
 // AddMaterialsHandlerFn  REST handler
@@ -42,7 +42,7 @@ func addMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			return errors.New("amount is required")
+			return err
 		}
 
 		msg := asset.MsgAddMaterials{

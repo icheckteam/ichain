@@ -1174,7 +1174,7 @@ func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.Ac
 			"chain_id": "%s"
 		},
 		"amount": [
-			{"denom": "test", "amount": "5"}
+			{"record_id": "test", "amount": "5"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 

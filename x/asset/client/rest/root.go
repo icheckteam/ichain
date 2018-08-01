@@ -12,7 +12,6 @@ var storeName = "asset"
 // RegisterRoutes resgister REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc("/assets", createAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/history", HistortyHandlerFn(ctx, storeName, cdc)).Methods("GET")
 	r.HandleFunc("/assets/{id}", queryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
 	r.HandleFunc("/assets/{id}/txs", assetTxsHandlerFn(ctx, storeName, cdc)).Methods("GET")
 	r.HandleFunc("/assets/{id}/children", queryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")

@@ -688,8 +688,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials := MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("assetb", 10),
+		Amount: []Material{
+			Material{RecordID: "assetb", Amount: sdk.NewInt(10)},
 		},
 	}
 
@@ -705,8 +705,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("assetb", 10),
+		Amount: []Material{
+			Material{RecordID: "assetb", Amount: sdk.NewInt(10)},
 		},
 	}
 	keeper.AddMaterials(ctx, msgAddMaterials)
@@ -718,8 +718,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("asset1", 10),
+		Amount: []Material{
+			Material{RecordID: "asset1", Amount: sdk.NewInt(10)},
 		},
 	}
 	keeper.AddMaterials(ctx, msgAddMaterials)
@@ -733,8 +733,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr2,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("asset1", 10),
+		Amount: []Material{
+			Material{RecordID: "asset1", Amount: sdk.NewInt(10)},
 		},
 	}
 	_, err := keeper.AddMaterials(ctx, msgAddMaterials)
@@ -744,8 +744,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("asset3", 10),
+		Amount: []Material{
+			Material{RecordID: "asset3", Amount: sdk.NewInt(10)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -755,8 +755,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asseta",
-		Amount: sdk.Coins{
-			sdk.NewCoin("asset5", 10),
+		Amount: []Material{
+			Material{RecordID: "asset5", Amount: sdk.NewInt(10)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
@@ -766,8 +766,8 @@ func TestKeeperAddMaterials(t *testing.T) {
 	msgAddMaterials = MsgAddMaterials{
 		Sender:  addr,
 		AssetID: "asset6",
-		Amount: sdk.Coins{
-			sdk.NewCoin("asset1", 10),
+		Amount: []Material{
+			Material{RecordID: "asset1", Amount: sdk.NewInt(10)},
 		},
 	}
 	_, err = keeper.AddMaterials(ctx, msgAddMaterials)
