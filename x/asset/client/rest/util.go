@@ -119,40 +119,57 @@ func getMaterials(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]
 	return materials, nil
 }
 
-func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Codec) (*asset.RecordOutput, error) {
-	// query all properties of this record
-	properties, err := getProperties(ctx, record.ID, cdc)
-	if err != nil {
-		return nil, err
+func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
+	recordOutput := asset.RecordOutput{
+		ID:       record.ID,
+		Name:     record.Name,
+		Owner:    record.Owner,
+		Parent:   record.Parent,
+		Root:     record.Root,
+		Final:    record.Final,
+		Quantity: record.Quantity,
+		Height:   record.Height,
 	}
 
-	// query all materials of this record
-	materials, err := getMaterials(ctx, record.ID, cdc)
-	if err != nil {
-		return nil, err
+	// defaults
+	if len(includes) == 0 {
+		includes = []string{
+			"properties", "materials", "reporters",
+		}
 	}
 
-	// query all reporters of this record
-	reporters, err := getReporters(ctx, record.ID, cdc)
-	if err != nil {
-		return nil, err
+	for _, include := range includes {
+		switch include {
+		case "properties":
+			// query all properties of this record
+			properties, err := getProperties(ctx, record.ID, cdc)
+			if err != nil {
+				return nil, err
+			}
+			recordOutput.Properties = properties
+			break
+		case "materials":
+			// query all materials of this record
+			materials, err := getMaterials(ctx, record.ID, cdc)
+			if err != nil {
+				return nil, err
+			}
+			recordOutput.Materials = materials
+			break
+		case "reporters":
+			// query all reporters of this record
+			reporters, err := getReporters(ctx, record.ID, cdc)
+			if err != nil {
+				return nil, err
+			}
+			recordOutput.Reporters = reporters
+			break
+		}
 	}
-	return &asset.RecordOutput{
-		ID:         record.ID,
-		Name:       record.Name,
-		Owner:      record.Owner,
-		Parent:     record.Parent,
-		Root:       record.Root,
-		Final:      record.Final,
-		Quantity:   record.Quantity,
-		Height:     record.Height,
-		Materials:  materials,
-		Reporters:  reporters,
-		Properties: properties,
-	}, nil
+	return &recordOutput, nil
 }
 
-func getRecord(ctx context.CoreContext, recordID string, cdc *wire.Codec) (*asset.RecordOutput, error) {
+func getRecord(ctx context.CoreContext, recordID string, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
 	recordKey := asset.GetAssetKey(recordID)
 	res, err := ctx.QueryStore(recordKey, storeName)
 	if err != nil {
@@ -164,7 +181,35 @@ func getRecord(ctx context.CoreContext, recordID string, cdc *wire.Codec) (*asse
 		return nil, err
 	}
 
-	return widthMoreRecord(ctx, record, cdc)
+	recordOutput, err := widthMoreRecord(ctx, record, cdc, includes...)
+	if err != nil {
+		return nil, err
+	}
+	// get rppot asset info
+	if recordOutput.Root != "" {
+		root, err := getRecord(ctx, recordOutput.Root, cdc, "properties")
+		if err != nil {
+			return nil, err
+		}
+		record.Unit = root.Unit
+		for _, p := range root.Properties {
+			switch p.Name {
+			case "barcode":
+				recordOutput.Barcode = p.StringValue
+				break
+			case "type":
+				recordOutput.Type = p.StringValue
+				break
+			case "subtype":
+				recordOutput.SubType = p.StringValue
+				break
+			default:
+				break
+			}
+		}
+	}
+
+	return recordOutput, nil
 }
 
 func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire.Codec) ([]*asset.RecordOutput, error) {

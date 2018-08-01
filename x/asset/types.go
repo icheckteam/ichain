@@ -26,6 +26,9 @@ type RecordOutput struct {
 	ID         string         `json:"id"`
 	Name       string         `json:"name"`
 	Owner      sdk.AccAddress `json:"owner"`
+	Type       string         `json:"type"`
+	SubType    string         `json:"subtype"`
+	Barcode    string         `json:"barcode"`
 	Parent     string         `json:"parent"` // the id of the asset parent
 	Root       string         `json:"root"`   // the id of the asset root
 	Final      bool           `json:"final"`
