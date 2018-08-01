@@ -54,11 +54,6 @@ func ErrInvalidAssetQuantity(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset {%s} is not enough", assetID))
 }
 
-// ErrInvalidAssetRoot ...
-func ErrInvalidAssetRoot(assetID string) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeInvalidTransaction, fmt.Sprintf("asset {%s} is not root", assetID))
-}
-
 // ErrInvalidRevokeReporter is used when the reporter of
 // a revoke reporter message is not in the asset's reporter list
 func ErrInvalidRevokeReporter(addr sdk.AccAddress) sdk.Error {

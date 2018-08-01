@@ -37,8 +37,7 @@ type AssetOutput struct {
 func queryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-
-		record, err := queryAsset(ctx, storeName, cdc, vars["id"])
+		record, err := getRecord(ctx, vars["id"], cdc)
 
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -46,21 +45,7 @@ func queryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 			return
 		}
 
-		assetOutput := AssetOutput{
-			Asset:     *record,
-			Materials: map[string]asset.Asset{},
-		}
-		for _, material := range record.Materials {
-			record, err := queryAsset(ctx, storeName, cdc, material.Denom)
-			assetOutput.Materials[record.ID] = *record
-			if err != nil {
-				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(fmt.Sprintf("Couldn't decode asset. Error: %s", err.Error())))
-				return
-			}
-		}
-
-		output, err := cdc.MarshalJSON(assetOutput)
+		output, err := cdc.MarshalJSON(record)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
@@ -256,111 +241,21 @@ func queryAssetsByIds(ctx context.CoreContext, storeName string, cdc *wire.Codec
 	return records, nil
 }
 
-func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]asset.Asset, error) {
+func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]*asset.RecordOutput, error) {
 	address, err := sdk.AccAddressFromBech32(account)
 	if err != nil {
 		return nil, err
 	}
-
-	items := []asset.Asset{}
-	kvs, err := ctx.QuerySubspace(cdc, asset.GetAccountAssetsKey(address), storeName)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, kv := range kvs {
-		var itemID string
-		err = cdc.UnmarshalBinary(kv.Value, &itemID)
-		if err != nil {
-			return nil, err
-		}
-		item, err := queryAsset(ctx, storeName, cdc, itemID)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, *item)
-	}
-
-	return items, nil
+	return getRecordsByAccount(ctx, address, cdc)
 }
 
-func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) ([]asset.Asset, error) {
-	items := []asset.Asset{}
+func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) ([]*asset.RecordOutput, error) {
 	kvs, err := ctx.QuerySubspace(cdc, asset.GetAssetChildrensKey(assetID), storeName)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, kv := range kvs {
-		var itemID string
-		err = cdc.UnmarshalBinary(kv.Value, &itemID)
-		if err != nil {
-			return nil, err
-		}
-		item, err := queryAsset(ctx, storeName, cdc, itemID)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, *item)
-	}
-
-	return items, nil
-}
-
-func queryInventoryHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		address, err := sdk.AccAddressFromBech32(vars["address"])
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		kvs, err := ctx.QuerySubspace(cdc, asset.GetInventoryByAccountKey(address), storeName)
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
-			return
-		}
-
-		assets := make([]asset.Asset, len(kvs))
-		for index, kv := range kvs {
-			a := asset.Asset{}
-			var assetID string
-
-			err = cdc.UnmarshalBinary(kv.Value, &assetID)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			res, err := ctx.QueryStore(asset.GetInventoryKey(address, assetID), storeName)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-			err = cdc.UnmarshalBinary(res, &a)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			assets[index] = a
-		}
-		output, err := cdc.MarshalJSON(assets)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
-	}
+	return getRecordsByKvs(ctx, kvs, cdc)
 }
 
 func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -381,34 +276,13 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 			return
 		}
 
-		assets := make([]asset.Asset, len(kvs))
-		for index, kv := range kvs {
-			a := asset.Asset{}
-			var assetID string
-
-			err = cdc.UnmarshalBinary(kv.Value, &assetID)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			res, err := ctx.QueryStore(asset.GetReporterAssetKey(address, assetID), storeName)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-			err = cdc.UnmarshalBinary(res, &a)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			assets[index] = a
+		records, err := getRecordsByKvs(ctx, kvs, cdc)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
 		}
-		output, err := cdc.MarshalJSON(assets)
+		output, err := cdc.MarshalJSON(records)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))

@@ -98,20 +98,11 @@ func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 		return ErrMissingField("asset_id")
 	}
 	if len(msg.Properties) == 0 {
-		return ErrMissingField("name")
+		return ErrMissingField("properties")
 	}
-	for _, attr := range msg.Properties {
-		switch attr.Type {
-		case PropertyTypeBoolean,
-			PropertyTypeBytes,
-			PropertyTypeEnum,
-			PropertyTypeLocation,
-			PropertyTypeNumber,
-			PropertyTypeString:
-			break
-		default:
-			return ErrInvalidField("properties")
-		}
+
+	if err := msg.Properties.ValidateBasic(); err != nil {
+		return err
 	}
 	return nil
 }

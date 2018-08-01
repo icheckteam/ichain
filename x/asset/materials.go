@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -11,40 +13,98 @@ func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sd
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 
-	if err := asset.ValidateAddMaterial(msg.Sender); err != nil {
-		return nil, err
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
 	}
-	// subtract quantity
-	materialsToSave := []Asset{}
+
+	// validate material amount
+	cached := map[string]Asset{}
 	for _, amount := range msg.Amount {
 		m, found := k.GetAsset(ctx, amount.Denom)
 		if !found {
 			return nil, ErrAssetNotFound(amount.Denom)
 		}
-
-		if err := m.ValidateSubtractQuantity(msg.Sender, amount.Amount); err != nil {
-			return nil, err
+		if !m.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
 		}
 
-		m.Quantity = m.Quantity.Sub(amount.Amount)
-		materialsToSave = append(materialsToSave, m)
+		cached[m.ID] = m
 	}
-	asset.Materials = asset.Materials.Plus(msg.Amount.Sort())
+
+	// new tags ...
 	tags := sdk.NewTags(
 		TagAsset, []byte(asset.ID),
 		TagSender, []byte(msg.Sender.String()),
 	)
-	for index, meterialToSave := range materialsToSave {
-		// subtract inventory
-		k.subtractInventory(ctx, asset.Owner, sdk.Coin{
-			Denom:  asset.GetRoot(),
-			Amount: msg.Amount[index].Amount,
-		})
 
-		k.setAsset(ctx, meterialToSave)
-		tags = tags.AppendTag(TagAsset, []byte(meterialToSave.ID))
+	// update record and material
+	for _, amount := range msg.Amount {
+		record := cached[amount.Denom]
+		record.Quantity = record.Quantity.Sub(amount.Amount)
+		k.SetAsset(ctx, record)
+		k.AddMaterial(ctx, msg.AssetID, Material{Amount: amount.Amount, RecordID: amount.Denom})
+		tags = tags.AppendTag(TagAsset, []byte(amount.Denom))
 	}
-	k.setAsset(ctx, asset)
-	tags = tags.AppendTag(TagAsset, []byte(asset.ID))
+
 	return tags, nil
+}
+
+// Material ...
+type Material struct {
+	RecordID string
+	Amount   sdk.Int
+}
+
+// SetMaterial ...
+func (k Keeper) setMaterial(ctx sdk.Context, recordID string, material Material) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(material)
+	store.Set(GetMaterialKey(recordID, material.RecordID), bz)
+}
+
+// AddMaterial ...
+func (k Keeper) AddMaterial(ctx sdk.Context, recordID string, input Material) {
+	material, found := k.GetMaterial(ctx, recordID, input.RecordID)
+	if !found {
+		material = Material{
+			RecordID: input.RecordID,
+			Amount:   input.Amount,
+		}
+	} else {
+		material.Amount = material.Amount.Add(input.Amount)
+	}
+	k.setMaterial(ctx, recordID, material)
+
+}
+
+// GetMaterial ...
+func (k Keeper) GetMaterial(ctx sdk.Context, recordID string, materialID string) (material Material, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get(GetMaterialKey(recordID, materialID))
+	if b == nil {
+		found = false
+		return
+	}
+	k.cdc.MustUnmarshalBinary(b, &material)
+	return material, true
+}
+
+// GetMaterials ...
+func (k Keeper) GetMaterials(ctx sdk.Context, recordID string) (materials []Material) {
+	store := ctx.KVStore(k.storeKey)
+	materialsPrefixKey := GetMaterialsKey(recordID)
+	iterator := sdk.KVStorePrefixIterator(store, materialsPrefixKey)
+	i := 0
+	for ; ; i++ {
+		if !iterator.Valid() {
+			break
+		}
+		material := Material{}
+		k.cdc.MustUnmarshalBinary(iterator.Value(), &material)
+		materials = append(materials, material)
+		iterator.Next()
+	}
+
+	iterator.Close()
+	return materials
 }

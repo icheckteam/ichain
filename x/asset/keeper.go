@@ -50,9 +50,18 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		if !found {
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
-		if err := parent.ValidateAddChildren(msg.Sender, msg.Quantity); err != nil {
-			return nil, err
+		if parent.Final {
+			return nil, ErrAssetAlreadyFinal(parent.ID)
 		}
+
+		if !parent.IsOwner(msg.Sender) {
+			return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to revoke", msg.Sender))
+		}
+
+		if parent.Quantity.LT(msg.Quantity) {
+			return nil, ErrInvalidAssetQuantity(parent.ID)
+		}
+
 		parent.Quantity = parent.Quantity.Sub(msg.Quantity)
 
 		if len(parent.Root) != 0 && parent.Quantity.IsZero() {
@@ -68,30 +77,9 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
 
 		// clone data
-		newAsset.Description = parent.Description
-		newAsset.Materials = parent.Materials
-		newAsset.Properties = parent.Properties
 		k.setAsset(ctx, parent)
 	}
 
-	// index type/subtype for asset
-	if len(msg.Parent) == 0 && len(msg.Properties) > 0 {
-		description := Description{}
-		for _, prop := range msg.Properties {
-			if prop.Name == "type" {
-				description.Type = prop.StringValue
-			} else if prop.Name == "subtype" {
-				description.Subtype = prop.StringValue
-			} else if prop.Name == "barcode" {
-				description.Barcode = prop.StringValue
-			}
-		}
-		newAsset.Description = description
-	}
-
-	if len(msg.Properties) > 0 {
-		newAsset.Properties = msg.Properties.Sort()
-	}
 	// update asset info
 	k.SetAsset(ctx, newAsset)
 	k.setAssetByAccountIndex(ctx, newAsset.ID, newAsset.Owner)
@@ -99,13 +87,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 	if len(newAsset.Parent) > 0 {
 		// index by parent
 		k.setAssetByParentIndex(ctx, newAsset)
-	}
-
-	if len(newAsset.Parent) == 0 {
-		k.addInventory(ctx, newAsset.Owner, sdk.Coin{
-			Denom:  newAsset.GetRoot(),
-			Amount: newAsset.Quantity,
-		})
 	}
 
 	return tags, nil
@@ -122,11 +103,6 @@ func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipien
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(assetID)
 	store.Set(GetAccountAssetKey(recipient, assetID), bz)
-}
-
-func (k Keeper) removeAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetAccountAssetKey(recipient, assetID))
 }
 
 func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
@@ -165,16 +141,13 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-
-	if err := asset.ValidateAddQuantity(msg.Sender); err != nil {
-		return nil, err
+	if asset.Final {
+		return nil, ErrAssetAlreadyFinal(asset.ID)
 	}
 
-	// add inventory
-	k.addInventory(ctx, asset.Owner, sdk.Coin{
-		Denom:  asset.GetRoot(),
-		Amount: msg.Quantity,
-	})
+	if asset.Root != "" || !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to add", msg.Sender))
+	}
 
 	asset.Quantity = asset.Quantity.Add(msg.Quantity)
 	k.setAsset(ctx, asset)
@@ -192,15 +165,17 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
 
-	if err := asset.ValidateSubtractQuantity(msg.Sender, msg.Quantity); err != nil {
-		return nil, err
+	if asset.Quantity.LT(msg.Quantity) {
+		return nil, ErrInvalidAssetQuantity(asset.ID)
 	}
 
-	// subtract inventory
-	k.subtractInventory(ctx, asset.Owner, sdk.Coin{
-		Denom:  asset.GetRoot(),
-		Amount: msg.Quantity,
-	})
+	if asset.Final {
+		return nil, ErrAssetAlreadyFinal(asset.ID)
+	}
+
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to revoke", msg.Sender))
+	}
 
 	asset.Quantity = asset.Quantity.Sub(msg.Quantity)
 	k.setAsset(ctx, asset)
@@ -211,29 +186,19 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 	return tags, nil
 }
 
-// Send ...
+// Finalize ...
 func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error) {
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
 	}
-	if err := asset.ValidateFinalize(msg.Sender); err != nil {
-		return nil, err
+	if asset.Final {
+		return nil, ErrAssetAlreadyFinal(asset.ID)
+	}
+	if !asset.IsOwner(msg.Sender) {
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("%v not unauthorized to revoke", msg.Sender))
 	}
 	asset.Final = true
-	k.removeAssetByAccountIndex(ctx, asset.ID, asset.Owner)
-
-	// delete all index for reporter
-	for _, reporter := range asset.Reporters {
-		k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
-	}
-
-	// subtract inventory
-	k.subtractInventory(ctx, asset.Owner, sdk.Coin{
-		Denom:  asset.GetRoot(),
-		Amount: asset.Quantity,
-	})
-
 	k.setAsset(ctx, asset)
 	tags := sdk.NewTags(
 		TagAsset, []byte(msg.AssetID),
