@@ -6,7 +6,6 @@ import (
 
 // AddMaterials add materials to the asset
 func (k Keeper) AddMaterials(ctx sdk.Context, msg MsgAddMaterials) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costAddMaterials, "addMaterials")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)

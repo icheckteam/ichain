@@ -7,21 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-const (
-	costGetAsset         sdk.Gas = 10
-	costCreateAsset      sdk.Gas = 10
-	costSetAsset         sdk.Gas = 10
-	costHasAsset         sdk.Gas = 10
-	costSubtractQuantity sdk.Gas = 10
-	costAddQuantity      sdk.Gas = 10
-	costUpdateProperties sdk.Gas = 10
-	costCreateReporter   sdk.Gas = 10
-	costRevokeReporter   sdk.Gas = 10
-	costAddMaterials     sdk.Gas = 10
-	costFinalize         sdk.Gas = 10
-	costTransfer         sdk.Gas = 10
-)
-
 // Keeper ...
 type Keeper struct {
 	storeKey sdk.StoreKey // The (unexposed) key used to access the store from the Context.
@@ -36,9 +21,8 @@ func NewKeeper(key sdk.StoreKey, cdc *wire.Codec) Keeper {
 	}
 }
 
-// Register register new asset
+// CreateAsset create new an asset
 func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costCreateAsset, "createAsset")
 	if k.has(ctx, msg.AssetID) {
 		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already exists", msg.AssetID))
 	}
@@ -129,7 +113,6 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 // set the main record holding asset details
 func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
-	ctx.GasMeter().ConsumeGas(costSetAsset, "setAsset")
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(asset)
 	store.Set(GetAssetKey(asset.ID), bz)
@@ -152,14 +135,13 @@ func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
 	store.Set(GetAssetChildrenKey(asset.Parent, asset.ID), bz)
 }
 
-// set the main record holding asset details
+// SetAsset set the main record holding asset details
 func (k Keeper) SetAsset(ctx sdk.Context, asset Asset) {
 	k.setAsset(ctx, asset)
 }
 
 // Has asset
 func (k Keeper) has(ctx sdk.Context, assetID string) bool {
-	ctx.GasMeter().ConsumeGas(costHasAsset, "hasAsset")
 	store := ctx.KVStore(k.storeKey)
 	assetKey := GetAssetKey(assetID)
 	return store.Has(assetKey)
@@ -167,7 +149,6 @@ func (k Keeper) has(ctx sdk.Context, assetID string) bool {
 
 // GetAsset get asset by IDS
 func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (asset Asset, found bool) {
-	ctx.GasMeter().ConsumeGas(costGetAsset, "getAsset")
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetAssetKey(assetID))
 	if b == nil {
@@ -180,7 +161,6 @@ func (k Keeper) GetAsset(ctx sdk.Context, assetID string) (asset Asset, found bo
 
 // AddQuantity ...
 func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costAddQuantity, "addQuantity")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
@@ -207,7 +187,6 @@ func (k Keeper) AddQuantity(ctx sdk.Context, msg MsgAddQuantity) (sdk.Tags, sdk.
 
 // SubtractQuantity  subtract quantity of the asset
 func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costSubtractQuantity, "subtractQuantity")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
@@ -234,7 +213,6 @@ func (k Keeper) SubtractQuantity(ctx sdk.Context, msg MsgSubtractQuantity) (sdk.
 
 // Send ...
 func (k Keeper) Finalize(ctx sdk.Context, msg MsgFinalize) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costFinalize, "finalizeAsset")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)

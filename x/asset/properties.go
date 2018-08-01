@@ -127,8 +127,6 @@ const (
 
 // UpdateAttribute ...
 func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costUpdateProperties, "updateProperties")
-
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(asset.ID)

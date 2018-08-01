@@ -24,14 +24,17 @@ const (
 	DefaultCodespace          sdk.CodespaceType = 10
 )
 
+// ErrInvalidRole ...
 func ErrInvalidRole(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidRole, msg)
 }
 
+// ErrAssetNotFound ...
 func ErrAssetNotFound(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeUnknownAsset, fmt.Sprintf("asset {%s} not found", assetID))
 }
 
+// ErrAssetAlreadyFinal ...
 func ErrAssetAlreadyFinal(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeAssetAlreadyFinal, fmt.Sprintf("asset {%s} already final", assetID))
 }
@@ -51,6 +54,7 @@ func ErrInvalidAssetQuantity(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeMissingField, fmt.Sprintf("asset {%s} is not enough", assetID))
 }
 
+// ErrInvalidAssetRoot ...
 func ErrInvalidAssetRoot(assetID string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidTransaction, fmt.Sprintf("asset {%s} is not root", assetID))
 }
@@ -61,11 +65,12 @@ func ErrInvalidRevokeReporter(addr sdk.AccAddress) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidRevokeReporter, fmt.Sprintf("address %s is an invalid target for revoking reporter", addr.String()))
 }
 
-// InvalidTransaction ...
+// ErrInvalidTransaction ...
 func ErrInvalidTransaction(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidTransaction, msg)
 }
 
+// ErrProposalNotFound ...
 func ErrProposalNotFound(recipient sdk.AccAddress) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeProposalNotFound, fmt.Sprintf("proposal %s not found", recipient.String()))
 }

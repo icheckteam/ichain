@@ -16,7 +16,6 @@ type Reporters []Reporter
 
 // RevokeReporter delete reporter
 func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costRevokeReporter, "revokeReporter")
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
 		return nil, ErrAssetNotFound(msg.AssetID)
