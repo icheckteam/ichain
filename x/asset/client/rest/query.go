@@ -4,17 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/icheckteam/ichain/client/errors"
-
 	"github.com/gorilla/mux"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 
-	"github.com/icheckteam/ichain/client/tx"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -99,106 +95,8 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Co
 			w.Write([]byte(err.Error()))
 			return
 		}
-
-		output, err := cdc.MarshalJSON(filterTxUpdateProperties(info, vars["name"]))
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.Write(output)
+		WriteJSON(w, cdc, filterTxUpdateProperties(info, vars["name"]))
 	}
-}
-
-func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, height int64) ([]tx.TxInfo, error) {
-	record, err := getRecord(ctx, assetID, cdc)
-	if err != nil {
-		return nil, err
-	}
-	node, err := ctx.GetNode()
-	if err != nil {
-		return nil, err
-	}
-
-	query := fmt.Sprintf("asset_id='%s'", record.ID)
-	page := 0
-	perPage := 500
-	prove := false
-	res, err := node.TxSearch(query, prove, page, perPage)
-	if err != nil {
-		return nil, err
-	}
-	info, err := tx.FormatTxResults(cdc, res.Txs)
-	if err != nil {
-		return nil, err
-	}
-
-	// load tx from parents ....
-	if record.Parent != "" {
-		txs, err := queryAssetTxs(ctx, record.Parent, cdc, record.Height)
-		if err != nil {
-			return nil, err
-		}
-		for _, tx := range txs {
-			if tx.Height > record.Height {
-				continue
-			}
-			info = append(info, tx)
-		}
-	}
-
-	return info, nil
-}
-
-func filterTxUpdateProperties(infos []tx.TxInfo, name string) []historyUpdateProperty {
-	history := []historyUpdateProperty{}
-	for _, info := range infos {
-		tx, _ := info.Tx.(auth.StdTx)
-		for _, msg := range info.Tx.GetMsgs() {
-			switch msg := msg.(type) {
-			case asset.MsgUpdateProperties:
-				for _, p := range msg.Properties {
-					if name != "" && name != p.Name {
-						continue
-					}
-					history = append(history, historyUpdateProperty{
-						Type:  asset.PropertyTypeToString(p.Type),
-						Name:  p.Name,
-						Value: p.GetValue(),
-						Time:  info.Time,
-						Memo:  tx.Memo,
-					})
-				}
-				break
-			default:
-				break
-			}
-		}
-	}
-	return history
-}
-
-func filterTxChangeOwner(infos []tx.TxInfo) []historyTransferOutput {
-	history := []historyTransferOutput{}
-	for _, info := range infos {
-		tx, _ := info.Tx.(auth.StdTx)
-		for _, msg := range info.Tx.GetMsgs() {
-			switch msg := msg.(type) {
-			case asset.MsgAnswerProposal:
-				if msg.Role == asset.RoleOwner {
-					history = append(history, historyTransferOutput{
-						Time:  info.Time,
-						Memo:  tx.Memo,
-						Owner: msg.Sender,
-					})
-				}
-				break
-			default:
-				break
-			}
-		}
-	}
-	return history
 }
 
 func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
@@ -210,49 +108,8 @@ func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
-		output, err := cdc.MarshalJSON(items)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Couldn't encode asset. Error: %s", err.Error())))
-			return
-		}
-
-		w.Write(output)
+		WriteJSON(w, cdc, items)
 	}
-}
-
-func queryAsset(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (*asset.Asset, error) {
-	key := asset.GetAssetKey(assetID)
-	res, err := ctx.QueryStore(key, storeName)
-
-	if res == nil {
-		return nil, errors.New("asset not found")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var a asset.Asset
-
-	err = cdc.UnmarshalBinary(res, &a)
-	if err != nil {
-		return nil, err
-	}
-	return &a, nil
-}
-
-func queryAssetsByIds(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID []string) (map[string]asset.Asset, error) {
-	records := map[string]asset.Asset{}
-
-	for _, id := range assetID {
-		record, err := queryAsset(ctx, storeName, cdc, id)
-		if err != nil {
-			return nil, err
-		}
-		records[id] = *record
-	}
-	return records, nil
 }
 
 func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]*asset.RecordOutput, error) {
@@ -296,14 +153,7 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 			w.Write([]byte(err.Error()))
 			return
 		}
-		output, err := cdc.MarshalJSON(records)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		WriteJSON(w, cdc, records)
 	}
 }
 
@@ -324,14 +174,7 @@ func queryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 			return
 		}
 
-		output, err := cdc.MarshalJSON(proposals)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		WriteJSON(w, cdc, proposals)
 	}
 }
 
@@ -381,14 +224,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 			proposals[index] = ToProposalOutput(proposal, assetID)
 
 		}
-		output, err := cdc.MarshalJSON(proposals)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		WriteJSON(w, cdc, proposals)
 	}
 }
 

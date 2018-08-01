@@ -47,6 +47,17 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 	w.Write(output)
 }
 
+// WriteJSON ...
+func WriteJSON(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
+	output, err := cdc.MarshalJSON(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(output)
+}
+
 func withErrHandler(fn func(http.ResponseWriter, *http.Request) error) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := fn(w, r)
