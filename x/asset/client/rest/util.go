@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -227,7 +228,7 @@ func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec)
 		var recordID string
 		err := cdc.UnmarshalBinary(kv.Value, &recordID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getRecordsByKvs %s err: %s", recordID, err.Error())
 		}
 		record, err := getRecord(ctx, recordID, cdc)
 		if err != nil {

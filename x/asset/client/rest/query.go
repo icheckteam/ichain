@@ -51,7 +51,7 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 		vars := mux.Vars(r)
 		items, err := queryAccountAssets(ctx, storeName, cdc, vars["address"])
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
@@ -104,7 +104,7 @@ func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 		vars := mux.Vars(r)
 		items, err := queryAssetChildrens(ctx, storeName, cdc, vars["id"])
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
