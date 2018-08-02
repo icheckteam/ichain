@@ -130,6 +130,7 @@ func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Code
 		Final:    record.Final,
 		Quantity: record.Quantity,
 		Height:   record.Height,
+		Created:  record.Created,
 	}
 
 	// defaults
