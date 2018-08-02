@@ -1017,6 +1017,10 @@ func TestCreateAsset(t *testing.T) {
 
 	asset := getAsset(t, port, "test")
 	assert.Equal(t, asset.ID, "test")
+	assert.Equal(t, len(asset.Properties), 1)
+
+	records := getAssetsByAccount(t, port, asset.Owner)
+	assert.Equal(t, len(records), 1)
 
 	// UpdateProperties tests
 	resultTx = doUpdateProperties(t, port, seed, name, password, addr)
@@ -1356,6 +1360,16 @@ func doRevokeReporter(t *testing.T, port, seed, name, password string, addr, rec
 	require.Nil(t, err)
 
 	return resultTx
+}
+
+func getAssetsByAccount(t *testing.T, port string, owner sdk.AccAddress) []*asset.RecordOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/assets", owner.String()), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	record := []*asset.RecordOutput{}
+	err := cdc.UnmarshalJSON([]byte(body), &record)
+	require.Nil(t, err)
+	return record
 }
 
 func getAsset(t *testing.T, port string, assetID string) asset.RecordOutput {

@@ -27,6 +27,8 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		return nil, ErrInvalidTransaction(fmt.Sprintf("Asset {%s} already exists", msg.AssetID))
 	}
 
+	var parent Asset
+	var found bool
 	tags := sdk.NewTags(
 		TagAsset, []byte(msg.AssetID),
 		TagSender, []byte(msg.Sender.String()),
@@ -46,7 +48,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 
 	if len(msg.Parent) > 0 {
 		// get asset to check quantity and check authorized
-		parent, found := k.GetAsset(ctx, msg.Parent)
+		parent, found = k.GetAsset(ctx, msg.Parent)
 		if !found {
 			return nil, ErrAssetNotFound(msg.Parent)
 		}
@@ -75,9 +77,15 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		}
 
 		tags = tags.AppendTag(TagAsset, []byte(parent.ID))
+	}
 
+	if msg.Parent != "" {
 		// clone data
 		k.setAsset(ctx, parent)
+	}
+
+	if len(msg.Properties) > 0 {
+		k.SetProperties(ctx, msg.AssetID, msg.Properties)
 	}
 
 	// update asset info

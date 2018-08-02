@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -50,6 +52,17 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 // WriteJSON ...
 func WriteJSON(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
 	output, err := cdc.MarshalJSON(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(output)
+}
+
+// WriteJSON2 ...
+func WriteJSON2(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
+	output, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -129,6 +142,8 @@ func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Code
 		Final:    record.Final,
 		Quantity: record.Quantity,
 		Height:   record.Height,
+		Created:  record.Created,
+		Unit:     record.Unit,
 	}
 
 	// defaults
@@ -227,7 +242,7 @@ func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec)
 		var recordID string
 		err := cdc.UnmarshalBinary(kv.Value, &recordID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getRecordsByKvs %s err: %s", recordID, err.Error())
 		}
 		record, err := getRecord(ctx, recordID, cdc)
 		if err != nil {

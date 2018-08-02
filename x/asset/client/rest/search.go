@@ -47,11 +47,20 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, hei
 		}
 	}
 
+	// get block time
+	for index, inf := range info {
+		block, err := tx.GetBlock(ctx, &inf.Height)
+		if err != nil {
+			return nil, err
+		}
+		info[index].Time = block.Block.Header.Time.Unix()
+	}
+
 	return info, nil
 }
 
-func filterTxUpdateProperties(infos []tx.TxInfo, name string) []historyUpdateProperty {
-	history := []historyUpdateProperty{}
+func filterTxUpdateProperties(infos []tx.TxInfo, name string) []HistoryUpdateProperty {
+	history := []HistoryUpdateProperty{}
 	for _, info := range infos {
 		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
@@ -61,12 +70,13 @@ func filterTxUpdateProperties(infos []tx.TxInfo, name string) []historyUpdatePro
 					if name != "" && name != p.Name {
 						continue
 					}
-					history = append(history, historyUpdateProperty{
-						Type:  asset.PropertyTypeToString(p.Type),
-						Name:  p.Name,
-						Value: p.GetValue(),
-						Time:  info.Time,
-						Memo:  tx.Memo,
+					history = append(history, HistoryUpdateProperty{
+						Reporter: msg.Sender,
+						Type:     asset.PropertyTypeToString(p.Type),
+						Name:     p.Name,
+						Value:    p.GetValue(),
+						Time:     info.Time,
+						Memo:     tx.Memo,
 					})
 				}
 				break
@@ -77,16 +87,22 @@ func filterTxUpdateProperties(infos []tx.TxInfo, name string) []historyUpdatePro
 	}
 	return history
 }
-
-func filterTxChangeOwner(infos []tx.TxInfo) []historyTransferOutput {
-	history := []historyTransferOutput{}
+func filterTxChangeOwner(infos []tx.TxInfo) []HistoryTransferOutput {
+	history := []HistoryTransferOutput{}
 	for _, info := range infos {
 		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
+			case asset.MsgCreateAsset:
+				history = append(history, HistoryTransferOutput{
+					Time:  info.Time,
+					Memo:  tx.Memo,
+					Owner: msg.Sender,
+				})
+				break
 			case asset.MsgAnswerProposal:
 				if msg.Role == asset.RoleOwner {
-					history = append(history, historyTransferOutput{
+					history = append(history, HistoryTransferOutput{
 						Time:  info.Time,
 						Memo:  tx.Memo,
 						Owner: msg.Sender,

@@ -13,6 +13,7 @@ var storeName = "asset"
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc("/assets", createAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc("/assets/{id}", queryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
+	r.HandleFunc("/assets/{id}/owners/history", queryHistoryOwnersHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc("/assets/{id}/txs", assetTxsHandlerFn(ctx, storeName, cdc)).Methods("GET")
 	r.HandleFunc("/assets/{id}/children", queryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 	r.HandleFunc("/assets/{id}/add", addAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
@@ -28,4 +29,5 @@ func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb 
 	r.HandleFunc("/accounts/{address}/assets", queryAccountAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 	r.HandleFunc("/accounts/{address}/proposals", queryAccountProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 	r.HandleFunc("/accounts/{address}/report-assets", queryReporterAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+
 }

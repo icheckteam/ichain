@@ -95,6 +95,10 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
 	assert.True(t, newAsset.Unit == "kg")
+	properties := keeper.GetProperties(ctx, newAsset.ID)
+	assert.True(t, len(properties) == 4)
+	assert.True(t, properties[0].Name == "barcode")
+	assert.True(t, properties[0].StringValue == "barcode")
 
 	keeper.CreateAsset(ctx, asset2)
 	keeper.CreateAsset(ctx, asset3)
