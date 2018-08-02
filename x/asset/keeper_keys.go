@@ -35,29 +35,32 @@ func GetAccountAssetsKey(addr sdk.AccAddress) []byte {
 	return append(AccountAssetKey, []byte(addr.String())...)
 }
 
-// GetAssetChilrenKey get the key for an asset for an asset
+// GetAssetChildrenKey get the key for an asset for an asset
 func GetAssetChildrenKey(parent, children string) []byte {
 	return append(GetAssetChildrensKey(parent), []byte(children)...)
 }
 
+// GetAssetChildrensKey ...
 func GetAssetChildrensKey(parent string) []byte {
 	return append(AssetChildrenKey, []byte(parent)...)
 }
 
+// GetProposalKey ...
 func GetProposalKey(assetID string, recipient sdk.AccAddress) []byte {
 	return append(GetProposalsKey(assetID), []byte(recipient.String())...)
 }
 
+// GetProposalsKey ...
 func GetProposalsKey(assetID string) []byte {
 	return append(ProposalsKey, []byte(assetID)...)
 }
 
-// GetInventoryKey ...
+// GetReporterAssetKey ...
 func GetReporterAssetKey(addr sdk.AccAddress, assetID string) []byte {
 	return append(GetReporterAssetsKey(addr), []byte(assetID)...)
 }
 
-// GetInventoryKey ...
+// GetReporterAssetsKey ...
 func GetReporterAssetsKey(addr sdk.AccAddress) []byte {
 	return append(ReporterAssetsKey, []byte(addr.String())...)
 }

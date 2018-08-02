@@ -6,7 +6,7 @@ import (
 
 var msgCdc = wire.NewCodec()
 
-// Register concrete types on wire codec
+// RegisterWire Register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgCreateAsset{}, "asset/CreateAsset", nil)
 	cdc.RegisterConcrete(MsgAddQuantity{}, "asset/AddQuantity", nil)

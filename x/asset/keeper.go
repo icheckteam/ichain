@@ -101,14 +101,12 @@ func (k Keeper) setAsset(ctx sdk.Context, asset Asset) {
 
 func (k Keeper) setAssetByAccountIndex(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(assetID)
-	store.Set(GetAccountAssetKey(recipient, assetID), bz)
+	store.Set(GetAccountAssetKey(recipient, assetID), []byte{})
 }
 
 func (k Keeper) setAssetByParentIndex(ctx sdk.Context, asset Asset) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(asset.ID)
-	store.Set(GetAssetChildrenKey(asset.Parent, asset.ID), bz)
+	store.Set(GetAssetChildrenKey(asset.Parent, asset.ID), []byte{})
 }
 
 // SetAsset set the main record holding asset details

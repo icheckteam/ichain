@@ -249,3 +249,17 @@ func getProposals(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (a
 	}
 	return proposals, nil
 }
+
+func getProposal(ctx context.CoreContext, addr sdk.AccAddress, key []byte, cdc *wire.Codec) (proposal asset.Proposal, recordID string, err error) {
+	err = cdc.UnmarshalBinary(key, &recordID)
+	if err != nil {
+		return
+	}
+
+	res, err := ctx.QueryStore(asset.GetProposalAccountKey(addr, recordID), storeName)
+	if err != nil {
+		return
+	}
+	proposal, err = asset.UnmarshalProposal(cdc, res)
+	return
+}

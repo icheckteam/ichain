@@ -44,15 +44,14 @@ func (k Keeper) RevokeReporter(ctx sdk.Context, msg MsgRevokeReporter) (sdk.Tags
 	return tags, nil
 }
 
-func (k Keeper) setAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, assetId string) {
+func (k Keeper) setAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(assetId)
-	store.Set(GetReporterAssetKey(reporter, assetId), bz)
+	store.Set(GetReporterAssetKey(reporter, recordID), []byte{})
 }
 
-func (k Keeper) removeAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, assetId string) {
+func (k Keeper) removeAssetByReporterIndex(ctx sdk.Context, reporter sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetReporterAssetKey(reporter, assetId))
+	store.Delete(GetReporterAssetKey(reporter, recordID))
 }
 
 // SetReporter ...

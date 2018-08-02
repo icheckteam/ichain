@@ -198,30 +198,13 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 
 		proposals := make([]ProposalOutput, len(kvs))
 		for index, kv := range kvs {
-			proposal := asset.Proposal{}
-			var assetID string
-
-			err = cdc.UnmarshalBinary(kv.Value, &assetID)
+			proposal, recordID, err := getProposal(ctx, address, kv.Key[1:], cdc)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(fmt.Sprintf("Couldn't get proposal. Error: %s", err.Error())))
 				return
 			}
-
-			res, err := ctx.QueryStore(asset.GetProposalAccountKey(address, assetID), storeName)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-			proposal, err = asset.UnmarshalProposal(cdc, res)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			proposals[index] = ToProposalOutput(proposal, assetID)
+			proposals[index] = ToProposalOutput(proposal, recordID)
 
 		}
 		WriteJSON(w, cdc, proposals)
