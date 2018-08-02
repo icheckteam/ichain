@@ -1,7 +1,10 @@
 package asset
 
 const (
-	TagAsset     = "asset_id"
-	TagSender    = "sender"
+	// TagAsset ...
+	TagAsset = "asset_id"
+	// TagSender ...
+	TagSender = "sender"
+	// TagRecipient ...
 	TagRecipient = "recipient"
 )

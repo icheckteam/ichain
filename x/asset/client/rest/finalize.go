@@ -17,7 +17,8 @@ type finalizeBody struct {
 	BaseReq baseBody `json:"base_req"`
 }
 
-func FinalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+// FinalizeHandlerFn ...
+func finalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 

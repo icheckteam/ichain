@@ -23,7 +23,7 @@ const (
 	flagAny  = "any"
 )
 
-// default client command to search through tagged transactions
+// SearchTxCmd default client command to search through tagged transactions
 func SearchTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "txs",
@@ -53,7 +53,7 @@ func SearchTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]txInfo, error) {
+func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]TxInfo, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("Must declare at least one tag to search")
 	}
@@ -74,13 +74,13 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]txInf
 		return nil, err
 	}
 
-	info, err := formatTxResults(cdc, res.Txs)
+	info, err := FormatTxResults(cdc, res.Txs)
 	if err != nil {
 		return nil, err
 	}
 
-	for index, _ := range info {
-		block, err := getBlock(ctx, &info[index].Height)
+	for index := range info {
+		block, err := GetBlock(ctx, &info[index].Height)
 		if err != nil {
 			return nil, err
 		}
@@ -90,11 +90,12 @@ func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]txInf
 	return info, nil
 }
 
-func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) {
+// FormatTxResults ...
+func FormatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]TxInfo, error) {
 	var err error
-	out := make([]txInfo, len(res))
+	out := make([]TxInfo, len(res))
 	for i := range res {
-		out[i], err = formatTxResult(cdc, res[i])
+		out[i], err = FormatTxResult(cdc, res[i])
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +106,7 @@ func formatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]txInfo, error) 
 /////////////////////////////////////////
 // REST
 
-// Search Tx REST Handler
+// SearchTxRequestHandlerFn Search Tx REST Handler
 func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tag := r.FormValue("tag")
@@ -158,7 +159,8 @@ func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 	}
 }
 
-func getBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
+// GetBlock ...
+func GetBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {

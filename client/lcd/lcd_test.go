@@ -21,8 +21,6 @@ import (
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/icheckteam/ichain/x/identity"
 
-	assetRest "github.com/icheckteam/ichain/x/asset/client/rest"
-
 	client "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	cryptoKeys "github.com/cosmos/cosmos-sdk/crypto/keys"
@@ -1176,7 +1174,7 @@ func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.Ac
 			"chain_id": "%s"
 		},
 		"amount": [
-			{"denom": "test", "amount": "5"}
+			{"record_id": "test", "amount": "5"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1320,7 +1318,8 @@ func doAnswerProposal(t *testing.T, port, seed, name, password string, addr, rec
 			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"response": "1"
+		"response": "1",
+		"role": "1"
 	}`, name, password, accnum, sequence, chainID))
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/test/proposals/%s/answer", recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -1359,14 +1358,14 @@ func doRevokeReporter(t *testing.T, port, seed, name, password string, addr, rec
 	return resultTx
 }
 
-func getAsset(t *testing.T, port string, assetID string) asset.Asset {
+func getAsset(t *testing.T, port string, assetID string) asset.RecordOutput {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s", assetID), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var a assetRest.AssetOutput
-	err := cdc.UnmarshalJSON([]byte(body), &a)
+	record := asset.RecordOutput{}
+	err := cdc.UnmarshalJSON([]byte(body), &record)
 	require.Nil(t, err)
-	return a.Asset
+	return record
 }
 
 func getProposals(t *testing.T, port string) []asset.Proposal {

@@ -17,6 +17,7 @@ var (
 	InventoryKey        = []byte{0x07}
 	ReporterAssetsKey   = []byte{0x08}
 	ProposalsAccountKey = []byte{0x09}
+	MaterialsKey        = []byte{0x0A}
 )
 
 // GetAssetKey get the key for the record with address
@@ -52,16 +53,6 @@ func GetProposalsKey(assetID string) []byte {
 }
 
 // GetInventoryKey ...
-func GetInventoryKey(addr sdk.AccAddress, assetID string) []byte {
-	return append(GetInventoryByAccountKey(addr), []byte(assetID)...)
-}
-
-// GetInventoryKey ...
-func GetInventoryByAccountKey(addr sdk.AccAddress) []byte {
-	return append(InventoryKey, []byte(addr.String())...)
-}
-
-// GetInventoryKey ...
 func GetReporterAssetKey(addr sdk.AccAddress, assetID string) []byte {
 	return append(GetReporterAssetsKey(addr), []byte(assetID)...)
 }
@@ -76,7 +67,37 @@ func GetProposalAccountKey(addr sdk.AccAddress, assetID string) []byte {
 	return append(GetProposalsAccountKey(addr), []byte(assetID)...)
 }
 
-// GetProposalsAccount ...
+// GetProposalsAccountKey  ...
 func GetProposalsAccountKey(addr sdk.AccAddress) []byte {
 	return append(ProposalsAccountKey, []byte(addr.String())...)
+}
+
+// GetPropertiesKey ...
+func GetPropertiesKey(recordID string) []byte {
+	return append(PropertiesKey, []byte(recordID)...)
+}
+
+// GetPropertyKey ...
+func GetPropertyKey(recordID, name string) []byte {
+	return append(GetPropertiesKey(recordID), []byte(name)...)
+}
+
+// GetReportersKey ...
+func GetReportersKey(recordID string) []byte {
+	return append(ReportersKey, []byte(recordID)...)
+}
+
+// GetReporterKey ...
+func GetReporterKey(recordID string, addr sdk.AccAddress) []byte {
+	return append(GetReportersKey(recordID), []byte(addr.String())...)
+}
+
+// GetMaterialsKey ...
+func GetMaterialsKey(recordID string) []byte {
+	return append(MaterialsKey, []byte(recordID)...)
+}
+
+// GetMaterialKey ...
+func GetMaterialKey(recordID string, materialID string) []byte {
+	return append(GetMaterialsKey(recordID), []byte(materialID)...)
 }

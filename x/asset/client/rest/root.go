@@ -7,23 +7,25 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// resgister REST routes
+var storeName = "asset"
+
+// RegisterRoutes resgister REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
-	r.HandleFunc("/assets", CreateAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/history", HistortyHandlerFn(ctx, storeName, cdc)).Methods("GET")
-	r.HandleFunc("/assets/{id}", QueryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
-	r.HandleFunc("/assets/{id}/children", QueryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
-	r.HandleFunc("/assets/{id}/add", AddAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/subtract", SubtractQuantityBodyHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/properties", UpdateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/materials", AddMaterialsHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/finalize", FinalizeHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/reporters/{address}/revoke", RevokeReporterHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/proposals", CreateProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/assets/{id}/proposals", QueryProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
-	r.HandleFunc("/assets/{id}/proposals/{recipient}/answer", AnswerProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc("/accounts/{address}/assets", QueryAccountAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
-	r.HandleFunc("/accounts/{address}/inventory", QueryInventoryHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
-	r.HandleFunc("/accounts/{address}/proposals", QueryAccountProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
-	r.HandleFunc("/accounts/{address}/report-assets", QueryReporterAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/assets", createAssetHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}", queryAssetRequestHandlerFn(ctx, storeName, cdc)).Methods("GET")
+	r.HandleFunc("/assets/{id}/txs", assetTxsHandlerFn(ctx, storeName, cdc)).Methods("GET")
+	r.HandleFunc("/assets/{id}/children", queryAssetChildrensHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/assets/{id}/add", addAssetQuantityHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/subtract", subtractQuantityBodyHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/properties", updateAttributeHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/properties/{name}/history", queryHistoryUpdatePropertiesHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc("/assets/{id}/materials", addMaterialsHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/finalize", finalizeHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/reporters/{address}/revoke", revokeReporterHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/proposals", createProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/assets/{id}/proposals", queryProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/assets/{id}/proposals/{recipient}/answer", answerProposalHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc("/accounts/{address}/assets", queryAccountAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/proposals", queryAccountProposalsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
+	r.HandleFunc("/accounts/{address}/report-assets", queryReporterAssetsHandlerFn(ctx, storeName, cdc, kb)).Methods("GET")
 }

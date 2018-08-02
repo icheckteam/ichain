@@ -19,6 +19,10 @@ type Proposal struct {
 }
 
 func (p Proposal) ValidateAnswer(msg MsgAnswerProposal) sdk.Error {
+	if p.Role != msg.Role {
+		return ErrInvalidRole("")
+	}
+
 	switch msg.Response {
 	case StatusCancel:
 		if !bytes.Equal(msg.Sender, p.Issuer) {
@@ -133,44 +137,18 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	if msg.Response == StatusAccepted {
 		switch proposal.Role {
 		case RoleOwner:
-			// subtract inventory
-			k.subtractInventory(ctx, asset.Owner, sdk.Coin{
-				Denom:  asset.GetRoot(),
-				Amount: asset.Quantity,
-			})
-
 			// update owner
 			asset.Owner = proposal.Recipient
-			asset.Reporters = Reporters{}
-			for _, reporter := range asset.Reporters {
-				k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
-			}
+			k.DeleteReporters(ctx, asset.ID)
 			k.setAssetByAccountIndex(ctx, asset.ID, proposal.Recipient)
-
-			// ADD inventory
-			k.addInventory(ctx, asset.Owner, sdk.Coin{
-				Denom:  asset.GetRoot(),
-				Amount: asset.Quantity,
-			})
 			break
 		case RoleReporter:
-			// add reporter
-			reporter, reporterIndex := asset.GetReporter(msg.Recipient)
-			if reporter != nil {
-				// Update reporter
-				reporter.Properties = proposal.Properties
-				reporter.Created = ctx.BlockHeader().Time
-				asset.Reporters[reporterIndex] = *reporter
-			} else {
-				// Add new reporter
-				reporter = &Reporter{
-					Addr:       proposal.Recipient,
-					Properties: proposal.Properties,
-					Created:    ctx.BlockHeader().Time,
-				}
-				asset.Reporters = append(asset.Reporters, *reporter)
-				k.setAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
-			}
+			k.SetReporter(ctx, asset.ID, Reporter{
+				Properties: proposal.Properties,
+				Created:    ctx.BlockHeader().Time,
+				Addr:       proposal.Recipient,
+			})
+			k.setAssetByReporterIndex(ctx, proposal.Recipient, asset.ID)
 			break
 		default:
 			break

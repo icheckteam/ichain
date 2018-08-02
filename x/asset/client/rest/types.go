@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -52,12 +53,27 @@ type msgAnswerProposalBody struct {
 
 	Response asset.ProposalStatus `json:"response"`
 	AssetID  string               `json:"asset_id"`
+	Role     asset.ProposalRole   `json:"role"`
 }
 
+// ProposalOutput ...
 type ProposalOutput struct {
 	Role       asset.ProposalRole   `json:"role"`       // The role assigned to the recipient
 	Status     asset.ProposalStatus `json:"status"`     // The response of the recipient
 	Properties []string             `json:"properties"` // The asset's attributes name that the recipient is authorized to update
-	Issuer     string               `json:"issuer"`     // The proposal issuer
-	Recipient  string               `json:"recipient"`  // The recipient of the proposal
+	Issuer     sdk.AccAddress       `json:"issuer"`     // The proposal issuer
+	Recipient  sdk.AccAddress       `json:"recipient"`  // The recipient of the proposal
+	AssetID    string               `json:"asset_id"`   // The id of the asset
+}
+
+// ToProposalOutput ...
+func ToProposalOutput(proposal asset.Proposal, assetID string) ProposalOutput {
+	return ProposalOutput{
+		Role:       proposal.Role,
+		Status:     proposal.Status,
+		Properties: proposal.Properties,
+		Issuer:     proposal.Issuer,
+		Recipient:  proposal.Recipient,
+		AssetID:    assetID,
+	}
 }
