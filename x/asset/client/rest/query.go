@@ -95,7 +95,20 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Co
 			w.Write([]byte(err.Error()))
 			return
 		}
-		WriteJSON(w, cdc, filterTxUpdateProperties(info, vars["name"]))
+		WriteJSON2(w, cdc, filterTxUpdateProperties(info, vars["name"]))
+	}
+}
+
+func queryHistoryTransfersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		WriteJSON2(w, cdc, filterTxChangeOwner(info))
 	}
 }
 
@@ -228,22 +241,15 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 	}
 }
 
-// historyOutput
-type historyOutput struct {
-	Transfers  []historyTransferOutput       `json:"transfers"`
-	Quantity   []historyChangeQuantityOutput `json:"quantity"`
-	Properties []historyUpdateProperty       `json:"properties"`
-	Materials  []historyAddMaterial          `json:"materials"`
-	AssetByID  map[string]asset.Asset        `json:"asset_by_id"`
-}
-
-type historyTransferOutput struct {
+// HistoryTransferOutput ...
+type HistoryTransferOutput struct {
 	Owner sdk.AccAddress `json:"recipient"`
 	Time  int64          `json:"time"`
 	Memo  string         `json:"memo"`
 }
 
-type historyChangeQuantityOutput struct {
+// HistoryChangeQuantityOutput ...
+type HistoryChangeQuantityOutput struct {
 	Sender sdk.AccAddress `json:"sender"`
 	Amount sdk.Int        `json:"amount"`
 	Type   string         `json:"type"`
@@ -251,7 +257,8 @@ type historyChangeQuantityOutput struct {
 	Memo   string         `json:"memo"`
 }
 
-type historyUpdateProperty struct {
+// HistoryUpdateProperty ...
+type HistoryUpdateProperty struct {
 	Reporter sdk.AccAddress `json:"reporter"`
 	Name     string         `json:"name"`
 	Type     string         `json:"type"`
@@ -260,7 +267,8 @@ type historyUpdateProperty struct {
 	Memo     string         `json:"memo"`
 }
 
-type historyAddMaterial struct {
+// HistoryAddMaterial ...
+type HistoryAddMaterial struct {
 	Sender  sdk.AccAddress `json:"sender"`
 	Amount  sdk.Int        `json:"amount"`
 	AssetID string         `json:"asset_id"`

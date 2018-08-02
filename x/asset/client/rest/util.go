@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -51,6 +52,17 @@ func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWrite
 // WriteJSON ...
 func WriteJSON(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
 	output, err := cdc.MarshalJSON(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(output)
+}
+
+// WriteJSON2 ...
+func WriteJSON2(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
+	output, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -131,6 +143,7 @@ func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Code
 		Quantity: record.Quantity,
 		Height:   record.Height,
 		Created:  record.Created,
+		Unit:     record.Unit,
 	}
 
 	// defaults
