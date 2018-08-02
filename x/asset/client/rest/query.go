@@ -99,7 +99,7 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Co
 	}
 }
 
-func queryHistoryTransfersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func queryHistoryOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
