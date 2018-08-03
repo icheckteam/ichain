@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -239,11 +238,7 @@ func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire
 func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) ([]*asset.RecordOutput, error) {
 	records := make([]*asset.RecordOutput, len(kvs))
 	for i, kv := range kvs {
-		var recordID string
-		err := cdc.UnmarshalBinary(kv.Value, &recordID)
-		if err != nil {
-			return nil, fmt.Errorf("getRecordsByKvs %s err: %s", recordID, err.Error())
-		}
+		recordID := string(kv.Key[1+sdk.AddrLen:])
 		record, err := getRecord(ctx, recordID, cdc)
 		if err != nil {
 			return nil, err
@@ -263,4 +258,13 @@ func getProposals(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (a
 		proposals[i] = proposal
 	}
 	return proposals, nil
+}
+
+func getProposal(ctx context.CoreContext, addr sdk.AccAddress, recordID string, cdc *wire.Codec) (proposal asset.Proposal, err error) {
+	res, err := ctx.QueryStore(asset.GetProposalKey(recordID, addr), storeName)
+	if err != nil {
+		return
+	}
+	proposal, err = asset.UnmarshalProposal(cdc, res)
+	return
 }

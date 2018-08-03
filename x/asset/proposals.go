@@ -66,17 +66,20 @@ const (
 	StatusRejected                       // the recipient reject the proposal
 )
 
+// SetProposal ...
 func (k Keeper) SetProposal(ctx sdk.Context, assetID string, proposal Proposal) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(proposal)
 	store.Set(GetProposalKey(assetID, proposal.Recipient), bz)
 }
 
+// DeleteProposal ...
 func (k Keeper) DeleteProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetProposalKey(assetID, recipient))
 }
 
+// GetProposal ...
 func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) (proposal Proposal, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetProposalKey(assetID, recipient))
@@ -88,6 +91,7 @@ func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.AccAd
 	return
 }
 
+// AddProposal ...
 func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, sdk.Error) {
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
@@ -116,6 +120,7 @@ func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, s
 	return tags, nil
 }
 
+// AnswerProposal ...
 func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags, sdk.Error) {
 	proposal, found := k.GetProposal(ctx, msg.AssetID, msg.Recipient)
 	if !found {
@@ -163,12 +168,11 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	return tags, nil
 }
 
-func (k Keeper) setProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+func (k Keeper) setProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(assetId)
-	store.Set(GetProposalAccountKey(addr, assetId), bz)
+	store.Set(GetProposalAccountKey(addr, recordID), []byte{})
 }
-func (k Keeper) removeProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+func (k Keeper) removeProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetProposalAccountKey(addr, assetId))
+	store.Delete(GetProposalAccountKey(addr, recordID))
 }

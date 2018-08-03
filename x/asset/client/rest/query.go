@@ -209,69 +209,18 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 			return
 		}
 
-		proposals := make([]ProposalOutput, len(kvs))
+		proposals := make([]asset.ProposalOutput, len(kvs))
 		for index, kv := range kvs {
-			proposal := asset.Proposal{}
-			var assetID string
-
-			err = cdc.UnmarshalBinary(kv.Value, &assetID)
+			recordID := string(kv.Key[1+sdk.AddrLen:])
+			proposal, err := getProposal(ctx, address, recordID, cdc)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
+				w.WriteHeader(http.StatusNotFound)
+				w.Write([]byte(fmt.Sprintf("Couldn't get proposal. Error: %s", err.Error())))
 				return
 			}
-
-			res, err := ctx.QueryStore(asset.GetProposalAccountKey(address, assetID), storeName)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-			proposal, err = asset.UnmarshalProposal(cdc, res)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Couldn't encode proposal. Error: %s", err.Error())))
-				return
-			}
-
-			proposals[index] = ToProposalOutput(proposal, assetID)
+			proposals[index] = asset.ToProposalOutput(proposal, recordID)
 
 		}
 		WriteJSON(w, cdc, proposals)
 	}
-}
-
-// HistoryTransferOutput ...
-type HistoryTransferOutput struct {
-	Owner sdk.AccAddress `json:"recipient"`
-	Time  int64          `json:"time"`
-	Memo  string         `json:"memo"`
-}
-
-// HistoryChangeQuantityOutput ...
-type HistoryChangeQuantityOutput struct {
-	Sender sdk.AccAddress `json:"sender"`
-	Amount sdk.Int        `json:"amount"`
-	Type   string         `json:"type"`
-	Time   int64          `json:"time"`
-	Memo   string         `json:"memo"`
-}
-
-// HistoryUpdateProperty ...
-type HistoryUpdateProperty struct {
-	Reporter sdk.AccAddress `json:"reporter"`
-	Name     string         `json:"name"`
-	Type     string         `json:"type"`
-	Value    interface{}    `json:"value"`
-	Time     int64          `json:"time"`
-	Memo     string         `json:"memo"`
-}
-
-// HistoryAddMaterial ...
-type HistoryAddMaterial struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Amount  sdk.Int        `json:"amount"`
-	AssetID string         `json:"asset_id"`
-	Time    int64          `json:"time"`
-	Memo    string         `json:"memo"`
 }

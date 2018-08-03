@@ -32,34 +32,37 @@ func GetAccountAssetKey(addr sdk.AccAddress, assetID string) []byte {
 
 // GetAccountAssetsKey get the key for an account for all assets
 func GetAccountAssetsKey(addr sdk.AccAddress) []byte {
-	return append(AccountAssetKey, []byte(addr.String())...)
+	return append(AccountAssetKey, addr.Bytes()...)
 }
 
-// GetAssetChilrenKey get the key for an asset for an asset
+// GetAssetChildrenKey get the key for an asset for an asset
 func GetAssetChildrenKey(parent, children string) []byte {
 	return append(GetAssetChildrensKey(parent), []byte(children)...)
 }
 
+// GetAssetChildrensKey ...
 func GetAssetChildrensKey(parent string) []byte {
 	return append(AssetChildrenKey, []byte(parent)...)
 }
 
-func GetProposalKey(assetID string, recipient sdk.AccAddress) []byte {
-	return append(GetProposalsKey(assetID), []byte(recipient.String())...)
+// GetProposalKey ...
+func GetProposalKey(assetID string, addr sdk.AccAddress) []byte {
+	return append(GetProposalsKey(assetID), addr.Bytes()...)
 }
 
+// GetProposalsKey ...
 func GetProposalsKey(assetID string) []byte {
 	return append(ProposalsKey, []byte(assetID)...)
 }
 
-// GetInventoryKey ...
+// GetReporterAssetKey ...
 func GetReporterAssetKey(addr sdk.AccAddress, assetID string) []byte {
 	return append(GetReporterAssetsKey(addr), []byte(assetID)...)
 }
 
-// GetInventoryKey ...
+// GetReporterAssetsKey ...
 func GetReporterAssetsKey(addr sdk.AccAddress) []byte {
-	return append(ReporterAssetsKey, []byte(addr.String())...)
+	return append(ReporterAssetsKey, addr.Bytes()...)
 }
 
 // GetProposalAccountKey ...
@@ -69,7 +72,7 @@ func GetProposalAccountKey(addr sdk.AccAddress, assetID string) []byte {
 
 // GetProposalsAccountKey  ...
 func GetProposalsAccountKey(addr sdk.AccAddress) []byte {
-	return append(ProposalsAccountKey, []byte(addr.String())...)
+	return append(ProposalsAccountKey, addr.Bytes()...)
 }
 
 // GetPropertiesKey ...
@@ -89,7 +92,7 @@ func GetReportersKey(recordID string) []byte {
 
 // GetReporterKey ...
 func GetReporterKey(recordID string, addr sdk.AccAddress) []byte {
-	return append(GetReportersKey(recordID), []byte(addr.String())...)
+	return append(GetReportersKey(recordID), addr.Bytes()...)
 }
 
 // GetMaterialsKey ...

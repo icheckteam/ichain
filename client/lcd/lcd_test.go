@@ -3,6 +3,7 @@ package lcd
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -1022,6 +1023,12 @@ func TestCreateAsset(t *testing.T) {
 	records := getAssetsByAccount(t, port, asset.Owner)
 	assert.Equal(t, len(records), 1)
 
+	properties := getTxsProperties(t, port)
+	assert.Equal(t, len(properties), 1)
+
+	owners := getRecordOwners(t, port)
+	assert.Equal(t, len(owners), 1)
+
 	// UpdateProperties tests
 	resultTx = doUpdateProperties(t, port, seed, name, password, addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
@@ -1074,6 +1081,9 @@ func TestCreateProposal(t *testing.T) {
 	// getProposals
 	proposals := getProposals(t, port)
 	assert.Equal(t, len(proposals), 1)
+
+	proposalsOwner := getProposalByOwner(t, port, addr2)
+	assert.Equal(t, len(proposalsOwner), 1)
 
 	// AnswerProposal tests
 	resultTx = doAnswerProposal(t, port, seed2, name2, password2, addr2, addr2)
@@ -1390,6 +1400,36 @@ func getProposals(t *testing.T, port string) []asset.Proposal {
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
+}
+
+func getProposalByOwner(t *testing.T, port string, addr sdk.AccAddress) []asset.ProposalOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/proposals", addr.String()), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var proposals []asset.ProposalOutput
+	err := cdc.UnmarshalJSON([]byte(body), &proposals)
+	require.Nil(t, err)
+	return proposals
+}
+
+func getTxsProperties(t *testing.T, port string) []asset.HistoryUpdateProperty {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s/properties/size/history", "test"), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var history []asset.HistoryUpdateProperty
+	err := json.Unmarshal([]byte(body), &history)
+	require.Nil(t, err)
+	return history
+}
+
+func getRecordOwners(t *testing.T, port string) []asset.HistoryTransferOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s/owners/history", "test"), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var owners []asset.HistoryTransferOutput
+	err := json.Unmarshal([]byte(body), &owners)
+	require.Nil(t, err)
+	return owners
 }
 
 // Test Identity Module

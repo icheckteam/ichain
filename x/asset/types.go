@@ -41,6 +41,63 @@ type RecordOutput struct {
 	Properties Properties     `json:"properties"`
 }
 
+// HistoryTransferOutput ...
+type HistoryTransferOutput struct {
+	Owner sdk.AccAddress `json:"recipient"`
+	Time  int64          `json:"time"`
+	Memo  string         `json:"memo"`
+}
+
+// HistoryChangeQuantityOutput ...
+type HistoryChangeQuantityOutput struct {
+	Sender sdk.AccAddress `json:"sender"`
+	Amount sdk.Int        `json:"amount"`
+	Type   string         `json:"type"`
+	Time   int64          `json:"time"`
+	Memo   string         `json:"memo"`
+}
+
+// HistoryUpdateProperty ...
+type HistoryUpdateProperty struct {
+	Reporter sdk.AccAddress `json:"reporter"`
+	Name     string         `json:"name"`
+	Type     string         `json:"type"`
+	Value    interface{}    `json:"value"`
+	Time     int64          `json:"time"`
+	Memo     string         `json:"memo"`
+}
+
+// HistoryAddMaterial ...
+type HistoryAddMaterial struct {
+	Sender  sdk.AccAddress `json:"sender"`
+	Amount  sdk.Int        `json:"amount"`
+	AssetID string         `json:"asset_id"`
+	Time    int64          `json:"time"`
+	Memo    string         `json:"memo"`
+}
+
+// ProposalOutput ...
+type ProposalOutput struct {
+	Role       ProposalRole   `json:"role"`       // The role assigned to the recipient
+	Status     ProposalStatus `json:"status"`     // The response of the recipient
+	Properties []string       `json:"properties"` // The asset's attributes name that the recipient is authorized to update
+	Issuer     sdk.AccAddress `json:"issuer"`     // The proposal issuer
+	Recipient  sdk.AccAddress `json:"recipient"`  // The recipient of the proposal
+	AssetID    string         `json:"asset_id"`   // The id of the asset
+}
+
+// ToProposalOutput ...
+func ToProposalOutput(proposal Proposal, assetID string) ProposalOutput {
+	return ProposalOutput{
+		Role:       proposal.Role,
+		Status:     proposal.Status,
+		Properties: proposal.Properties,
+		Issuer:     proposal.Issuer,
+		Recipient:  proposal.Recipient,
+		AssetID:    assetID,
+	}
+}
+
 // IsOwner check is owner of the asset
 func (a Asset) IsOwner(addr sdk.AccAddress) bool {
 	return bytes.Equal(a.Owner, addr)
