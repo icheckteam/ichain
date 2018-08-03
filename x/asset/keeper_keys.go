@@ -32,7 +32,7 @@ func GetAccountAssetKey(addr sdk.AccAddress, assetID string) []byte {
 
 // GetAccountAssetsKey get the key for an account for all assets
 func GetAccountAssetsKey(addr sdk.AccAddress) []byte {
-	return append(AccountAssetKey, []byte(addr.String())...)
+	return append(AccountAssetKey, addr.Bytes()...)
 }
 
 // GetAssetChildrenKey get the key for an asset for an asset
@@ -46,8 +46,8 @@ func GetAssetChildrensKey(parent string) []byte {
 }
 
 // GetProposalKey ...
-func GetProposalKey(assetID string, recipient sdk.AccAddress) []byte {
-	return append(GetProposalsKey(assetID), []byte(recipient.String())...)
+func GetProposalKey(assetID string, addr sdk.AccAddress) []byte {
+	return append(GetProposalsKey(assetID), addr.Bytes()...)
 }
 
 // GetProposalsKey ...
@@ -62,7 +62,7 @@ func GetReporterAssetKey(addr sdk.AccAddress, assetID string) []byte {
 
 // GetReporterAssetsKey ...
 func GetReporterAssetsKey(addr sdk.AccAddress) []byte {
-	return append(ReporterAssetsKey, []byte(addr.String())...)
+	return append(ReporterAssetsKey, addr.Bytes()...)
 }
 
 // GetProposalAccountKey ...
@@ -72,7 +72,7 @@ func GetProposalAccountKey(addr sdk.AccAddress, assetID string) []byte {
 
 // GetProposalsAccountKey  ...
 func GetProposalsAccountKey(addr sdk.AccAddress) []byte {
-	return append(ProposalsAccountKey, []byte(addr.String())...)
+	return append(ProposalsAccountKey, addr.Bytes()...)
 }
 
 // GetPropertiesKey ...
@@ -92,7 +92,7 @@ func GetReportersKey(recordID string) []byte {
 
 // GetReporterKey ...
 func GetReporterKey(recordID string, addr sdk.AccAddress) []byte {
-	return append(GetReportersKey(recordID), []byte(addr.String())...)
+	return append(GetReportersKey(recordID), addr.Bytes()...)
 }
 
 // GetMaterialsKey ...

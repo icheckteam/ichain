@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/icheckteam/ichain/client/tx"
@@ -59,26 +60,39 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, hei
 	return info, nil
 }
 
-func filterTxUpdateProperties(infos []tx.TxInfo, name string) []HistoryUpdateProperty {
-	history := []HistoryUpdateProperty{}
+func newHistoryUpdateProperties(sender sdk.AccAddress, memo string, time int64, props asset.Properties, name string) []asset.HistoryUpdateProperty {
+	history := make([]asset.HistoryUpdateProperty, len(props))
+	var i = 0
+	for index, p := range props {
+		if name != "" && name != p.Name {
+			continue
+		}
+		i++
+		history[index] = asset.HistoryUpdateProperty{
+			Reporter: sender,
+			Type:     asset.PropertyTypeToString(p.Type),
+			Name:     p.Name,
+			Value:    p.GetValue(),
+			Time:     time,
+			Memo:     memo,
+		}
+	}
+	return history[:i]
+}
+
+func filterTxUpdateProperties(infos []tx.TxInfo, name string) []asset.HistoryUpdateProperty {
+	history := []asset.HistoryUpdateProperty{}
 	for _, info := range infos {
 		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
+			case asset.MsgCreateAsset:
+				history = append(history,
+					newHistoryUpdateProperties(msg.Sender, tx.Memo, info.Time, msg.Properties, name)...)
+				break
 			case asset.MsgUpdateProperties:
-				for _, p := range msg.Properties {
-					if name != "" && name != p.Name {
-						continue
-					}
-					history = append(history, HistoryUpdateProperty{
-						Reporter: msg.Sender,
-						Type:     asset.PropertyTypeToString(p.Type),
-						Name:     p.Name,
-						Value:    p.GetValue(),
-						Time:     info.Time,
-						Memo:     tx.Memo,
-					})
-				}
+				history = append(history,
+					newHistoryUpdateProperties(msg.Sender, tx.Memo, info.Time, msg.Properties, name)...)
 				break
 			default:
 				break
@@ -87,14 +101,14 @@ func filterTxUpdateProperties(infos []tx.TxInfo, name string) []HistoryUpdatePro
 	}
 	return history
 }
-func filterTxChangeOwner(infos []tx.TxInfo) []HistoryTransferOutput {
-	history := []HistoryTransferOutput{}
+func filterTxChangeOwner(infos []tx.TxInfo) []asset.HistoryTransferOutput {
+	history := []asset.HistoryTransferOutput{}
 	for _, info := range infos {
 		tx, _ := info.Tx.(auth.StdTx)
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgCreateAsset:
-				history = append(history, HistoryTransferOutput{
+				history = append(history, asset.HistoryTransferOutput{
 					Time:  info.Time,
 					Memo:  tx.Memo,
 					Owner: msg.Sender,
@@ -102,7 +116,7 @@ func filterTxChangeOwner(infos []tx.TxInfo) []HistoryTransferOutput {
 				break
 			case asset.MsgAnswerProposal:
 				if msg.Role == asset.RoleOwner {
-					history = append(history, HistoryTransferOutput{
+					history = append(history, asset.HistoryTransferOutput{
 						Time:  info.Time,
 						Memo:  tx.Memo,
 						Owner: msg.Sender,
