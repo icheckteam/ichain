@@ -1,8 +1,6 @@
 package asset
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -98,20 +96,11 @@ func (msg MsgUpdateProperties) ValidateBasic() sdk.Error {
 		return ErrMissingField("asset_id")
 	}
 	if len(msg.Properties) == 0 {
-		return ErrMissingField("name")
+		return ErrMissingField("properties")
 	}
-	for _, attr := range msg.Properties {
-		switch attr.Type {
-		case PropertyTypeBoolean,
-			PropertyTypeBytes,
-			PropertyTypeEnum,
-			PropertyTypeLocation,
-			PropertyTypeNumber,
-			PropertyTypeString:
-			break
-		default:
-			return ErrInvalidField("properties")
-		}
+
+	if err := msg.Properties.ValidateBasic(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -199,7 +188,7 @@ func (msg MsgSubtractQuantity) GetSignBytes() []byte {
 type MsgAddMaterials struct {
 	AssetID string         `json:"asset_id"`
 	Sender  sdk.AccAddress `json:"sender"`
-	Amount  sdk.Coins      `json:"amount"`
+	Amount  Materials      `json:"amount"`
 }
 
 func (msg MsgAddMaterials) Type() string                            { return msgType }
@@ -217,15 +206,9 @@ func (msg MsgAddMaterials) ValidateBasic() sdk.Error {
 	if len(msg.Amount) == 0 {
 		return ErrMissingField("amount")
 	}
-	for i, coin := range msg.Amount {
-		if len(coin.Denom) == 0 {
-			return ErrMissingField(fmt.Sprintf("amount[%d].denom is required", i))
-		}
-		if coin.Amount.IsZero() {
-			return ErrMissingField(fmt.Sprintf("amount[%d].amount is required", i))
-		}
+	if err := msg.Amount.ValidateBasic(); err != nil {
+		return err
 	}
-
 	return nil
 }
 
@@ -348,6 +331,7 @@ type MsgAnswerProposal struct {
 	Sender    sdk.AccAddress `json:"sender"`
 	Recipient sdk.AccAddress `json:"recipient"`
 	Response  ProposalStatus `json:"response"`
+	Role      ProposalRole   `json:"role"`
 }
 
 func (msg MsgAnswerProposal) Type() string                            { return msgType }
@@ -364,6 +348,9 @@ func (msg MsgAnswerProposal) ValidateBasic() sdk.Error {
 	}
 	if len(msg.Sender) == 0 {
 		return ErrMissingField("sender")
+	}
+	if msg.Role == 0 {
+		return ErrMissingField("role")
 	}
 	switch msg.Response {
 	case StatusAccepted, StatusCancel, StatusRejected:

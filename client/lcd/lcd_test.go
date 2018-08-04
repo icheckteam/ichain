@@ -3,6 +3,7 @@ package lcd
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -20,8 +21,6 @@ import (
 	"github.com/icheckteam/ichain/client/rpc"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/icheckteam/ichain/x/identity"
-
-	assetRest "github.com/icheckteam/ichain/x/asset/client/rest"
 
 	client "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -1019,6 +1018,16 @@ func TestCreateAsset(t *testing.T) {
 
 	asset := getAsset(t, port, "test")
 	assert.Equal(t, asset.ID, "test")
+	assert.Equal(t, len(asset.Properties), 1)
+
+	records := getAssetsByAccount(t, port, asset.Owner)
+	assert.Equal(t, len(records), 1)
+
+	properties := getTxsProperties(t, port)
+	assert.Equal(t, len(properties), 1)
+
+	owners := getRecordOwners(t, port)
+	assert.Equal(t, len(owners), 1)
 
 	// UpdateProperties tests
 	resultTx = doUpdateProperties(t, port, seed, name, password, addr)
@@ -1072,6 +1081,9 @@ func TestCreateProposal(t *testing.T) {
 	// getProposals
 	proposals := getProposals(t, port)
 	assert.Equal(t, len(proposals), 1)
+
+	proposalsOwner := getProposalByOwner(t, port, addr2)
+	assert.Equal(t, len(proposalsOwner), 1)
 
 	// AnswerProposal tests
 	resultTx = doAnswerProposal(t, port, seed2, name2, password2, addr2, addr2)
@@ -1176,7 +1188,7 @@ func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.Ac
 			"chain_id": "%s"
 		},
 		"amount": [
-			{"denom": "test", "amount": "5"}
+			{"record_id": "test", "amount": "5"}
 		]
 	}`, name, password, accnum, sequence, chainID))
 
@@ -1320,7 +1332,8 @@ func doAnswerProposal(t *testing.T, port, seed, name, password string, addr, rec
 			"gas": "10000",
 			"chain_id": "%s"
 		},
-		"response": "1"
+		"response": "1",
+		"role": "1"
 	}`, name, password, accnum, sequence, chainID))
 	res, body := Request(t, port, "POST", fmt.Sprintf("/assets/test/proposals/%s/answer", recipient), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
@@ -1359,14 +1372,24 @@ func doRevokeReporter(t *testing.T, port, seed, name, password string, addr, rec
 	return resultTx
 }
 
-func getAsset(t *testing.T, port string, assetID string) asset.Asset {
+func getAssetsByAccount(t *testing.T, port string, owner sdk.AccAddress) []*asset.RecordOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/assets", owner.String()), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	record := []*asset.RecordOutput{}
+	err := cdc.UnmarshalJSON([]byte(body), &record)
+	require.Nil(t, err)
+	return record
+}
+
+func getAsset(t *testing.T, port string, assetID string) asset.RecordOutput {
 	// get the account to get the sequence
 	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s", assetID), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var a assetRest.AssetOutput
-	err := cdc.UnmarshalJSON([]byte(body), &a)
+	record := asset.RecordOutput{}
+	err := cdc.UnmarshalJSON([]byte(body), &record)
 	require.Nil(t, err)
-	return a.Asset
+	return record
 }
 
 func getProposals(t *testing.T, port string) []asset.Proposal {
@@ -1377,6 +1400,36 @@ func getProposals(t *testing.T, port string) []asset.Proposal {
 	err := cdc.UnmarshalJSON([]byte(body), &proposals)
 	require.Nil(t, err)
 	return proposals
+}
+
+func getProposalByOwner(t *testing.T, port string, addr sdk.AccAddress) []asset.ProposalOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/proposals", addr.String()), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var proposals []asset.ProposalOutput
+	err := cdc.UnmarshalJSON([]byte(body), &proposals)
+	require.Nil(t, err)
+	return proposals
+}
+
+func getTxsProperties(t *testing.T, port string) []asset.HistoryUpdateProperty {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s/properties/size/history", "test"), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var history []asset.HistoryUpdateProperty
+	err := json.Unmarshal([]byte(body), &history)
+	require.Nil(t, err)
+	return history
+}
+
+func getRecordOwners(t *testing.T, port string) []asset.HistoryTransferOutput {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s/owners/history", "test"), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var owners []asset.HistoryTransferOutput
+	err := json.Unmarshal([]byte(body), &owners)
+	require.Nil(t, err)
+	return owners
 }
 
 // Test Identity Module
@@ -1545,5 +1598,5 @@ func doAppSignAndVerify(t *testing.T, port string) {
 	b, _ := base64.StdEncoding.DecodeString(body)
 
 	res, body = Request(t, port, "POST", "/apps/verify", b)
-	require.Equal(t, http.StatusForbidden, res.StatusCode, body)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
 }

@@ -52,12 +52,5 @@ type msgAnswerProposalBody struct {
 
 	Response asset.ProposalStatus `json:"response"`
 	AssetID  string               `json:"asset_id"`
-}
-
-type ProposalOutput struct {
-	Role       asset.ProposalRole   `json:"role"`       // The role assigned to the recipient
-	Status     asset.ProposalStatus `json:"status"`     // The response of the recipient
-	Properties []string             `json:"properties"` // The asset's attributes name that the recipient is authorized to update
-	Issuer     string               `json:"issuer"`     // The proposal issuer
-	Recipient  string               `json:"recipient"`  // The recipient of the proposal
+	Role     asset.ProposalRole   `json:"role"`
 }

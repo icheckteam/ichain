@@ -1,9 +1,6 @@
 package asset
 
 import (
-	"sort"
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -57,59 +54,41 @@ func (p Property) GetValue() interface{} {
 	}
 }
 
+// ValidateBasic ...
+func (p Property) ValidateBasic() sdk.Error {
+	if p.Name == "" {
+		return ErrMissingField("properties[$].name")
+	}
+	switch p.Type {
+	case PropertyTypeBoolean,
+		PropertyTypeBytes,
+		PropertyTypeEnum,
+		PropertyTypeLocation,
+		PropertyTypeNumber,
+		PropertyTypeString:
+		break
+	default:
+		return ErrInvalidField("properties")
+	}
+	return nil
+}
+
 type Location struct {
 	Latitude  int64 `json:"latitude"`
 	Longitude int64 `json:"longitude"`
 }
 
-// list all properties
+// Properties list all properties
 type Properties []Property
 
-func (propertiesA Properties) Adds(othersB ...Property) Properties {
-	sum := ([]Property)(nil)
-	indexA, indexB := 0, 0
-	lenA, lenB := len(propertiesA), len(othersB)
-	for {
-		if indexA == lenA {
-			if indexB == lenB {
-				return sum
-			}
-			return append(sum, othersB[indexB:]...)
-		} else if indexB == lenB {
-			return append(sum, propertiesA[indexA:]...)
-		}
-		propertyA, propertyB := propertiesA[indexA], othersB[indexB]
-		switch strings.Compare(propertyA.Name, propertyB.Name) {
-		case -1:
-			sum = append(sum, propertyA)
-			indexA++
-		case 0:
-			sum = append(sum, propertyB)
-			indexA++
-			indexB++
-		case 1:
-			indexB++
-			sum = append(sum, propertyB)
+// ValidateBasic ...
+func (props Properties) ValidateBasic() sdk.Error {
+	for _, p := range props {
+		if err := p.ValidateBasic(); err != nil {
+			return err
 		}
 	}
-}
-
-//----------------------------------------
-// Sort interface
-
-//nolint
-func (properties Properties) Len() int           { return len(properties) }
-func (properties Properties) Less(i, j int) bool { return properties[i].Name < properties[j].Name }
-func (properties Properties) Swap(i, j int) {
-	properties[i], properties[j] = properties[j], properties[i]
-}
-
-var _ sort.Interface = Properties{}
-
-// Sort is a helper function to sort the set of materials inplace
-func (properties Properties) Sort() Properties {
-	sort.Sort(properties)
-	return properties
+	return nil
 }
 
 // PropertyType define the type of the property
@@ -125,27 +104,50 @@ const (
 	PropertyTypeLocation
 )
 
-// UpdateAttribute ...
+// UpdateProperties ...
 func (k Keeper) UpdateProperties(ctx sdk.Context, msg MsgUpdateProperties) (sdk.Tags, sdk.Error) {
-	ctx.GasMeter().ConsumeGas(costUpdateProperties, "updateProperties")
-
-	asset, found := k.GetAsset(ctx, msg.AssetID)
+	record, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
-		return nil, ErrAssetNotFound(asset.ID)
+		return nil, ErrAssetNotFound(record.ID)
 	}
 
-	if err := asset.ValidateUpdateProperties(msg.Sender, msg.Properties); err != nil {
+	if err := k.ValidateUpdateProperties(ctx, record, msg.Sender, msg.Properties); err != nil {
 		return nil, err
 	}
 
-	// update all Properties
-	msg.Properties = msg.Properties.Sort()
-	asset.Properties = asset.Properties.Adds(msg.Properties...)
-	// save asset to store
-	k.setAsset(ctx, asset)
+	k.SetProperties(ctx, msg.AssetID, msg.Properties)
 	tags := sdk.NewTags(
-		TagAsset, []byte(asset.ID),
+		TagAsset, []byte(record.ID),
 		TagSender, []byte(msg.Sender.String()),
 	)
 	return tags, nil
+}
+
+// SetProperty ....
+func (k Keeper) SetProperty(ctx sdk.Context, recordID string, property Property) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshalBinary(property)
+	store.Set(GetPropertyKey(recordID, property.Name), bz)
+}
+
+// SetProperties ...
+func (k Keeper) SetProperties(ctx sdk.Context, recordID string, props Properties) {
+	for _, prop := range props {
+		k.SetProperty(ctx, recordID, prop)
+	}
+}
+
+// GetProperties ...
+func (k Keeper) GetProperties(ctx sdk.Context, recordID string) (reporters Properties) {
+	store := ctx.KVStore(k.storeKey)
+
+	// delete subspace
+	iterator := sdk.KVStorePrefixIterator(store, GetPropertiesKey(recordID))
+	for ; iterator.Valid(); iterator.Next() {
+		p := Property{}
+		k.cdc.MustUnmarshalBinary(iterator.Value(), &p)
+		reporters = append(reporters, p)
+	}
+	iterator.Close()
+	return
 }

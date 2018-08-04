@@ -1,6 +1,6 @@
 {
   "genesis_time": "2018-07-17T00:29:06.90358706Z",
-  "chain_id": "ichain",
+  "chain_id": "ichain-2001",
   "consensus_params": {
     "block_size_params": {
       "max_bytes": "22020096",
@@ -57,6 +57,22 @@
       },
       "power": "10",
       "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "lGZuiUTINE+7NAQfjDDxFQZoqRpWEpXcSNUDjLsGI0U="
+      },
+      "power": "10",
+      "name": ""
+    },
+    {
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "V8LSnZ//ToXhPwLVf66oTd/wey63SaDHBsus/+mfIr0="
+      },
+      "power": "10",
+      "name": ""
     }
   ],
   "app_hash": "",
@@ -85,7 +101,7 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
           }
         ]
       },
@@ -94,7 +110,7 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
           }
         ]
       },
@@ -103,7 +119,7 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
           }
         ]
       },
@@ -112,7 +128,7 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
           }
         ]
       },
@@ -121,7 +137,7 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
           }
         ]
       },
@@ -130,7 +146,25 @@
         "coins": [
           {
             "denom": "tomato",
-            "amount": "1000"
+            "amount": "100000"
+          }
+        ]
+      },
+      {
+        "address": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+        "coins": [
+          {
+            "denom": "tomato",
+            "amount": "100000"
+          }
+        ]
+      },
+      {
+        "address": "cosmosaccaddr1ddcvh59244yl963w6kky766u4m6druxaa5rgtf",
+        "coins": [
+          {
+            "denom": "tomato",
+            "amount": "100000"
           }
         ]
       }
@@ -167,8 +201,8 @@
           "description": {
             "moniker": "thangn",
             "identity": "",
-            "website": "",
-            "details": ""
+            "website": "https://github.com/thang14",
+            "details": "Thang Nguyen"
           },
           "bond_height": "0",
           "bond_intra_tx_counter": 0,
@@ -192,8 +226,8 @@
           "description": {
             "moniker": "ducdv",
             "identity": "",
-            "website": "",
-            "details": ""
+            "website": "https://github.com/ducdung8491",
+            "details": "https://github.com/ducdung8491"
           },
           "bond_height": "0",
           "bond_intra_tx_counter": 0,
@@ -240,10 +274,34 @@
           "tokens": "100",
           "delegator_shares": "100",
           "description": {
-            "moniker": "validator",
+            "moniker": "Hexa9on",
             "identity": "",
-            "website": "",
-            "details": ""
+            "website": "http://hexa9on.com",
+            "details": "http://hexa9on.com"
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        },{
+          "owner": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "lGZuiUTINE+7NAQfjDDxFQZoqRpWEpXcSNUDjLsGI0U="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "laonongso",
+            "identity": "",
+            "website": "http://laonongso.com/",
+            "details": "Lao Nong So"
           },
           "bond_height": "0",
           "bond_intra_tx_counter": 0,
@@ -265,10 +323,35 @@
           "tokens": "100",
           "delegator_shares": "100",
           "description": {
-            "moniker": "validator",
+            "moniker": "certdid",
             "identity": "",
-            "website": "",
-            "details": ""
+            "website": "http://certdid.com/",
+            "details": "Certificate of decentralized identity"
+          },
+          "bond_height": "0",
+          "bond_intra_tx_counter": 0,
+          "proposer_reward_pool": [],
+          "commission": "0",
+          "commission_max": "0",
+          "commission_change_rate": "0",
+          "commission_change_today": "0",
+          "prev_bonded_tokens": "0"
+        },
+        {
+          "owner": "cosmosaccaddr1ddcvh59244yl963w6kky766u4m6druxaa5rgtf",
+          "pub_key": {
+            "type": "tendermint/PubKeyEd25519",
+            "value": "V8LSnZ//ToXhPwLVf66oTd/wey63SaDHBsus/+mfIr0="
+          },
+          "revoked": false,
+          "status": 0,
+          "tokens": "100",
+          "delegator_shares": "100",
+          "description": {
+            "moniker": "Icheck Pay",
+            "identity": "",
+            "website": "http://icheckcorp.com/",
+            "details": "http://icheckcorp.com/"
           },
           "bond_height": "0",
           "bond_intra_tx_counter": 0,
@@ -308,6 +391,18 @@
         {
           "delegator_addr": "cosmosaccaddr16f08hlqh26x2mgkvellkxhnkl4r6qxhkff0k9c",
           "validator_addr": "cosmosaccaddr16f08hlqh26x2mgkvellkxhnkl4r6qxhkff0k9c",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+          "validator_addr": "cosmosaccaddr1rphvtsk7knv42p0yv97n38wer5mz7mh269xx2x",
+          "shares": "100",
+          "height": "0"
+        },
+        {
+          "delegator_addr": "cosmosaccaddr1ddcvh59244yl963w6kky766u4m6druxaa5rgtf",
+          "validator_addr": "cosmosaccaddr1ddcvh59244yl963w6kky766u4m6druxaa5rgtf",
           "shares": "100",
           "height": "0"
         }

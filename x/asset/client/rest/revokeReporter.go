@@ -16,38 +16,30 @@ type revokeReporterBody struct {
 	BaseReq baseBody `json:"base_req"`
 }
 
-func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+func revokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m revokeReporterBody
 		body, err := ioutil.ReadAll(r.Body)
 		err = cdc.UnmarshalJSON(body, &m)
 
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		err = m.BaseReq.Validate()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		address, err := sdk.AccAddressFromBech32(vars["address"])
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
-			return
+			return err
 		}
 
 		// build message
@@ -58,5 +50,6 @@ func RevokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 			AssetID:  vars["id"],
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
-	}
+		return nil
+	})
 }

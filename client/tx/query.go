@@ -6,22 +6,21 @@ import (
 	"net/http"
 	"strconv"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/common"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 )
 
-// Get the default command for a tx query
+// QueryTxCmd  Get the default command for a tx query
 func QueryTxCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx [hash]",
@@ -33,7 +32,7 @@ func QueryTxCmd(cdc *wire.Codec) *cobra.Command {
 			hashHexStr := args[0]
 			trustNode := viper.GetBool(client.FlagTrustNode)
 
-			output, err := queryTx(cdc, context.NewCoreContextFromViper(), hashHexStr, trustNode)
+			output, err := QueryTx(cdc, context.NewCoreContextFromViper(), hashHexStr, trustNode)
 			if err != nil {
 				return err
 			}
@@ -50,7 +49,8 @@ func QueryTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func queryTx(cdc *wire.Codec, ctx context.CoreContext, hashHexStr string, trustNode bool) ([]byte, error) {
+// QueryTx ...
+func QueryTx(cdc *wire.Codec, ctx context.CoreContext, hashHexStr string, trustNode bool) ([]byte, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func queryTx(cdc *wire.Codec, ctx context.CoreContext, hashHexStr string, trustN
 
 		return nil, err
 	}
-	info, err := formatTxResult(cdc, res)
+	info, err := FormatTxResult(cdc, res)
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +75,15 @@ func queryTx(cdc *wire.Codec, ctx context.CoreContext, hashHexStr string, trustN
 	return cdc.MarshalJSON(info)
 }
 
-func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
+// FormatTxResult ...
+func FormatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (TxInfo, error) {
 	// TODO: verify the proof if requested
-	tx, err := parseTx(cdc, res.Tx)
+	tx, err := ParseTx(cdc, res.Tx)
 	if err != nil {
-		return txInfo{}, err
+		return TxInfo{}, err
 	}
 
-	info := txInfo{
+	info := TxInfo{
 		Hash:   res.Hash,
 		Height: res.Height,
 		Tx:     tx,
@@ -91,8 +92,8 @@ func formatTxResult(cdc *wire.Codec, res *ctypes.ResultTx) (txInfo, error) {
 	return info, nil
 }
 
-// txInfo is used to prepare info to display
-type txInfo struct {
+// TxInfo  is used to prepare info to display
+type TxInfo struct {
 	Hash   common.HexBytes        `json:"hash"`
 	Height int64                  `json:"height"`
 	Tx     sdk.Tx                 `json:"tx"`
@@ -100,18 +101,19 @@ type txInfo struct {
 	Time   int64                  `json:"time"`
 }
 
-func parseTx(cdc *wire.Codec, txBytes []byte) (sdk.Tx, error) {
+// ParseTx ...
+func ParseTx(cdc *wire.Codec, txBytes []byte) (auth.StdTx, error) {
 	var tx auth.StdTx
 	err := cdc.UnmarshalBinary(txBytes, &tx)
 	if err != nil {
-		return nil, err
+		return tx, err
 	}
 	return tx, nil
 }
 
 // REST
 
-// transaction query REST handler
+// QueryTxRequestHandlerFn  transaction query REST handler
 func QueryTxRequestHandlerFn(cdc *wire.Codec, ctx context.CoreContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -122,7 +124,7 @@ func QueryTxRequestHandlerFn(cdc *wire.Codec, ctx context.CoreContext) http.Hand
 			trustNode = true
 		}
 
-		output, err := queryTx(cdc, ctx, hashHexStr, trustNode)
+		output, err := QueryTx(cdc, ctx, hashHexStr, trustNode)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte(err.Error()))

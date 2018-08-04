@@ -19,6 +19,10 @@ type Proposal struct {
 }
 
 func (p Proposal) ValidateAnswer(msg MsgAnswerProposal) sdk.Error {
+	if p.Role != msg.Role {
+		return ErrInvalidRole("")
+	}
+
 	switch msg.Response {
 	case StatusCancel:
 		if !bytes.Equal(msg.Sender, p.Issuer) {
@@ -62,17 +66,20 @@ const (
 	StatusRejected                       // the recipient reject the proposal
 )
 
+// SetProposal ...
 func (k Keeper) SetProposal(ctx sdk.Context, assetID string, proposal Proposal) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshalBinary(proposal)
 	store.Set(GetProposalKey(assetID, proposal.Recipient), bz)
 }
 
+// DeleteProposal ...
 func (k Keeper) DeleteProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(GetProposalKey(assetID, recipient))
 }
 
+// GetProposal ...
 func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.AccAddress) (proposal Proposal, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(GetProposalKey(assetID, recipient))
@@ -84,6 +91,7 @@ func (k Keeper) GetProposal(ctx sdk.Context, assetID string, recipient sdk.AccAd
 	return
 }
 
+// AddProposal ...
 func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, sdk.Error) {
 	asset, found := k.GetAsset(ctx, msg.AssetID)
 	if !found {
@@ -112,6 +120,7 @@ func (k Keeper) AddProposal(ctx sdk.Context, msg MsgCreateProposal) (sdk.Tags, s
 	return tags, nil
 }
 
+// AnswerProposal ...
 func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags, sdk.Error) {
 	proposal, found := k.GetProposal(ctx, msg.AssetID, msg.Recipient)
 	if !found {
@@ -133,44 +142,18 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	if msg.Response == StatusAccepted {
 		switch proposal.Role {
 		case RoleOwner:
-			// subtract inventory
-			k.subtractInventory(ctx, asset.Owner, sdk.Coin{
-				Denom:  asset.GetRoot(),
-				Amount: asset.Quantity,
-			})
-
 			// update owner
 			asset.Owner = proposal.Recipient
-			asset.Reporters = Reporters{}
-			for _, reporter := range asset.Reporters {
-				k.removeAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
-			}
+			k.DeleteReporters(ctx, asset.ID)
 			k.setAssetByAccountIndex(ctx, asset.ID, proposal.Recipient)
-
-			// ADD inventory
-			k.addInventory(ctx, asset.Owner, sdk.Coin{
-				Denom:  asset.GetRoot(),
-				Amount: asset.Quantity,
-			})
 			break
 		case RoleReporter:
-			// add reporter
-			reporter, reporterIndex := asset.GetReporter(msg.Recipient)
-			if reporter != nil {
-				// Update reporter
-				reporter.Properties = proposal.Properties
-				reporter.Created = ctx.BlockHeader().Time
-				asset.Reporters[reporterIndex] = *reporter
-			} else {
-				// Add new reporter
-				reporter = &Reporter{
-					Addr:       proposal.Recipient,
-					Properties: proposal.Properties,
-					Created:    ctx.BlockHeader().Time,
-				}
-				asset.Reporters = append(asset.Reporters, *reporter)
-				k.setAssetByReporterIndex(ctx, reporter.Addr, asset.ID)
-			}
+			k.SetReporter(ctx, asset.ID, Reporter{
+				Properties: proposal.Properties,
+				Created:    ctx.BlockHeader().Time,
+				Addr:       proposal.Recipient,
+			})
+			k.setAssetByReporterIndex(ctx, proposal.Recipient, asset.ID)
 			break
 		default:
 			break
@@ -185,12 +168,11 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 	return tags, nil
 }
 
-func (k Keeper) setProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+func (k Keeper) setProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshalBinary(assetId)
-	store.Set(GetProposalAccountKey(addr, assetId), bz)
+	store.Set(GetProposalAccountKey(addr, recordID), []byte{})
 }
-func (k Keeper) removeProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, assetId string) {
+func (k Keeper) removeProposalAccountIndex(ctx sdk.Context, addr sdk.AccAddress, recordID string) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(GetProposalAccountKey(addr, assetId))
+	store.Delete(GetProposalAccountKey(addr, recordID))
 }

@@ -79,8 +79,8 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "9f2b83cbe9e1b35b350703366b5e7f5806c5547e"
-  version = "v0.22.0"
+  revision = "02d52e43261191f4a0ded4501cc3585640c6272b"
+  version = "v0.23.1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -89,7 +89,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ebuchman/fail-test"
   packages = ["."]
   revision = "95f809107225be108efcf10a3509e4ea6ceef3c4"
@@ -136,8 +135,8 @@
     "sortkeys",
     "types"
   ]
-  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
-  version = "v1.0.0"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -252,13 +251,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
     "prometheus/promhttp"
   ]
-  revision = "bcbbc08eb2ddff3af83bbf11e7ec13b4fd730b6e"
+  revision = "ae27198cdd90bf12cd134ad79d1366a6cf49f632"
 
 [[projects]]
   branch = "master"
@@ -288,7 +286,6 @@
   revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
 
 [[projects]]
-  branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
@@ -383,13 +380,19 @@
   version = "0.10.1"
 
 [[projects]]
-  branch = "dev/hkdf_test_vector"
   name = "github.com/tendermint/go-crypto"
+  packages = ["."]
+  revision = "c3e19f3ea26f5c3357e0bcbb799b0761ef923755"
+  version = "v0.5.0"
+
+[[projects]]
+  name = "github.com/tendermint/go-wire"
   packages = [
     ".",
-    "tmhash"
+    "data"
   ]
-  revision = "2ddc3afe2ea9474157e40d648d529d1c550b3ff7"
+  revision = "fa721242b042ecd4c6ed1a934ee740db4f74e45c"
+  version = "v0.7.3"
 
 [[projects]]
   name = "github.com/tendermint/iavl"
@@ -411,8 +414,13 @@
     "consensus",
     "consensus/types",
     "crypto",
+    "crypto/armor",
+    "crypto/ed25519",
+    "crypto/encoding/amino",
     "crypto/merkle",
+    "crypto/secp256k1",
     "crypto/tmhash",
+    "crypto/xsalsa20symmetric",
     "evidence",
     "libs/autofile",
     "libs/bech32",
@@ -454,8 +462,8 @@
     "types",
     "version"
   ]
-  revision = "5ff65274b84ea905787a48512cc3124385bddf2f"
-  version = "v0.22.2"
+  revision = "d542d2c3945116697f60451e6a407082c41c3cc9"
+  version = "v0.22.8"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -463,8 +471,8 @@
     "common",
     "log"
   ]
-  revision = "692f1d86a6e2c0efa698fd1e4541b68c74ffaf38"
-  version = "v0.8.4"
+  revision = "fb7ec62b2925f48de159aeea73b254ae8c58a738"
+  version = "v0.9.0-rc1"
 
 [[projects]]
   name = "github.com/zondax/ledger-goclient"
@@ -490,7 +498,6 @@
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -502,7 +509,7 @@
     "netutil",
     "trace"
   ]
-  revision = "d0887baf81f4598189d4e12a37c6da86f0bba4d0"
+  revision = "292b43bbf7cb8d35ddf40f8d5100ef3837cced3f"
 
 [[projects]]
   branch = "master"
@@ -549,9 +556,11 @@
     "credentials",
     "encoding",
     "encoding/proto",
-    "grpclb/grpc_lb_v1/messages",
     "grpclog",
     "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/grpcrand",
     "keepalive",
     "metadata",
     "naming",
@@ -564,8 +573,8 @@
     "tap",
     "transport"
   ]
-  revision = "d11072e7ca9811b1100b80ca0269ac831f06d024"
-  version = "v1.11.3"
+  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
+  version = "v1.13.0"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -576,6 +585,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7079f4e651108162ca563e0bdf3eee56879354e9b240ff69cd37d5d16cf33783"
+  inputs-digest = "e1861b42b081b941b58e4743db339e574c0eeb10469d000a915a468beca48578"
   solver-name = "gps-cdcl"
   solver-version = 1
