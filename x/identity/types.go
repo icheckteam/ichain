@@ -10,22 +10,27 @@ import (
 type Cert struct {
 	Property  string         `json:"property"`
 	Certifier sdk.AccAddress `json:"certifier"`
+	Owner     sdk.AccAddress `json:"owner"`
 	Data      Metadata       `json:"data"`
 	CreatedAt int64          `json:"created_at"`
 }
 
 // CertValue ...
 type CertValue struct {
-	Property   string   `json:"property"`
-	Data       Metadata `json:"data"`
-	Confidence bool     `json:"confidence"`
-	Expires    int64    `json:"expires"`
+	Owner      sdk.AccAddress `json:"owner"`
+	Property   string         `json:"property"`
+	Data       Metadata       `json:"data"`
+	Confidence bool           `json:"confidence"`
 }
 
 // ValidateBasic quick validity check
 func (msg CertValue) ValidateBasic() sdk.Error {
 	if len(msg.Property) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
+	}
+
+	if len(msg.Owner) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil owner address")
 	}
 	return nil
 }

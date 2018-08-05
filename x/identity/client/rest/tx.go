@@ -92,10 +92,16 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 			w.Write([]byte(err.Error()))
 			return
 		}
+
+		// assign owner
+		for i := range m.Values {
+			m.Values[i].Owner = address
+		}
+		certifier := sdk.AccAddress(info.GetPubKey().Address())
 		msg := identity.MsgSetCerts{
-			Certifier: sdk.AccAddress(info.GetPubKey().Address()),
-			Recipient: address,
-			Values:    m.Values,
+			Sender: certifier,
+			Issuer: certifier,
+			Values: m.Values,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}

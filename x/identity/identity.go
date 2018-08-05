@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"bytes"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +23,7 @@ func (k Keeper) Register(ctx sdk.Context, msg MsgReg) ([]sdk.Tags, sdk.Error) {
 
 // AddOwner add an account to identity
 func (k Keeper) AddOwner(ctx sdk.Context, msg MsgAddOwner) ([]sdk.Tags, sdk.Error) {
-	if k.hasOwner(ctx, msg.Address, msg.Sender) {
+	if !k.hasOwner(ctx, msg.Address, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized", msg.Sender))
 	}
 	ownerCount := k.getOwnerCount(ctx, msg.Address)
@@ -32,8 +33,8 @@ func (k Keeper) AddOwner(ctx sdk.Context, msg MsgAddOwner) ([]sdk.Tags, sdk.Erro
 }
 
 // DeleteOwner delete an account of identity
-func (k Keeper) DeleteOwner(ctx sdk.Context, msg MsgAddOwner) ([]sdk.Tags, sdk.Error) {
-	if k.hasOwner(ctx, msg.Address, msg.Sender) {
+func (k Keeper) DeleteOwner(ctx sdk.Context, msg MsgDelOwner) ([]sdk.Tags, sdk.Error) {
+	if !k.hasOwner(ctx, msg.Address, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized", msg.Sender))
 	}
 	ownerCount := k.getOwnerCount(ctx, msg.Address)
@@ -44,6 +45,9 @@ func (k Keeper) DeleteOwner(ctx sdk.Context, msg MsgAddOwner) ([]sdk.Tags, sdk.E
 
 // hasOwner check owner of the identity
 func (k Keeper) hasOwner(ctx sdk.Context, id sdk.AccAddress, owner sdk.AccAddress) bool {
+	if bytes.Equal(id, owner) {
+		return true
+	}
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(KeyOwner(id, owner))
 }
@@ -86,9 +90,10 @@ func (k Keeper) GetOwners(ctx sdk.Context, id sdk.AccAddress) []sdk.AccAddress {
 	iterator := sdk.KVStorePrefixIterator(store, KeyOwners(id))
 	owners := []sdk.AccAddress{}
 	for ; iterator.Valid(); iterator.Next() {
-		owner := sdk.AccAddress{}
-		k.cdc.MustUnmarshalBinary(iterator.Value(), &owner)
-		owners = append(owners, owner)
+		addrs := iterator.Key()[1:] // remove prefix bytes
+		if len(addrs) == 2*sdk.AddrLen {
+			owners = append(owners, sdk.AccAddress(addrs[sdk.AddrLen:]))
+		}
 	}
 	iterator.Close()
 	return owners

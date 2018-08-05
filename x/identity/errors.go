@@ -30,11 +30,6 @@ func ErrIDAlreadyExists(codespace sdk.CodespaceType, id sdk.AccAddress) sdk.Erro
 	return sdk.NewError(codespace, CodeInvalidID, fmt.Sprintf("id %d already exists", id))
 }
 
-// ErrInvalidGenesis ...
-func ErrInvalidGenesis(codespace sdk.CodespaceType, msg string) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidGenesis, msg)
-}
-
 // ErrNilTrustorAddr ...
 func ErrNilTrustorAddr(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidTrustor, "trustor address is nil")

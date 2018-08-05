@@ -1,6 +1,10 @@
 package identity
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // setCert set the main record holding cert details
 func (k Keeper) setCert(ctx sdk.Context, addr sdk.AccAddress, cert Cert) {
@@ -29,14 +33,20 @@ func (k Keeper) deleteCert(ctx sdk.Context, addr sdk.AccAddress, property string
 
 // AddCerts add all certs
 func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
+	// check owner to add certificate
+	if !k.hasOwner(ctx, msg.Issuer, msg.Sender) {
+		return sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized to add", msg.Sender))
+	}
+
 	for _, value := range msg.Values {
 		if value.Confidence == true {
-			cert, found := k.GetCert(ctx, msg.Recipient, value.Property, msg.Certifier)
+			cert, found := k.GetCert(ctx, value.Owner, value.Property, msg.Issuer)
 			if !found {
 				// new cert
 				cert = Cert{
 					Property:  value.Property,
-					Certifier: msg.Certifier,
+					Owner:     value.Owner,
+					Certifier: msg.Issuer,
 					Data:      value.Data,
 					CreatedAt: ctx.BlockHeader().Time,
 				}
@@ -46,11 +56,11 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 			}
 
 			// add cert
-			k.setCert(ctx, msg.Recipient, cert)
+			k.setCert(ctx, value.Owner, cert)
 
 		} else {
 			// delete cert
-			k.deleteCert(ctx, msg.Recipient, value.Property, msg.Certifier)
+			k.deleteCert(ctx, value.Owner, value.Property, msg.Issuer)
 		}
 	}
 	return nil
