@@ -4,40 +4,39 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
+// Cert ...
 type Cert struct {
-	ID         string         `json:"id"`
-	Context    string         `json:"context"`
-	Property   string         `json:"property"`
-	Certifier  sdk.AccAddress `json:"certifier"`
+	Property  string         `json:"property"`
+	Certifier sdk.AccAddress `json:"certifier"`
+	Owner     sdk.AccAddress `json:"owner"`
+	Data      Metadata       `json:"data"`
+	CreatedAt int64          `json:"created_at"`
+}
+
+// CertValue ...
+type CertValue struct {
 	Owner      sdk.AccAddress `json:"owner"`
-	Trust      bool           `json:"trust"`
+	Property   string         `json:"property"`
 	Data       Metadata       `json:"data"`
 	Confidence bool           `json:"confidence"`
-	Expires    int64          `json:"expires"`
-	CreatedAt  int64          `json:"created_at"`
-	Revocation Revocation     `json:"revocation"`
 }
 
-type CertValue struct {
-	ID         string     `json:"id"`
-	Context    string     `json:"context"`
-	Property   string     `json:"property"`
-	Data       Metadata   `json:"data"`
-	Confidence bool       `json:"confidence"`
-	Expires    int64      `json:"expires"`
-	Revocation Revocation `json:"revocation"`
-}
-
-// quick validity check
+// ValidateBasic quick validity check
 func (msg CertValue) ValidateBasic() sdk.Error {
 	if len(msg.Property) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
 	}
+
+	if len(msg.Owner) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil owner address")
+	}
 	return nil
 }
 
+// GetSignBytes ...
 func (msg CertValue) GetSignBytes() []byte {
 	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -46,8 +45,10 @@ func (msg CertValue) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
+// Certs ...
 type Certs []Cert
 
+// Metadata struct
 type Metadata []byte
 
 // MarshalJSON returns *m as the JSON encoding of m.
@@ -67,12 +68,8 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type Trust struct {
-	Trustor  sdk.AccAddress `json:"trustor"`
-	Trusting sdk.AccAddress `json:"trusting"`
-}
-
-type Revocation struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
+// UnmarshalCert ...
+func UnmarshalCert(cdc *wire.Codec, value []byte) (cert Cert, err error) {
+	err = cdc.UnmarshalBinary(value, &cert)
+	return
 }

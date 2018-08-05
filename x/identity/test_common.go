@@ -76,6 +76,8 @@ func createTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 	assetKeeper := NewKeeper(keyIdentity, cdc)
 	return ctx, accountMapper, assetKeeper
 }
+
+// NewPubKey ...
 func NewPubKey(pk string) (res ed25519.PubKeyEd25519) {
 	pkBytes, err := hex.DecodeString(pk)
 	if err != nil {
@@ -87,7 +89,7 @@ func NewPubKey(pk string) (res ed25519.PubKeyEd25519) {
 	return pkEd
 }
 
-// for incode address generation
+// TestAddr for incode address generation
 func TestAddr(addr string, bech string) sdk.AccAddress {
 
 	res, err := sdk.AccAddressFromHex(addr)
@@ -147,7 +149,7 @@ func createTestPubKeys(numPubKeys int) []crypto.PubKey {
 
 //_____________________________________________________________________________________
 
-// does a certain by-power index record exist
+// ValidatorByPowerIndexExists ... does a certain by-power index record exist
 func ValidatorByPowerIndexExists(ctx sdk.Context, keeper Keeper, power []byte) bool {
 	store := ctx.KVStore(keeper.storeKey)
 	return store.Get(power) != nil
