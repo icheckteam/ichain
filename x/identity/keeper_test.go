@@ -19,18 +19,17 @@ func TestKeeper(t *testing.T) {
 	// invalid trustor/trusting
 	msgSetTrust := MsgSetTrust{Trustor: addr1, Trusting: addr2, Trust: true}
 	keeper.AddTrust(ctx, msgSetTrust)
-	trust, found := keeper.GetTrust(ctx, msgSetTrust.Trustor, msgSetTrust.Trusting)
+	found := keeper.hasTrust(ctx, msgSetTrust.Trustor, msgSetTrust.Trusting)
 	assert.True(t, found)
-	assert.True(t, bytes.Equal(trust.Trusting, msgSetTrust.Trusting))
 
 	// get trust not found
-	_, found = keeper.GetTrust(ctx, addr1, addr3)
+	found = keeper.hasTrust(ctx, addr1, addr3)
 	assert.True(t, !found)
 
 	// trust = false
 	msgSetTrust = MsgSetTrust{Trustor: addr1, Trusting: addr2, Trust: false}
 	keeper.AddTrust(ctx, msgSetTrust)
-	_, found = keeper.GetTrust(ctx, msgSetTrust.Trustor, msgSetTrust.Trusting)
+	found = keeper.hasTrust(ctx, msgSetTrust.Trustor, msgSetTrust.Trusting)
 	assert.True(t, !found)
 
 	// Add Certs
@@ -41,4 +40,13 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, found)
 	assert.True(t, bytes.Equal(cert.Certifier, addr1))
 
+}
+
+func TestKeeperCreate(t *testing.T) {
+	ctx, _, keeper := createTestInput(t, false, 0)
+
+	keeper.Register(ctx, MsgReg{
+		Address: addr1,
+		Sender:  addr2,
+	})
 }

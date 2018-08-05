@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// name to idetify transaction types
+// MsgType name to idetify transaction types
 const MsgType = "identity"
 
 var _, _ sdk.Msg = &MsgSetTrust{}, &MsgSetCerts{}
@@ -16,6 +16,7 @@ type MsgSetTrust struct {
 	Trust    bool           `json:"trust"`
 }
 
+// NewMsgSetTrust ...
 func NewMsgSetTrust(trustor, trusting sdk.AccAddress, trust bool) MsgSetTrust {
 	return MsgSetTrust{
 		Trustor:  trustor,
@@ -24,13 +25,15 @@ func NewMsgSetTrust(trustor, trusting sdk.AccAddress, trust bool) MsgSetTrust {
 	}
 }
 
-//nolint
+//Type ...
 func (msg MsgSetTrust) Type() string { return MsgType }
+
+// GetSigners ...
 func (msg MsgSetTrust) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Trustor}
 }
 
-// get the bytes for the message signer to sign on
+// GetSignBytes get the bytes for the message signer to sign on
 func (msg MsgSetTrust) GetSignBytes() []byte {
 	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -39,7 +42,7 @@ func (msg MsgSetTrust) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// quick validity check
+// ValidateBasic quick validity check
 func (msg MsgSetTrust) ValidateBasic() sdk.Error {
 	if msg.Trustor == nil {
 		return ErrNilTrustorAddr(DefaultCodespace)
@@ -58,6 +61,7 @@ type MsgSetCerts struct {
 	Values    []CertValue    `json:"values"`
 }
 
+// NewMsgSetCerts ...
 func NewMsgSetCerts(certifier sdk.AccAddress, recipient sdk.AccAddress, values []CertValue) MsgSetCerts {
 	return MsgSetCerts{
 		Certifier: certifier,
@@ -66,13 +70,15 @@ func NewMsgSetCerts(certifier sdk.AccAddress, recipient sdk.AccAddress, values [
 	}
 }
 
-//nolint
+// Type ...
 func (msg MsgSetCerts) Type() string { return MsgType }
+
+// GetSigners ...
 func (msg MsgSetCerts) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Certifier}
 }
 
-// get the bytes for the message signer to sign on
+// GetSignBytes get the bytes for the message signer to sign on
 func (msg MsgSetCerts) GetSignBytes() []byte {
 	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -81,7 +87,7 @@ func (msg MsgSetCerts) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
-// quick validity check
+// ValidateBasic quick validity check
 func (msg MsgSetCerts) ValidateBasic() sdk.Error {
 	if msg.Certifier == nil {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil certifier address")
@@ -93,6 +99,119 @@ func (msg MsgSetCerts) ValidateBasic() sdk.Error {
 		if err := value.ValidateBasic(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Identity
+// -----------------------------------------------
+// MsgReg
+// MsgAddKey
+// MsgDelKey
+
+// MsgReg ....
+// .......................................................
+type MsgReg struct {
+	Sender  sdk.AccAddress
+	Address sdk.AccAddress
+}
+
+// Type ...
+func (msg MsgReg) Type() string { return MsgType }
+
+// GetSigners ...
+func (msg MsgReg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// GetSignBytes get the bytes for the message signer to sign on
+func (msg MsgReg) GetSignBytes() []byte {
+	b, err := MsgCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+// ValidateBasic quick validity check
+func (msg MsgReg) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
+	}
+	if msg.Address == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
+	}
+	return nil
+}
+
+// MsgAddOwner ...
+// .......................................................
+type MsgAddOwner struct {
+	Sender  sdk.AccAddress
+	Address sdk.AccAddress
+	Owner   sdk.AccAddress
+}
+
+// Type ...
+func (msg MsgAddOwner) Type() string { return MsgType }
+
+// GetSigners ...
+func (msg MsgAddOwner) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// ValidateBasic quick validity check
+func (msg MsgAddOwner) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
+	}
+	if msg.Address == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
+	}
+	return nil
+}
+
+// GetSignBytes get the bytes for the message signer to sign on
+func (msg MsgAddOwner) GetSignBytes() []byte {
+	b, err := MsgCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+// MsgDelOwner ...
+// .......................................................
+type MsgDelOwner struct {
+	Sender  sdk.AccAddress
+	Address sdk.AccAddress
+	Owner   sdk.AccAddress
+}
+
+// Type ...
+func (msg MsgDelOwner) Type() string { return MsgType }
+
+// GetSigners ...
+func (msg MsgDelOwner) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+// GetSignBytes get the bytes for the message signer to sign on
+func (msg MsgDelOwner) GetSignBytes() []byte {
+	b, err := MsgCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+// ValidateBasic quick validity check
+func (msg MsgDelOwner) ValidateBasic() sdk.Error {
+	if len(msg.Sender) == 0 {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
+	}
+	if msg.Address == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
 	}
 	return nil
 }

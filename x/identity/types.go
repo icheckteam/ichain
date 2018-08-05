@@ -6,31 +6,23 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Cert ...
 type Cert struct {
-	ID         string         `json:"id"`
-	Context    string         `json:"context"`
-	Property   string         `json:"property"`
-	Certifier  sdk.AccAddress `json:"certifier"`
-	Owner      sdk.AccAddress `json:"owner"`
-	Trust      bool           `json:"trust"`
-	Data       Metadata       `json:"data"`
-	Confidence bool           `json:"confidence"`
-	Expires    int64          `json:"expires"`
-	CreatedAt  int64          `json:"created_at"`
-	Revocation Revocation     `json:"revocation"`
+	Property  string         `json:"property"`
+	Certifier sdk.AccAddress `json:"certifier"`
+	Data      Metadata       `json:"data"`
+	CreatedAt int64          `json:"created_at"`
 }
 
+// CertValue ...
 type CertValue struct {
-	ID         string     `json:"id"`
-	Context    string     `json:"context"`
-	Property   string     `json:"property"`
-	Data       Metadata   `json:"data"`
-	Confidence bool       `json:"confidence"`
-	Expires    int64      `json:"expires"`
-	Revocation Revocation `json:"revocation"`
+	Property   string   `json:"property"`
+	Data       Metadata `json:"data"`
+	Confidence bool     `json:"confidence"`
+	Expires    int64    `json:"expires"`
 }
 
-// quick validity check
+// ValidateBasic quick validity check
 func (msg CertValue) ValidateBasic() sdk.Error {
 	if len(msg.Property) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil property address")
@@ -38,6 +30,7 @@ func (msg CertValue) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// GetSignBytes ...
 func (msg CertValue) GetSignBytes() []byte {
 	b, err := MsgCdc.MarshalJSON(msg)
 	if err != nil {
@@ -46,8 +39,10 @@ func (msg CertValue) GetSignBytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
+// Certs ...
 type Certs []Cert
 
+// Metadata struct
 type Metadata []byte
 
 // MarshalJSON returns *m as the JSON encoding of m.
@@ -65,14 +60,4 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 	}
 	*j = append((*j)[0:0], data...)
 	return nil
-}
-
-type Trust struct {
-	Trustor  sdk.AccAddress `json:"trustor"`
-	Trusting sdk.AccAddress `json:"trusting"`
-}
-
-type Revocation struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// SetTrustHandlerFn
+// SetTrustHandlerFn ...
 func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -58,7 +58,7 @@ func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 	}
 }
 
-// SetCertsHandlerFn
+// SetCertsHandlerFn ...
 func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

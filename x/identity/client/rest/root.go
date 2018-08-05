@@ -10,11 +10,13 @@ import (
 )
 
 const (
+	// RestIdentityID ...
 	RestIdentityID = "identityID"
-	RestAccount    = "address"
+	// RestAccount ...
+	RestAccount = "address"
 )
 
-// resgister REST routes
+// RegisterRoutes REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), trustsHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
