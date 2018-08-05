@@ -34,13 +34,13 @@ func (k Keeper) DeleteTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) {
 }
 
 // AddTrust add a trust
-func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) sdk.Error {
+func (k Keeper) AddTrust(ctx sdk.Context, msg MsgSetTrust) (sdk.Tags, sdk.Error) {
 	if msg.Trust == true {
 		k.SetTrust(ctx, msg.Trustor, msg.Trusting)
 	} else {
 		k.DeleteTrust(ctx, msg.Trustor, msg.Trusting)
 	}
-	return nil
+	return nil, nil
 }
 
 func (k Keeper) hasTrust(ctx sdk.Context, trustor, trusting sdk.AccAddress) bool {

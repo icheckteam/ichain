@@ -32,10 +32,10 @@ func (k Keeper) deleteCert(ctx sdk.Context, addr sdk.AccAddress, property string
 }
 
 // AddCerts add all certs
-func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
+func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) (sdk.Tags, sdk.Error) {
 	// check owner to add certificate
 	if !k.hasOwner(ctx, msg.Issuer, msg.Sender) {
-		return sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized to add", msg.Sender))
+		return nil, sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized to add", msg.Sender))
 	}
 
 	for _, value := range msg.Values {
@@ -63,7 +63,7 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) sdk.Error {
 			k.deleteCert(ctx, value.Owner, value.Property, msg.Issuer)
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // GetCerts ...

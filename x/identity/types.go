@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
 )
 
 // Cert ...
@@ -65,4 +66,10 @@ func (j *Metadata) UnmarshalJSON(data []byte) error {
 	}
 	*j = append((*j)[0:0], data...)
 	return nil
+}
+
+// UnmarshalCert ...
+func UnmarshalCert(cdc *wire.Codec, value []byte) (cert Cert, err error) {
+	err = cdc.UnmarshalBinary(value, &cert)
+	return
 }

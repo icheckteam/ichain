@@ -18,8 +18,12 @@ const (
 
 // RegisterRoutes REST routes
 func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), trustsHandlerFn(ctx, cdc)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/certs", RestAccount), queryCertsHandlerFn(ctx, cdc)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/accounts/{%s}/certs", RestAccount), SetCertsHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/trusts", RestAccount), trustsHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/certs", RestAccount), queryCertsHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/certs", RestAccount), SetCertsHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/register", RestAccount), registerHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/owners", RestAccount), getOwnersHandlerFn(ctx, cdc)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/owners", RestAccount), addOwnerHandlerFn(ctx, cdc, kb)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/idents/{%s}/owners/{owner}", RestAccount), delOwnerHandlerFn(ctx, cdc, kb)).Methods("DELETE")
 }

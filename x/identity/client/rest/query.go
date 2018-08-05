@@ -13,43 +13,66 @@ import (
 
 const storeName = "identity"
 
-func queryCertsByOwner(ctx context.CoreContext, cdc *wire.Codec, owner sdk.AccAddress, vars map[string]string) (identity.Certs, error) {
-	return nil, nil
+func getOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ident, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		owners, err := getOwners(ctx, ident, cdc)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		WriteJSON(w, cdc, owners)
+	}
 }
 
 func queryCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		address, err := sdk.AccAddressFromBech32(vars["address"])
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
 		}
 
-		certs, err := queryCertsByOwner(ctx, cdc, address, vars)
+		certs, err := getCerts(ctx, address, cdc)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("couldn't query certs. Error: %s", err.Error())))
 			return
 		}
-
-		output, err := cdc.MarshalJSON(certs)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-
-		w.Write(output)
+		WriteJSON(w, cdc, certs)
 	}
 }
 
 func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("not thing here"))
+		vars := mux.Vars(r)
+
+		address, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		accs, err := getTrusts(ctx, address, cdc)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("couldn't query accs. Error: %s", err.Error())))
+			return
+		}
+		WriteJSON(w, cdc, accs)
 	}
 }
 

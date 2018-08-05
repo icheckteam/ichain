@@ -8,6 +8,9 @@ import (
 func RegisterWire(cdc *wire.Codec) {
 	cdc.RegisterConcrete(MsgSetCerts{}, "identity/SetCerts", nil)
 	cdc.RegisterConcrete(MsgSetTrust{}, "identity/SetTrust", nil)
+	cdc.RegisterConcrete(MsgAddOwner{}, "identity/MsgAddOwner", nil)
+	cdc.RegisterConcrete(MsgReg{}, "identity/MsgReg", nil)
+	cdc.RegisterConcrete(MsgDelOwner{}, "identity/MsgDelOwner", nil)
 }
 
 // MsgCdc generic sealed codec to be used throughout sdk

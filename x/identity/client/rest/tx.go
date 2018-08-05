@@ -106,3 +106,99 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 	}
 }
+
+func registerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+	return withErr(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m msgRegBody
+		body, err := ioutil.ReadAll(r.Body)
+		err = cdc.UnmarshalJSON(body, &m)
+		if err != nil {
+			return err
+		}
+		err = m.BaseReq.Validate()
+		if err != nil {
+			return err
+		}
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		ident, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			return err
+		}
+		msg := identity.MsgReg{
+			Sender: sdk.AccAddress(info.GetPubKey().Address()),
+			Ident:  ident,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+func addOwnerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+	return withErr(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m msgAddOwnerBody
+		body, err := ioutil.ReadAll(r.Body)
+		err = cdc.UnmarshalJSON(body, &m)
+		if err != nil {
+			return err
+		}
+		err = m.BaseReq.Validate()
+		if err != nil {
+			return err
+		}
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		ident, err := sdk.AccAddressFromBech32(vars[RestAccount])
+		if err != nil {
+			return err
+		}
+		msg := identity.MsgAddOwner{
+			Sender: sdk.AccAddress(info.GetPubKey().Address()),
+			Ident:  ident,
+			Owner:  m.Owner,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+func delOwnerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+	return withErr(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m msgDelOwnerBody
+		body, err := ioutil.ReadAll(r.Body)
+		err = cdc.UnmarshalJSON(body, &m)
+		if err != nil {
+			return err
+		}
+		err = m.BaseReq.Validate()
+		if err != nil {
+			return err
+		}
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		ident, err := sdk.AccAddressFromBech32(vars["address"])
+		if err != nil {
+			return err
+		}
+		owner, err := sdk.AccAddressFromBech32(vars["owner"])
+		if err != nil {
+			return err
+		}
+		msg := identity.MsgDelOwner{
+			Sender: sdk.AccAddress(info.GetPubKey().Address()),
+			Ident:  ident,
+			Owner:  owner,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
