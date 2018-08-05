@@ -92,15 +92,15 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, len(certs) == 1)
 
 	msgSetCerts = MsgSetCerts{Issuer: addr1, Sender: addr1, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: true}}}
-	err = keeper.AddCerts(ctx, msgSetCerts)
+	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	assert.True(t, err == nil)
 
 	msgSetCerts = MsgSetCerts{Issuer: addr1, Sender: addr2, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: true}}}
-	err = keeper.AddCerts(ctx, msgSetCerts)
+	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	assert.True(t, err != nil)
 
 	msgSetCerts = MsgSetCerts{Issuer: addr1, Sender: addr1, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: false}}}
-	err = keeper.AddCerts(ctx, msgSetCerts)
+	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	certs = keeper.GetCerts(ctx, addr2)
 	assert.True(t, len(certs) == 0)
 
