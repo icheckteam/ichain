@@ -112,8 +112,8 @@ func (msg MsgSetCerts) ValidateBasic() sdk.Error {
 // MsgReg ....
 // .......................................................
 type MsgReg struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Address sdk.AccAddress `json:"address"`
+	Sender sdk.AccAddress `json:"sender"`
+	Ident  sdk.AccAddress `json:"ident"`
 }
 
 // Type ...
@@ -138,7 +138,7 @@ func (msg MsgReg) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
 	}
-	if msg.Address == nil {
+	if msg.Ident == nil {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
 	}
 	return nil
@@ -147,9 +147,9 @@ func (msg MsgReg) ValidateBasic() sdk.Error {
 // MsgAddOwner ...
 // .......................................................
 type MsgAddOwner struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Address sdk.AccAddress `json:"address"`
-	Owner   sdk.AccAddress `json:"owner"`
+	Sender sdk.AccAddress `json:"sender"`
+	Ident  sdk.AccAddress `json:"ident"`
+	Owner  sdk.AccAddress `json:"owner"`
 }
 
 // Type ...
@@ -165,7 +165,7 @@ func (msg MsgAddOwner) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
 	}
-	if msg.Address == nil {
+	if msg.Ident == nil {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
 	}
 	if msg.Owner == nil {
@@ -186,9 +186,9 @@ func (msg MsgAddOwner) GetSignBytes() []byte {
 // MsgDelOwner ...
 // .......................................................
 type MsgDelOwner struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Address sdk.AccAddress `json:"address"`
-	Owner   sdk.AccAddress `json:"owner"`
+	Sender sdk.AccAddress `json:"sender"`
+	Ident  sdk.AccAddress `json:"ident"`
+	Owner  sdk.AccAddress `json:"owner"`
 }
 
 // Type ...
@@ -213,8 +213,8 @@ func (msg MsgDelOwner) ValidateBasic() sdk.Error {
 	if len(msg.Sender) == 0 {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil sender address")
 	}
-	if msg.Address == nil {
-		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil address  address")
+	if msg.Ident == nil {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil ident  address")
 	}
 	if msg.Owner == nil {
 		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil owner  address")

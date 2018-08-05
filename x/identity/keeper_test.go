@@ -14,8 +14,8 @@ func TestKeeper(t *testing.T) {
 	// ----------------------------------------------------
 
 	msgRegister := MsgReg{
-		Address: addrs[1],
-		Sender:  addrs[2],
+		Ident:  addrs[1],
+		Sender: addrs[2],
 	}
 	keeper.Register(ctx, msgRegister)
 	owners := keeper.GetOwners(ctx, addrs[1])
@@ -23,8 +23,8 @@ func TestKeeper(t *testing.T) {
 
 	// Invalid id already exists
 	_, err := keeper.Register(ctx, MsgReg{
-		Address: addrs[1],
-		Sender:  addrs[2],
+		Ident:  addrs[1],
+		Sender: addrs[2],
 	})
 	assert.True(t, err != nil)
 
@@ -32,32 +32,32 @@ func TestKeeper(t *testing.T) {
 
 	// invalid sender
 	_, err = keeper.AddOwner(ctx, MsgAddOwner{
-		Address: addrs[1],
-		Owner:   addrs[3],
-		Sender:  addrs[4],
+		Ident:  addrs[1],
+		Owner:  addrs[3],
+		Sender: addrs[4],
 	})
 	assert.True(t, err != nil)
 
 	// valid
 	keeper.AddOwner(ctx, MsgAddOwner{
-		Address: addrs[1],
-		Owner:   addrs[3],
-		Sender:  addrs[2],
+		Ident:  addrs[1],
+		Owner:  addrs[3],
+		Sender: addrs[2],
 	})
 	owners = keeper.GetOwners(ctx, addrs[1])
 	assert.True(t, len(owners) == 2)
 
 	// delete owner invalid sender
 	_, err = keeper.DeleteOwner(ctx, MsgDelOwner{
-		Address: addrs[1],
-		Owner:   addrs[3],
-		Sender:  addrs[4],
+		Ident:  addrs[1],
+		Owner:  addrs[3],
+		Sender: addrs[4],
 	})
 	assert.True(t, err != nil)
 	keeper.DeleteOwner(ctx, MsgDelOwner{
-		Address: addrs[1],
-		Owner:   addrs[3],
-		Sender:  addrs[2],
+		Ident:  addrs[1],
+		Owner:  addrs[3],
+		Sender: addrs[2],
 	})
 	owners = keeper.GetOwners(ctx, addrs[1])
 	assert.True(t, len(owners) == 1)

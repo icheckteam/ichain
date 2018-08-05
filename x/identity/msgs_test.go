@@ -114,10 +114,10 @@ func TestMsgRegGetSigner(t *testing.T) {
 
 func TestMsgRegGetSignBytes(t *testing.T) {
 	signBytes := MsgReg{
-		Sender:  addr1,
-		Address: addr2,
+		Sender: addr1,
+		Ident:  addr2,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), "{\"address\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
+	assert.Equal(t, string(signBytes), "{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
 }
 
 func TestMsgRegValidation(t *testing.T) {
@@ -156,11 +156,11 @@ func TestMsgAddOwnerGetSigner(t *testing.T) {
 
 func TestMsgAddOwnerGetSignBytes(t *testing.T) {
 	signBytes := MsgAddOwner{
-		Sender:  addr1,
-		Address: addr2,
-		Owner:   addr3,
+		Sender: addr1,
+		Ident:  addr2,
+		Owner:  addr3,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), "{\"address\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
+	assert.Equal(t, string(signBytes), "{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
 }
 
 func TestMsgAddOwnerValidation(t *testing.T) {
@@ -201,11 +201,11 @@ func TestMsgDelOwnerGetSigner(t *testing.T) {
 
 func TestMsgDelOwnerGetSignBytes(t *testing.T) {
 	signBytes := MsgDelOwner{
-		Sender:  addr1,
-		Address: addr2,
-		Owner:   addr3,
+		Sender: addr1,
+		Ident:  addr2,
+		Owner:  addr3,
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), "{\"address\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
+	assert.Equal(t, string(signBytes), "{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}")
 }
 
 func TestMsgDelOwnerValidation(t *testing.T) {

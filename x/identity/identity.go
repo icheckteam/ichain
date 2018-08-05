@@ -9,37 +9,37 @@ import (
 
 // Register register an identity
 func (k Keeper) Register(ctx sdk.Context, msg MsgReg) ([]sdk.Tags, sdk.Error) {
-	ownerCount := k.getOwnerCount(ctx, msg.Address)
+	ownerCount := k.getOwnerCount(ctx, msg.Ident)
 
 	if ownerCount > 0 {
-		return nil, ErrIDAlreadyExists(DefaultCodespace, msg.Address)
+		return nil, ErrIDAlreadyExists(DefaultCodespace, msg.Ident)
 	}
 
 	// store data
-	k.setOwnerCount(ctx, msg.Address, 1)
-	k.setOwner(ctx, msg.Address, msg.Sender)
+	k.setOwnerCount(ctx, msg.Ident, 1)
+	k.setOwner(ctx, msg.Ident, msg.Sender)
 	return nil, nil
 }
 
 // AddOwner add an account to identity
 func (k Keeper) AddOwner(ctx sdk.Context, msg MsgAddOwner) ([]sdk.Tags, sdk.Error) {
-	if !k.hasOwner(ctx, msg.Address, msg.Sender) {
+	if !k.hasOwner(ctx, msg.Ident, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized", msg.Sender))
 	}
-	ownerCount := k.getOwnerCount(ctx, msg.Address)
-	k.setOwnerCount(ctx, msg.Address, ownerCount+1)
-	k.setOwner(ctx, msg.Address, msg.Owner)
+	ownerCount := k.getOwnerCount(ctx, msg.Ident)
+	k.setOwnerCount(ctx, msg.Ident, ownerCount+1)
+	k.setOwner(ctx, msg.Ident, msg.Owner)
 	return nil, nil
 }
 
 // DeleteOwner delete an account of identity
 func (k Keeper) DeleteOwner(ctx sdk.Context, msg MsgDelOwner) ([]sdk.Tags, sdk.Error) {
-	if !k.hasOwner(ctx, msg.Address, msg.Sender) {
+	if !k.hasOwner(ctx, msg.Ident, msg.Sender) {
 		return nil, sdk.ErrUnauthorized(fmt.Sprintf("addr %s unauthorized", msg.Sender))
 	}
-	ownerCount := k.getOwnerCount(ctx, msg.Address)
-	k.setOwnerCount(ctx, msg.Address, ownerCount-1)
-	k.delOwner(ctx, msg.Address, msg.Owner)
+	ownerCount := k.getOwnerCount(ctx, msg.Ident)
+	k.setOwnerCount(ctx, msg.Ident, ownerCount-1)
+	k.delOwner(ctx, msg.Ident, msg.Owner)
 	return nil, nil
 }
 
