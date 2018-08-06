@@ -65,14 +65,14 @@ func TestMsgSetCerts(t *testing.T) {
 		values     []CertValue
 		expectPass bool
 	}{
-		{"basic good", addr1, addr2, []CertValue{CertValue{Property: "owner", Confidence: true}}, true},
+		{"basic good", addr1, addr2, []CertValue{CertValue{Property: "owner", Confidence: true, Owner: addr3}}, true},
 		{"empty certifier", nil, addr2, []CertValue{CertValue{Property: "owner", Confidence: true}}, false},
 		{"empty identity id", addr1, nil, []CertValue{CertValue{Property: "owner", Confidence: true}}, false},
 		{"empty property address", addr1, addr2, []CertValue{CertValue{Confidence: true}}, false},
 	}
 
 	for _, tc := range tests {
-		msg := NewMsgSetCerts(tc.certifier, tc.recipient, tc.values)
+		msg := NewMsgSetCerts(tc.certifier, tc.certifier, tc.values)
 		if tc.expectPass {
 			require.Nil(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {
@@ -87,15 +87,147 @@ func TestMsgSetCertsType(t *testing.T) {
 }
 
 func TestMsgSetCertsGetSigner(t *testing.T) {
-	signers := MsgSetCerts{Certifier: addr1}.GetSigners()
+	signers := MsgSetCerts{Sender: addr1}.GetSigners()
 	assert.Equal(t, fmt.Sprintf("%v", signers), `[6164647231]`)
 }
 
 func TestMsgSetCertsGetSignBytes(t *testing.T) {
 	signBytes := MsgSetCerts{
-		Certifier: addr1,
-		Recipient: addr2,
-		Values:    []CertValue{CertValue{Property: "owner", Confidence: true}},
+		Sender: addr1,
+		Issuer: addr2,
+		Values: []CertValue{CertValue{Property: "owner", Confidence: true}},
 	}.GetSignBytes()
-	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetCerts\",\"value\":{\"certifier\":\"cosmosaccaddr1v9jxgu333rmgrm\",\"recipient\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"values\":[{\"confidence\":true,\"context\":\"\",\"data\":null,\"expires\":\"0\",\"id\":\"\",\"property\":\"owner\",\"revocation\":{\"id\":\"\",\"type\":\"\"}}]}}")
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/SetCerts\",\"value\":{\"issuer\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\",\"values\":[{\"confidence\":true,\"data\":null,\"owner\":\"cosmosaccaddr16y6p2v\",\"property\":\"owner\"}]}}")
+}
+
+// MsgReg
+// ------------------------------------------
+func TestMsgRegType(t *testing.T) {
+	msg := MsgReg{}
+	assert.Equal(t, msg.Type(), "identity")
+}
+
+func TestMsgRegGetSigner(t *testing.T) {
+	signers := MsgReg{Sender: addr1}.GetSigners()
+	assert.Equal(t, fmt.Sprintf("%v", signers), `[6164647231]`)
+}
+
+func TestMsgRegGetSignBytes(t *testing.T) {
+	signBytes := MsgReg{
+		Sender: addr1,
+		Ident:  addr2,
+	}.GetSignBytes()
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/MsgReg\",\"value\":{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}}")
+}
+
+func TestMsgRegValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		sender     sdk.AccAddress
+		address    sdk.AccAddress
+		expectPass bool
+	}{
+		{"basic good", addr1, addr2, true},
+		{"empty sender", nil, addr2, false},
+		{"empty address", addr1, nil, false},
+	}
+
+	for _, tc := range tests {
+		msg := MsgReg{tc.sender, tc.address}
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		}
+	}
+}
+
+// MsgAddOwner
+// ------------------------------------------
+func TestMsgAddOwnerType(t *testing.T) {
+	msg := MsgAddOwner{}
+	assert.Equal(t, msg.Type(), "identity")
+}
+
+func TestMsgAddOwnerGetSigner(t *testing.T) {
+	signers := MsgAddOwner{Sender: addr1}.GetSigners()
+	assert.Equal(t, fmt.Sprintf("%v", signers), `[6164647231]`)
+}
+
+func TestMsgAddOwnerGetSignBytes(t *testing.T) {
+	signBytes := MsgAddOwner{
+		Sender: addr1,
+		Ident:  addr2,
+		Owner:  addr3,
+	}.GetSignBytes()
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/MsgAddOwner\",\"value\":{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}}")
+}
+
+func TestMsgAddOwnerValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		sender     sdk.AccAddress
+		address    sdk.AccAddress
+		owner      sdk.AccAddress
+		expectPass bool
+	}{
+		{"basic good", addr1, addr2, addr3, true},
+		{"empty sender", nil, addr2, addr3, false},
+		{"empty address", addr1, nil, addr3, false},
+		{"empty owner", addr1, addr2, nil, false},
+	}
+
+	for _, tc := range tests {
+		msg := MsgAddOwner{tc.sender, tc.address, tc.owner}
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		}
+	}
+}
+
+// MsgDelOwner
+// ------------------------------------------
+func TestMsgDelOwnerType(t *testing.T) {
+	msg := MsgDelOwner{}
+	assert.Equal(t, msg.Type(), "identity")
+}
+
+func TestMsgDelOwnerGetSigner(t *testing.T) {
+	signers := MsgDelOwner{Sender: addr1}.GetSigners()
+	assert.Equal(t, fmt.Sprintf("%v", signers), `[6164647231]`)
+}
+
+func TestMsgDelOwnerGetSignBytes(t *testing.T) {
+	signBytes := MsgDelOwner{
+		Sender: addr1,
+		Ident:  addr2,
+		Owner:  addr3,
+	}.GetSignBytes()
+	assert.Equal(t, string(signBytes), "{\"type\":\"identity/MsgDelOwner\",\"value\":{\"ident\":\"cosmosaccaddr1v9jxgu3jlsw7dy\",\"owner\":\"cosmosaccaddr1v9jxgu3nzx6tsk\",\"sender\":\"cosmosaccaddr1v9jxgu333rmgrm\"}}")
+}
+
+func TestMsgDelOwnerValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		sender     sdk.AccAddress
+		address    sdk.AccAddress
+		owner      sdk.AccAddress
+		expectPass bool
+	}{
+		{"basic good", addr1, addr2, addr3, true},
+		{"empty sender", nil, addr2, addr3, false},
+		{"empty address", addr1, nil, addr3, false},
+		{"empty owner", addr1, addr2, nil, false},
+	}
+
+	for _, tc := range tests {
+		msg := MsgDelOwner{tc.sender, tc.address, tc.owner}
+		if tc.expectPass {
+			require.Nil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		} else {
+			require.NotNil(t, msg.ValidateBasic(), "test: %v", tc.name)
+		}
+	}
 }

@@ -1,49 +1,57 @@
 package identity
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
-	KeyNextIdentityID = []byte{0x01}
-	IdentitiesKey     = []byte{0x02}
+	// CertsKey ...
+	CertsKey = []byte{0x01}
+	// OwnersKey ...
+	OwnersKey = []byte{0x02}
+	//TrustsKey ...
+	TrustsKey = []byte{0x03}
+	// OwnerCountKey ...
+	OwnerCountKey = []byte{0x04}
 )
 
-// Key for getting a identity from the store
-func KeyIdentity(identityID int64) []byte {
-	return append(IdentitiesKey, []byte(fmt.Sprintf("%d", identityID))...)
-}
-
-// Key for getting a identity id  of the account from the store
-func KeyIdentityByOwnerIndex(owner sdk.AccAddress, identityID int64) []byte {
-	return []byte(fmt.Sprintf("account:%s:%d", owner.String(), identityID))
-}
-
-func KeyIdentitiesByOwnerIndex(owner sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("account:%s", owner.String()))
-}
-
-func KeyClaimedIdentity(address sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("account:%s:claimed", address.String()))
-}
-
-// Key for getting all trusting from the store
+// KeyTrust Key for getting all trusting from the store
 func KeyTrust(trustor, trusting sdk.AccAddress) []byte {
-	return append(KeyTrusts(trustor), []byte(fmt.Sprintf("trust:%s:%s", trustor.String(), trusting.String()))...)
+	return append(
+		append(KeyTrusts(trustor), trustor.Bytes()...),
+		trusting.Bytes()...,
+	)
 }
 
+// KeyTrusts ...
 func KeyTrusts(trustor sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("trust:%s", trustor.String()))
+	return append(TrustsKey, trustor.Bytes()...)
 }
 
-// Key for getting a cert from the store
+// KeyCert Key for getting a cert from the store
 func KeyCert(addr sdk.AccAddress, property string, certifier sdk.AccAddress) []byte {
-	return append(KeyCerts(addr), []byte(fmt.Sprintf(":%s:%s", property, certifier.String()))...)
+	return append(
+		append(KeyCerts(addr), []byte(property)...),
+		certifier.Bytes()...,
+	)
 }
 
-// Key for getting all certs from the store
+// KeyCerts Key for getting all certs from the store
 func KeyCerts(addr sdk.AccAddress) []byte {
-	return []byte(fmt.Sprintf("identity:%s", addr.String()))
+	return append(CertsKey, addr.Bytes()...)
+}
+
+// KeyOwners ...
+func KeyOwners(id sdk.AccAddress) []byte {
+	return append(OwnersKey, id.Bytes()...)
+}
+
+// KeyOwner ...
+func KeyOwner(id, owner sdk.AccAddress) []byte {
+	return append(KeyOwners(id), owner.Bytes()...)
+}
+
+// KeyOwnerCount ...
+func KeyOwnerCount(id sdk.AccAddress) []byte {
+	return append(OwnerCountKey, id.Bytes()...)
 }

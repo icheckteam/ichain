@@ -1460,14 +1460,57 @@ func TestAddCerts(t *testing.T) {
 	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
 	defer cleanup()
 
+	resultTx := doRegisterIdentity(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
 	// AddCerts tests
-	resultTx := doAddCerts(t, port, seed, name, password, addr)
+	resultTx = doAddCerts(t, port, seed, name, password, addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
 	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
 
 	certs := getCertsByOwner(t, port)
 	assert.Equal(t, len(certs), 2)
+}
+
+func TestRegisterIdent(t *testing.T) {
+	name, password := "test", "1234567890"
+	addr, seed := CreateAddr(t, name, password, GetKB(t))
+	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
+	defer cleanup()
+
+	// AddCerts tests
+	resultTx := doRegisterIdentity(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	// Onwers
+	owners := getOwners(t, port, addr)
+	assert.Equal(t, len(owners), 1)
+
+	// Test AddOwner
+	resultTx = doAddOwner(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	// Onwers
+	owners = getOwners(t, port, addr)
+	assert.Equal(t, len(owners), 2)
+
+	// Test DeleteOwner
+	resultTx = doDelOwner(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
+	// Onwers
+	owners = getOwners(t, port, addr)
+	assert.Equal(t, len(owners), 1)
+
 }
 
 func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
@@ -1488,7 +1531,7 @@ func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting 
 		"trust": true
 	}`, name, password, accnum, sequence, chainID))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/accounts/%s/trusts", trusting), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/idents/%s/trusts", trusting), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -1546,7 +1589,7 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 		]
 	}`, name, password, accnum, sequence, chainID))
 
-	res, body := Request(t, port, "POST", fmt.Sprintf("/accounts/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs"), jsonStr)
+	res, body := Request(t, port, "POST", fmt.Sprintf("/idents/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs"), jsonStr)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
 	require.Nil(t, err)
@@ -1556,11 +1599,11 @@ func doAddCerts(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 	return resultTx
 }
 
-func getTrusts(t *testing.T, port string, trustor sdk.AccAddress) []identity.Trust {
+func getTrusts(t *testing.T, port string, trustor sdk.AccAddress) []sdk.AccAddress {
 	// get the account to get the sequence
-	res, body := Request(t, port, "GET", fmt.Sprintf("/accounts/%s/trusts", trustor), nil)
+	res, body := Request(t, port, "GET", fmt.Sprintf("/idents/%s/trusts", trustor), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var trusts []identity.Trust
+	var trusts []sdk.AccAddress
 	err := cdc.UnmarshalJSON([]byte(body), &trusts)
 	require.Nil(t, err)
 	return trusts
@@ -1568,12 +1611,105 @@ func getTrusts(t *testing.T, port string, trustor sdk.AccAddress) []identity.Tru
 
 func getCertsByOwner(t *testing.T, port string) []identity.Cert {
 	// get the account to get the sequence
-	res, body := Request(t, port, "GET", "/accounts/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs", nil)
+	res, body := Request(t, port, "GET", "/idents/cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef/certs", nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 	var certs []identity.Cert
 	err := cdc.UnmarshalJSON([]byte(body), &certs)
 	require.Nil(t, err)
 	return certs
+}
+
+func getOwners(t *testing.T, port string, addr sdk.AccAddress) []sdk.AccAddress {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/idents/%s/owners", addr), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var owners []sdk.AccAddress
+	err := cdc.UnmarshalJSON([]byte(body), &owners)
+	require.Nil(t, err)
+	return owners
+}
+
+func doRegisterIdentity(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
+			"chain_id": "%s"
+		}
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/idents/%s/register", addr), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doAddOwner(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
+			"chain_id": "%s"
+		},
+		"owner": "cosmosaccaddr1jawd35d9aq4u76sr3fjalmcqc8hqygs9gtnmv3"
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "POST", fmt.Sprintf("/idents/%s/owners", addr), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
+}
+
+func doDelOwner(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
+	acc := getAccount(t, port, addr)
+	accnum := acc.GetAccountNumber()
+	sequence := acc.GetSequence()
+	chainID := viper.GetString(client.FlagChainID)
+	// send
+	jsonStr := []byte(fmt.Sprintf(`{
+		"base_req": {
+			"name": "%s",
+			"password": "%s",
+			"account_number": "%d",
+			"sequence": "%d",
+			"gas": "10000",
+			"chain_id": "%s"
+		},
+		"owner": "cosmosaccaddr1753dqa50dlh8l4xl0j0kd9gga0heqsj7c2wwef"
+	}`, name, password, accnum, sequence, chainID))
+
+	res, body := Request(t, port, "DELETE", fmt.Sprintf("/idents/%s/owners/cosmosaccaddr1jawd35d9aq4u76sr3fjalmcqc8hqygs9gtnmv3", addr), jsonStr)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	err := cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+	err = cdc.UnmarshalJSON([]byte(body), &resultTx)
+	require.Nil(t, err)
+
+	return resultTx
 }
 
 func TestAppLogin(t *testing.T) {

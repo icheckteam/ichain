@@ -7,31 +7,35 @@ import (
 )
 
 var (
+	// DefaultCodespace ...
 	DefaultCodespace sdk.CodespaceType = 12
 
-	CodeUnknownIdentity sdk.CodeType = 1
-	CodeInvalidGenesis  sdk.CodeType = 2
-	CodeInvalidTrustor  sdk.CodeType = 3
+	// CodeInvalidID ...
+	CodeInvalidID sdk.CodeType = 1
+	// CodeInvalidGenesis ...
+	CodeInvalidGenesis sdk.CodeType = 2
+	// CodeInvalidTrustor ...
+	CodeInvalidTrustor sdk.CodeType = 3
+	// CodeInvalidTrusting ...
 	CodeInvalidTrusting sdk.CodeType = 4
-	CodeInvalidInput    sdk.CodeType = 5
+	// CodeInvalidInput ...
+	CodeInvalidInput sdk.CodeType = 5
 )
 
 //----------------------------------------
 // Error constructors
 
-func ErrUnknownIdentity(codespace sdk.CodespaceType, identityID int64) sdk.Error {
-	return sdk.NewError(codespace, CodeUnknownIdentity, fmt.Sprintf("Unknown proposal - %d", identityID))
+// ErrIDAlreadyExists ...
+func ErrIDAlreadyExists(codespace sdk.CodespaceType, id sdk.AccAddress) sdk.Error {
+	return sdk.NewError(codespace, CodeInvalidID, fmt.Sprintf("id %d already exists", id))
 }
 
-func ErrInvalidGenesis(codespace sdk.CodespaceType, msg string) sdk.Error {
-	return sdk.NewError(codespace, CodeInvalidGenesis, msg)
-}
-
-//validator
+// ErrNilTrustorAddr ...
 func ErrNilTrustorAddr(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidTrustor, "trustor address is nil")
 }
 
+// ErrNilTrustingAddr ...
 func ErrNilTrustingAddr(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeInvalidTrusting, "trusting address is nil")
 }

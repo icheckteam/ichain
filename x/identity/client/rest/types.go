@@ -43,6 +43,20 @@ func (b baseBody) Validate() error {
 	return nil
 }
 
+type msgRegBody struct {
+	BaseReq baseBody `json:"base_req"`
+}
+
+type msgAddOwnerBody struct {
+	BaseReq baseBody       `json:"base_req"`
+	Owner   sdk.AccAddress `json:"owner"`
+}
+
+type msgDelOwnerBody struct {
+	BaseReq baseBody       `json:"base_req"`
+	Owner   sdk.AccAddress `json:"owner"`
+}
+
 func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
 	ctx = ctx.WithGas(m.Gas)
 	ctx = ctx.WithAccountNumber(m.AccountNumber)
