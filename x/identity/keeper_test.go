@@ -21,6 +21,12 @@ func TestKeeper(t *testing.T) {
 	owners := keeper.GetOwners(ctx, addrs[1])
 	assert.True(t, len(owners) == 1)
 
+	msgRegister = MsgReg{
+		Ident:  addrs[2],
+		Sender: addrs[2],
+	}
+	keeper.Register(ctx, msgRegister)
+
 	// Invalid id already exists
 	_, err := keeper.Register(ctx, MsgReg{
 		Ident:  addrs[1],
@@ -83,15 +89,15 @@ func TestKeeper(t *testing.T) {
 
 	// Add Certs
 	// ----------------------------------------------------
-	msgSetCerts := MsgSetCerts{Issuer: addr1, Sender: addr1, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: true}}}
+	msgSetCerts := MsgSetCerts{Issuer: addrs[2], Sender: addrs[2], Values: []CertValue{CertValue{Property: "owner", Owner: addrs[1], Confidence: true}}}
 	keeper.AddCerts(ctx, msgSetCerts)
-	cert, found := keeper.GetCert(ctx, addr2, "owner", addr1)
+	cert, found := keeper.GetCert(ctx, addrs[1], "owner", addrs[2])
 	assert.True(t, found)
-	assert.True(t, bytes.Equal(cert.Certifier, addr1))
-	certs := keeper.GetCerts(ctx, addr2)
+	assert.True(t, bytes.Equal(cert.Certifier, addrs[2]))
+	certs := keeper.GetCerts(ctx, addrs[1])
 	assert.True(t, len(certs) == 1)
 
-	msgSetCerts = MsgSetCerts{Issuer: addr1, Sender: addr1, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: true}}}
+	msgSetCerts = MsgSetCerts{Issuer: addrs[2], Sender: addrs[2], Values: []CertValue{CertValue{Property: "owner", Owner: addrs[1], Confidence: true}}}
 	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	assert.True(t, err == nil)
 
@@ -99,7 +105,7 @@ func TestKeeper(t *testing.T) {
 	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	assert.True(t, err != nil)
 
-	msgSetCerts = MsgSetCerts{Issuer: addr1, Sender: addr1, Values: []CertValue{CertValue{Property: "owner", Owner: addr2, Confidence: false}}}
+	msgSetCerts = MsgSetCerts{Issuer: addrs[2], Sender: addrs[2], Values: []CertValue{CertValue{Property: "owner", Owner: addrs[1], Confidence: false}}}
 	_, err = keeper.AddCerts(ctx, msgSetCerts)
 	certs = keeper.GetCerts(ctx, addr2)
 	assert.True(t, len(certs) == 0)

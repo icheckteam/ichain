@@ -36,15 +36,6 @@ func (msg CertValue) ValidateBasic() sdk.Error {
 	return nil
 }
 
-// GetSignBytes ...
-func (msg CertValue) GetSignBytes() []byte {
-	b, err := MsgCdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.MustSortJSON(b)
-}
-
 // Certs ...
 type Certs []Cert
 
