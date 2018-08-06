@@ -67,13 +67,14 @@ type HistoryUpdateProperty struct {
 	Memo     string         `json:"memo"`
 }
 
-// HistoryAddMaterial ...
-type HistoryAddMaterial struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Amount  sdk.Int        `json:"amount"`
-	AssetID string         `json:"asset_id"`
-	Time    int64          `json:"time"`
-	Memo    string         `json:"memo"`
+// HistoryTransferMaterial ...
+type HistoryTransferMaterial struct {
+	Sender sdk.AccAddress `json:"sender"`
+	Amount sdk.Int        `json:"amount"`
+	From   string         `json:"from"`
+	To     string         `json:"to"`
+	Time   int64          `json:"time"`
+	Memo   string         `json:"memo"`
 }
 
 // ProposalOutput ...

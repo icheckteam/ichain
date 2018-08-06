@@ -1041,6 +1041,9 @@ func TestCreateAsset(t *testing.T) {
 	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
 	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
 
+	txs := getTxsTransferMaterials(t, port)
+	assert.Equal(t, len(txs), 1)
+
 	// AddQuantity
 	resultTx = doAddQuantity(t, port, seed, name, password, addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
@@ -1170,6 +1173,16 @@ func doUpdateProperties(t *testing.T, port, seed, name, password string, addr sd
 
 	return resultTx
 
+}
+
+func getTxsTransferMaterials(t *testing.T, port string) []asset.HistoryTransferMaterial {
+	// get the account to get the sequence
+	res, body := Request(t, port, "GET", fmt.Sprintf("/assets/%s/materials/history", "test"), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	var history []asset.HistoryTransferMaterial
+	err := json.Unmarshal([]byte(body), &history)
+	require.Nil(t, err)
+	return history
 }
 
 func doAddMaterials(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
