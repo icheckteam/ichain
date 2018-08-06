@@ -47,10 +47,47 @@ type msgCreateCreateProposalBody struct {
 	Role       asset.ProposalRole `json:"role"`
 }
 
+func (b msgCreateCreateProposalBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Recipient == "" {
+		return errors.New("recipient is required")
+	}
+
+	switch b.Role {
+	case asset.RoleOwner, asset.RoleReporter:
+		break
+	default:
+		return errors.New("invalid role")
+	}
+
+	if b.Role == asset.RoleReporter && len(b.Properties) == 0 {
+		return errors.New("properties is required")
+	}
+	return nil
+}
+
 type msgAnswerProposalBody struct {
 	BaseReq baseBody `json:"base_req"`
 
 	Response asset.ProposalStatus `json:"response"`
 	AssetID  string               `json:"asset_id"`
 	Role     asset.ProposalRole   `json:"role"`
+}
+
+func (b msgAnswerProposalBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	switch b.Response {
+	case asset.StatusAccepted, asset.StatusCancel, asset.StatusRejected:
+		break
+	default:
+		return errors.New("invalid response")
+	}
+
+	return nil
 }

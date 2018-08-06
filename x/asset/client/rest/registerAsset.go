@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -22,36 +21,36 @@ type createAssetBody struct {
 	Properties asset.Properties `json:"properties"`
 }
 
+func (b createAssetBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Name == "" {
+		return errors.New("name is required")
+	}
+
+	if b.Quantity.IsZero() {
+		return errors.New("quantity is required")
+	}
+
+	if b.AssetID == "" {
+		return errors.New("asset.id is required")
+	}
+	return nil
+}
+
 // Create asset REST handler
 func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		var m createAssetBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
 
-		err = m.BaseReq.Validate()
-		if err != nil {
-			return err
-		}
-
-		if m.Name == "" {
-			return errors.New("name is required")
-		}
-
-		if m.Quantity.IsZero() {
-			return errors.New("quantity is required")
-		}
-
-		if m.AssetID == "" {
-			return errors.New("asset.id is required")
-		}
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
-			return errors.New("asset.id is required")
+			return err
 		}
 
 		// build message

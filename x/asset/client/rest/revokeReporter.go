@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -16,19 +15,20 @@ type revokeReporterBody struct {
 	BaseReq baseBody `json:"base_req"`
 }
 
+func (b revokeReporterBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func revokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m revokeReporterBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
-			return err
-		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
 

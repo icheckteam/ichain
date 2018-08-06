@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,21 +16,17 @@ type finalizeBody struct {
 	BaseReq baseBody `json:"base_req"`
 }
 
+func (b finalizeBody) ValidateBasic() error {
+	return b.BaseReq.Validate()
+}
+
 // FinalizeHandlerFn ...
 func finalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
 		var m finalizeBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
-			return err
-		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
 

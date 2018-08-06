@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -18,25 +17,25 @@ type subtractAssetQuantityBody struct {
 	Quantity sdk.Int  `json:"quantity"`
 }
 
+func (b subtractAssetQuantityBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Quantity.IsZero() {
+		return errors.New("quantity is required")
+	}
+	return nil
+}
+
 func subtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m subtractAssetQuantityBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
 
-		err = m.BaseReq.Validate()
-		if err != nil {
-			return err
-		}
-
-		if m.Quantity.IsZero() {
-			return errors.New("quantity is required")
-		}
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			return err

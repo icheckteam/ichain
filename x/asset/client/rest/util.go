@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -11,6 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
+
+type bodyI interface {
+	ValidateBasic() error
+}
 
 func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
 	ctx = ctx.WithGas(m.Gas)
@@ -68,6 +73,19 @@ func WriteJSON2(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
 		return
 	}
 	w.Write(output)
+}
+
+func validateAndGetDecodeBody(r *http.Request, cdc *wire.Codec, m bodyI) error {
+	body, err := ioutil.ReadAll(r.Body)
+	err = cdc.UnmarshalJSON(body, m)
+	if err != nil {
+		return err
+	}
+
+	if err := m.ValidateBasic(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func withErrHandler(fn func(http.ResponseWriter, *http.Request) error) func(http.ResponseWriter, *http.Request) {

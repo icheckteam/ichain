@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -19,27 +18,25 @@ type addMaterialsBody struct {
 	Amount  []asset.Material `json:"amount"`
 }
 
+func (b addMaterialsBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if len(b.Amount) == 0 {
+		return errors.New("amount is required")
+	}
+	return nil
+}
+
 // AddMaterialsHandlerFn  REST handler
 func addMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m addMaterialsBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
-			return err
-		}
-
-		if len(m.Amount) == 0 {
-			return errors.New("amount is required")
-		}
-
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			return err
