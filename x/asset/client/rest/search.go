@@ -119,11 +119,13 @@ func filterTxChangeOwner(infos []tx.TxInfo) []asset.HistoryTransferOutput {
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgCreateAsset:
-				history = append(history, asset.HistoryTransferOutput{
-					Time:  info.Time,
-					Memo:  tx.Memo,
-					Owner: msg.Sender,
-				})
+				if msg.Parent == "" {
+					history = append(history, asset.HistoryTransferOutput{
+						Time:  info.Time,
+						Memo:  tx.Memo,
+						Owner: msg.Sender,
+					})
+				}
 				break
 			case asset.MsgAnswerProposal:
 				if msg.Role == asset.RoleOwner {
