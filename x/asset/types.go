@@ -16,7 +16,6 @@ type Asset struct {
 	Root     string         `json:"root"`   // the id of the asset root
 	Final    bool           `json:"final"`
 	Quantity sdk.Int        `json:"quantity"`
-	Unit     string         `json:"unit"`
 	Created  int64          `json:"created"`
 	Height   int64          `json:"height"`
 }

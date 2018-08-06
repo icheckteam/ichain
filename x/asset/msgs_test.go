@@ -53,12 +53,11 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 		valid bool
 		tx    MsgCreateAsset
 	}{
-		{false, MsgCreateAsset{}},                                                                              // no asset info
-		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(0), Name: "name", AssetID: "1"}},            // missing quantity
-		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name"}},                          // missing id
-		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1"}},            //
-		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), AssetID: "1", Unit: "kg"}},              // missing name
-		{true, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1", Unit: "kg"}}, //
+		{false, MsgCreateAsset{}},                                                                   // no asset info
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(0), Name: "name", AssetID: "1"}}, // missing quantity
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name"}},               // missing id
+		{false, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), AssetID: "1"}},               // missing name
+		{true, MsgCreateAsset{Sender: addr1, Quantity: sdk.NewInt(1), Name: "name", AssetID: "1"}},  //
 	}
 
 	for i, tc := range cases {
@@ -71,15 +70,6 @@ func TestCreateAssetMsgValidation(t *testing.T) {
 	}
 }
 
-func TestRegisterMsgGet(t *testing.T) {
-	addr1 := sdk.AccAddress([]byte("input"))
-	var msg = MsgCreateAsset{
-		Sender: addr1,
-	}
-	res := msg.Get(nil)
-	assert.Nil(t, res)
-}
-
 func TestRegisterGetSignBytes(t *testing.T) {
 	addr1 := sdk.AccAddress([]byte("input"))
 	var msg = MsgCreateAsset{
@@ -87,12 +77,11 @@ func TestRegisterGetSignBytes(t *testing.T) {
 		AssetID:    "1212",
 		Name:       "name",
 		Quantity:   sdk.NewInt(1),
-		Unit:       "kg",
 		Properties: Properties{Property{Name: "size", StringValue: "50"}},
 	}
 	res := msg.GetSignBytes()
 	// TODO bad results
-	assert.Equal(t, string(res), "{\"type\":\"asset/CreateAsset\",\"value\":{\"asset_id\":\"1212\",\"name\":\"name\",\"parent\":\"\",\"properties\":[{\"name\":\"size\",\"string_value\":\"50\",\"type\":\"0\"}],\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\",\"unit\":\"kg\"}}")
+	assert.Equal(t, string(res), "{\"type\":\"asset/CreateAsset\",\"value\":{\"asset_id\":\"1212\",\"name\":\"name\",\"parent\":\"\",\"properties\":[{\"name\":\"size\",\"string_value\":\"50\",\"type\":\"0\"}],\"quantity\":\"1\",\"sender\":\"cosmosaccaddr1d9h8qat5e4ehc5\"}}")
 }
 
 func TestRegisterGetGetSigners(t *testing.T) {
@@ -157,15 +146,6 @@ func TestUpdateAttrMsgValidation(t *testing.T) {
 			assert.NotNil(t, err, "%d", i)
 		}
 	}
-}
-
-func TestUpdateAttrMsgGet(t *testing.T) {
-	addr1 := sdk.AccAddress([]byte("input"))
-	var msg = MsgUpdateProperties{
-		Sender: addr1,
-	}
-	res := msg.Get(nil)
-	assert.Nil(t, res)
 }
 
 func TestUpdateAttrMsgGetSignBytes(t *testing.T) {
@@ -528,12 +508,6 @@ func TestCreateProposalMsgValidation(t *testing.T) {
 	}
 }
 
-func TestCreateProposalMsgGet(t *testing.T) {
-	msg := MsgCreateProposal{}
-	res := msg.Get(nil)
-	assert.Nil(t, res)
-}
-
 func TestCreateProposalMsgGetSigners(t *testing.T) {
 	msg := MsgCreateProposal{
 		Sender: addrs[0],
@@ -584,12 +558,6 @@ func TestAnswerProposalMsgValidation(t *testing.T) {
 			assert.NotNil(t, err, "%d", i)
 		}
 	}
-}
-
-func TestAnswerProposalMsgGet(t *testing.T) {
-	msg := MsgAnswerProposal{}
-	res := msg.Get(nil)
-	assert.Nil(t, res)
 }
 
 func TestAnswerProposalGetSigners(t *testing.T) {

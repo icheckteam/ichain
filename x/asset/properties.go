@@ -16,6 +16,7 @@ type Property struct {
 	Location     Location     `json:"location_value,omitempty"`
 }
 
+// PropertyTypeToString ...
 func PropertyTypeToString(t PropertyType) string {
 	switch t {
 	case PropertyTypeBoolean:
@@ -35,6 +36,7 @@ func PropertyTypeToString(t PropertyType) string {
 	}
 }
 
+// GetValue ...
 func (p Property) GetValue() interface{} {
 	switch p.Type {
 	case PropertyTypeBoolean:
@@ -73,6 +75,7 @@ func (p Property) ValidateBasic() sdk.Error {
 	return nil
 }
 
+// Location ...
 type Location struct {
 	Latitude  int64 `json:"latitude"`
 	Longitude int64 `json:"longitude"`

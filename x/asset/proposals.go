@@ -18,6 +18,7 @@ type Proposal struct {
 	Recipient  sdk.AccAddress `json:"recipient"`  // The recipient of the proposal
 }
 
+// ValidateAnswer ...
 func (p Proposal) ValidateAnswer(msg MsgAnswerProposal) sdk.Error {
 	if p.Role != msg.Role {
 		return ErrInvalidRole("")

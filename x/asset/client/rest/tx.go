@@ -162,7 +162,6 @@ func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 			Properties: m.Properties,
 			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
 			Quantity:   m.Quantity,
-			Unit:       m.Unit,
 		}
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 		return nil
