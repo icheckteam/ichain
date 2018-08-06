@@ -1460,8 +1460,13 @@ func TestAddCerts(t *testing.T) {
 	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
 	defer cleanup()
 
+	resultTx := doRegisterIdentity(t, port, seed, name, password, addr)
+	tests.WaitForHeight(resultTx.Height+1, port)
+	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
+	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
+
 	// AddCerts tests
-	resultTx := doAddCerts(t, port, seed, name, password, addr)
+	resultTx = doAddCerts(t, port, seed, name, password, addr)
 	tests.WaitForHeight(resultTx.Height+1, port)
 	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
 	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)

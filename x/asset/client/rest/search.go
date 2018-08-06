@@ -34,18 +34,17 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, hei
 		return nil, err
 	}
 
+	if height > 0 {
+		info = filterByHeight(info, height)
+	}
+
 	// load tx from parents ....
 	if record.Parent != "" {
 		txs, err := queryAssetTxs(ctx, record.Parent, cdc, record.Height)
 		if err != nil {
 			return nil, err
 		}
-		for _, tx := range txs {
-			if tx.Height > record.Height {
-				continue
-			}
-			info = append(info, tx)
-		}
+		info = append(info, txs...)
 	}
 
 	// get block time
@@ -56,8 +55,20 @@ func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, hei
 		}
 		info[index].Time = block.Block.Header.Time.Unix()
 	}
-
 	return info, nil
+}
+
+func filterByHeight(infos []tx.TxInfo, height int64) []tx.TxInfo {
+	newInfos := make([]tx.TxInfo, len(infos))
+	var index = 0
+	for _, info := range infos {
+		if info.Height > height {
+			continue
+		}
+		newInfos[index] = info
+		index++
+	}
+	return newInfos
 }
 
 func newHistoryUpdateProperties(sender sdk.AccAddress, memo string, time int64, props asset.Properties, name string) []asset.HistoryUpdateProperty {
@@ -108,11 +119,13 @@ func filterTxChangeOwner(infos []tx.TxInfo) []asset.HistoryTransferOutput {
 		for _, msg := range info.Tx.GetMsgs() {
 			switch msg := msg.(type) {
 			case asset.MsgCreateAsset:
-				history = append(history, asset.HistoryTransferOutput{
-					Time:  info.Time,
-					Memo:  tx.Memo,
-					Owner: msg.Sender,
-				})
+				if msg.Parent == "" {
+					history = append(history, asset.HistoryTransferOutput{
+						Time:  info.Time,
+						Memo:  tx.Memo,
+						Owner: msg.Sender,
+					})
+				}
 				break
 			case asset.MsgAnswerProposal:
 				if msg.Role == asset.RoleOwner {

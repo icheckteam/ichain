@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"bytes"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -45,9 +44,6 @@ func (k Keeper) DeleteOwner(ctx sdk.Context, msg MsgDelOwner) (sdk.Tags, sdk.Err
 
 // hasOwner check owner of the identity
 func (k Keeper) hasOwner(ctx sdk.Context, id sdk.AccAddress, owner sdk.AccAddress) bool {
-	if bytes.Equal(id, owner) {
-		return true
-	}
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(KeyOwner(id, owner))
 }
