@@ -68,7 +68,7 @@ func filterByHeight(infos []tx.TxInfo, height int64) []tx.TxInfo {
 		newInfos[index] = info
 		index++
 	}
-	return newInfos
+	return newInfos[:index]
 }
 
 func newHistoryUpdateProperties(sender sdk.AccAddress, memo string, time int64, props asset.Properties, name string) []asset.HistoryUpdateProperty {
