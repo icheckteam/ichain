@@ -19,7 +19,6 @@ var (
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 1",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 		Properties: Properties{
 			Property{Name: "size", StringValue: "size"},
@@ -94,7 +93,6 @@ func TestKeeper(t *testing.T) {
 	assert.True(t, newAsset.Owner.String() == asset.Sender.String())
 	assert.True(t, newAsset.Name == asset.Name)
 	assert.True(t, newAsset.Quantity.Equal(asset.Quantity))
-	assert.True(t, newAsset.Unit == "kg")
 	properties := keeper.GetProperties(ctx, newAsset.ID)
 	assert.True(t, len(properties) == 4)
 	assert.True(t, properties[0].Name == "barcode")
@@ -477,7 +475,6 @@ func TestKeeperUpdateProperties(t *testing.T) {
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 1",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
@@ -518,7 +515,6 @@ func TestFinalize(t *testing.T) {
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 1",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
@@ -589,7 +585,6 @@ func TestAddQuantity(t *testing.T) {
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 1",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	}
 	keeper.CreateAsset(ctx, msgCreateAsset)
@@ -637,7 +632,6 @@ func createRecordTest(ctx sdk.Context, keeper Keeper) {
 		AssetID:  "asseta",
 		Sender:   addr,
 		Name:     "asset 1",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 
@@ -645,28 +639,24 @@ func createRecordTest(ctx sdk.Context, keeper Keeper) {
 		AssetID:  "assetb",
 		Sender:   addr,
 		Name:     "asset 2",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 	keeper.CreateAsset(ctx, MsgCreateAsset{
 		AssetID:  "asset1",
 		Sender:   addr,
 		Name:     "asset 2",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 	keeper.CreateAsset(ctx, MsgCreateAsset{
 		AssetID:  "asset2",
 		Sender:   addr,
 		Name:     "asset 2",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 	keeper.CreateAsset(ctx, MsgCreateAsset{
 		AssetID:  "asset3",
 		Sender:   addr2,
 		Name:     "asset 3",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 
@@ -674,7 +664,6 @@ func createRecordTest(ctx sdk.Context, keeper Keeper) {
 		AssetID:  "asset4",
 		Sender:   addr2,
 		Name:     "asset 4",
-		Unit:     "kg",
 		Quantity: sdk.NewInt(100),
 	})
 

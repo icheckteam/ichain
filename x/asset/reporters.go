@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Reporter ...
 type Reporter struct {
 	Addr       sdk.AccAddress `json:"address"`
 	Properties []string       `json:"properties"`

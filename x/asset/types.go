@@ -16,7 +16,6 @@ type Asset struct {
 	Root     string         `json:"root"`   // the id of the asset root
 	Final    bool           `json:"final"`
 	Quantity sdk.Int        `json:"quantity"`
-	Unit     string         `json:"unit"`
 	Created  int64          `json:"created"`
 	Height   int64          `json:"height"`
 }
@@ -67,13 +66,14 @@ type HistoryUpdateProperty struct {
 	Memo     string         `json:"memo"`
 }
 
-// HistoryAddMaterial ...
-type HistoryAddMaterial struct {
-	Sender  sdk.AccAddress `json:"sender"`
-	Amount  sdk.Int        `json:"amount"`
-	AssetID string         `json:"asset_id"`
-	Time    int64          `json:"time"`
-	Memo    string         `json:"memo"`
+// HistoryTransferMaterial ...
+type HistoryTransferMaterial struct {
+	Sender sdk.AccAddress `json:"sender"`
+	Amount sdk.Int        `json:"amount"`
+	From   string         `json:"from"`
+	To     string         `json:"to"`
+	Time   int64          `json:"time"`
+	Memo   string         `json:"memo"`
 }
 
 // ProposalOutput ...

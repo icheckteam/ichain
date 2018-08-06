@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/icheckteam/ichain/client/errors"
@@ -11,6 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 )
+
+type bodyI interface {
+	ValidateBasic() error
+}
 
 func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
 	ctx = ctx.WithGas(m.Gas)
@@ -68,6 +73,19 @@ func WriteJSON2(w http.ResponseWriter, cdc *wire.Codec, data interface{}) {
 		return
 	}
 	w.Write(output)
+}
+
+func validateAndGetDecodeBody(r *http.Request, cdc *wire.Codec, m bodyI) error {
+	body, err := ioutil.ReadAll(r.Body)
+	err = cdc.UnmarshalJSON(body, m)
+	if err != nil {
+		return err
+	}
+
+	if err := m.ValidateBasic(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func withErrHandler(fn func(http.ResponseWriter, *http.Request) error) func(http.ResponseWriter, *http.Request) {
@@ -142,7 +160,6 @@ func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Code
 		Quantity: record.Quantity,
 		Height:   record.Height,
 		Created:  record.Created,
-		Unit:     record.Unit,
 	}
 
 	// defaults
@@ -200,30 +217,37 @@ func getRecord(ctx context.CoreContext, recordID string, cdc *wire.Codec, includ
 		return nil, err
 	}
 	// get rppot asset info
+	props := recordOutput.Properties
 	if recordOutput.Root != "" {
 		root, err := getRecord(ctx, recordOutput.Root, cdc, "properties")
 		if err != nil {
 			return nil, err
 		}
-		record.Unit = root.Unit
-		for _, p := range root.Properties {
-			switch p.Name {
-			case "barcode":
-				recordOutput.Barcode = p.StringValue
-				break
-			case "type":
-				recordOutput.Type = p.StringValue
-				break
-			case "subtype":
-				recordOutput.SubType = p.StringValue
-				break
-			default:
-				break
-			}
+		props = root.Properties
+	}
+	formatRecordProperties(recordOutput, props)
+	return recordOutput, nil
+}
+
+func formatRecordProperties(record *asset.RecordOutput, props asset.Properties) {
+	for _, p := range props {
+		switch p.Name {
+		case "barcode":
+			record.Barcode = p.StringValue
+			break
+		case "unit":
+			record.Barcode = p.StringValue
+			break
+		case "type":
+			record.Type = p.StringValue
+			break
+		case "subtype":
+			record.SubType = p.StringValue
+			break
+		default:
+			break
 		}
 	}
-
-	return recordOutput, nil
 }
 
 func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire.Codec) ([]*asset.RecordOutput, error) {

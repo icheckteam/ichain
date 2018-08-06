@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -9,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/gorilla/mux"
-	"github.com/icheckteam/ichain/client/errors"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -18,33 +16,9 @@ func createProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgCreateCreateProposalBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
 		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
-			return err
-		}
-
-		if m.Recipient == "" {
-			return errors.New("recipient is required")
-		}
-
-		switch m.Role {
-		case asset.RoleOwner, asset.RoleReporter:
-			break
-		default:
-			return errors.New("invalid role")
-		}
-
-		if m.Role == asset.RoleReporter && len(m.Properties) == 0 {
-			return errors.New("properties is required")
-		}
-
 		info, err := kb.Get(m.BaseReq.Name)
 		if err != nil {
 			return err
@@ -70,23 +44,8 @@ func answerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgAnswerProposalBody
-		body, err := ioutil.ReadAll(r.Body)
-		err = cdc.UnmarshalJSON(body, &m)
-
-		if err != nil {
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
 			return err
-		}
-
-		err = m.BaseReq.Validate()
-		if err != nil {
-			return err
-		}
-
-		switch m.Response {
-		case asset.StatusAccepted, asset.StatusCancel, asset.StatusRejected:
-			break
-		default:
-			return errors.New("invalid response")
 		}
 
 		info, err := kb.Get(m.BaseReq.Name)
@@ -107,5 +66,184 @@ func answerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
 		return nil
 
+	})
+}
+
+func addAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m addAssetQuantityBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		// build message
+		msg := asset.MsgAddQuantity{
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
+			AssetID:  vars["id"],
+			Quantity: m.Quantity,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+// AddMaterialsHandlerFn  REST handler
+func addMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m addMaterialsBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+
+		msg := asset.MsgAddMaterials{
+			AssetID: vars["id"],
+			Sender:  sdk.AccAddress(info.GetPubKey().Address()),
+			Amount:  m.Amount,
+		}
+
+		// sign
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+// FinalizeHandlerFn ...
+func finalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		var m finalizeBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		// build message
+		msg := asset.MsgFinalize{
+			Sender:  sdk.AccAddress(info.GetPubKey().Address()),
+			AssetID: vars["id"],
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+// Create asset REST handler
+func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		var m createAssetBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+
+		// build message
+		msg := asset.MsgCreateAsset{
+			AssetID:    m.AssetID,
+			Name:       m.Name,
+			Parent:     m.Parent,
+			Properties: m.Properties,
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
+			Quantity:   m.Quantity,
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+func revokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m revokeReporterBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+
+		address, err := sdk.AccAddressFromBech32(vars["address"])
+		if err != nil {
+			return err
+		}
+
+		// build message
+
+		msg := asset.MsgRevokeReporter{
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
+			Reporter: address,
+			AssetID:  vars["id"],
+		}
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+func subtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m subtractAssetQuantityBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		// build message
+
+		msg := asset.MsgSubtractQuantity{
+			Sender:   sdk.AccAddress(info.GetPubKey().Address()),
+			AssetID:  vars["id"],
+			Quantity: m.Quantity,
+		}
+
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
+	})
+}
+
+func updateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		var m updateAttributeBody
+		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
+			return err
+		}
+
+		info, err := kb.Get(m.BaseReq.Name)
+		if err != nil {
+			return err
+		}
+		// build message
+
+		msg := asset.MsgUpdateProperties{
+			AssetID:    vars["id"],
+			Properties: m.Properties,
+			Sender:     sdk.AccAddress(info.GetPubKey().Address()),
+		}
+
+		signAndBuild(ctx, cdc, w, m.BaseReq, msg)
+		return nil
 	})
 }

@@ -111,6 +111,18 @@ func queryHistoryOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(
 		WriteJSON2(w, cdc, filterTxChangeOwner(info))
 	}
 }
+func queryHistoryTransferMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		WriteJSON2(w, cdc, filterTxTransferMaterial(info))
+	}
+}
 
 func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

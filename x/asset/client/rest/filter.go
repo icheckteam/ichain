@@ -68,7 +68,7 @@ func filterByHeight(infos []tx.TxInfo, height int64) []tx.TxInfo {
 		newInfos[index] = info
 		index++
 	}
-	return newInfos
+	return newInfos[:index]
 }
 
 func newHistoryUpdateProperties(sender sdk.AccAddress, memo string, time int64, props asset.Properties, name string) []asset.HistoryUpdateProperty {
@@ -134,6 +134,32 @@ func filterTxChangeOwner(infos []tx.TxInfo) []asset.HistoryTransferOutput {
 						Memo:  tx.Memo,
 						Owner: msg.Sender,
 					})
+				}
+				break
+			default:
+				break
+			}
+		}
+	}
+	return history
+}
+
+func filterTxTransferMaterial(infos []tx.TxInfo) []asset.HistoryTransferMaterial {
+	history := []asset.HistoryTransferMaterial{}
+	for _, info := range infos {
+		tx, _ := info.Tx.(auth.StdTx)
+		for _, msg := range info.Tx.GetMsgs() {
+			switch msg := msg.(type) {
+			case asset.MsgAddMaterials:
+				for _, amount := range msg.Amount {
+					history = append(history, asset.HistoryTransferMaterial{
+						Time:   info.Time,
+						Memo:   tx.Memo,
+						From:   amount.RecordID,
+						To:     msg.AssetID,
+						Amount: amount.Amount,
+					})
+
 				}
 				break
 			default:
