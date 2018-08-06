@@ -3,6 +3,7 @@ package rest
 import (
 	"errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/asset"
 )
 
@@ -89,5 +90,119 @@ func (b msgAnswerProposalBody) ValidateBasic() error {
 		return errors.New("invalid response")
 	}
 
+	return nil
+}
+
+type addAssetQuantityBody struct {
+	BaseReq  baseBody `json:"base_req"`
+	Quantity sdk.Int  `json:"quantity"`
+}
+
+func (b addAssetQuantityBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Quantity.IsZero() {
+		return errors.New("Quantity is required")
+	}
+	return nil
+}
+
+type addMaterialsBody struct {
+	BaseReq baseBody         `json:"base_req"`
+	Amount  []asset.Material `json:"amount"`
+}
+
+func (b addMaterialsBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if len(b.Amount) == 0 {
+		return errors.New("amount is required")
+	}
+	return nil
+}
+
+type finalizeBody struct {
+	BaseReq baseBody `json:"base_req"`
+}
+
+func (b finalizeBody) ValidateBasic() error {
+	return b.BaseReq.Validate()
+}
+
+type createAssetBody struct {
+	BaseReq    baseBody         `json:"base_req"`
+	AssetID    string           `json:"asset_id"`
+	Name       string           `json:"name"`
+	Quantity   sdk.Int          `json:"quantity"`
+	Parent     string           `json:"parent"`
+	Unit       string           `json:"unit"`
+	Properties asset.Properties `json:"properties"`
+}
+
+func (b createAssetBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Name == "" {
+		return errors.New("name is required")
+	}
+
+	if b.Quantity.IsZero() {
+		return errors.New("quantity is required")
+	}
+
+	if b.AssetID == "" {
+		return errors.New("asset.id is required")
+	}
+	return nil
+}
+
+type revokeReporterBody struct {
+	BaseReq baseBody `json:"base_req"`
+}
+
+func (b revokeReporterBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type subtractAssetQuantityBody struct {
+	BaseReq  baseBody `json:"base_req"`
+	Quantity sdk.Int  `json:"quantity"`
+}
+
+func (b subtractAssetQuantityBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if b.Quantity.IsZero() {
+		return errors.New("quantity is required")
+	}
+	return nil
+}
+
+type updateAttributeBody struct {
+	BaseReq    baseBody         `json:"base_req"`
+	Properties asset.Properties `json:"properties"`
+}
+
+func (b updateAttributeBody) ValidateBasic() error {
+	err := b.BaseReq.Validate()
+	if err != nil {
+		return err
+	}
+	if len(b.Properties) == 0 {
+		return errors.New("properties is required")
+	}
 	return nil
 }
