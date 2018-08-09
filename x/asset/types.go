@@ -2,6 +2,7 @@ package asset
 
 import (
 	"bytes"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
@@ -39,6 +40,16 @@ type RecordOutput struct {
 	Reporters  []Reporter     `json:"reporters"`
 	Properties Properties     `json:"properties"`
 }
+
+// RecordsOutput ...
+type RecordsOutput []RecordOutput
+
+func (a RecordsOutput) Len() int           { return len(a) }
+func (a RecordsOutput) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a RecordsOutput) Less(i, j int) bool { return a[i].Created < a[j].Created }
+
+// Sort ...
+func (a RecordsOutput) Sort() RecordsOutput { sort.Sort(a); return a }
 
 // HistoryTransferOutput ...
 type HistoryTransferOutput struct {

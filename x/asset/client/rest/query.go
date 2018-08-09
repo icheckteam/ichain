@@ -55,6 +55,7 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
+		items = items.Sort()
 		output, err := cdc.MarshalJSON(items)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -133,11 +134,12 @@ func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
+		items = items.Sort()
 		WriteJSON(w, cdc, items)
 	}
 }
 
-func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]*asset.RecordOutput, error) {
+func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) (asset.RecordsOutput, error) {
 	address, err := sdk.AccAddressFromBech32(account)
 	if err != nil {
 		return nil, err
@@ -145,7 +147,7 @@ func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Cod
 	return getRecordsByAccount(ctx, address, cdc)
 }
 
-func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) ([]*asset.RecordOutput, error) {
+func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) (asset.RecordsOutput, error) {
 	kvs, err := ctx.QuerySubspace(cdc, asset.GetAssetChildrensKey(assetID), storeName)
 	if err != nil {
 		return nil, err
@@ -173,6 +175,7 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 		}
 
 		records, err := getRecordsByKvs(ctx, kvs, cdc)
+		records = records.Sort()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))

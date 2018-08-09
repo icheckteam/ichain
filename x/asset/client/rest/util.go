@@ -250,7 +250,7 @@ func formatRecordProperties(record *asset.RecordOutput, props asset.Properties) 
 	}
 }
 
-func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire.Codec) ([]*asset.RecordOutput, error) {
+func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire.Codec) (asset.RecordsOutput, error) {
 	recordsPrefixKey := asset.GetAccountAssetsKey(addr)
 	kvs, err := ctx.QuerySubspace(cdc, recordsPrefixKey, storeName)
 	if err != nil {
@@ -259,15 +259,15 @@ func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire
 	return getRecordsByKvs(ctx, kvs, cdc)
 }
 
-func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) ([]*asset.RecordOutput, error) {
-	records := make([]*asset.RecordOutput, len(kvs))
+func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (asset.RecordsOutput, error) {
+	records := make(asset.RecordsOutput, len(kvs))
 	for i, kv := range kvs {
 		recordID := string(kv.Key[1+sdk.AddrLen:])
 		record, err := getRecord(ctx, recordID, cdc)
 		if err != nil {
 			return nil, err
 		}
-		records[i] = record
+		records[i] = *record
 	}
 	return records, nil
 }
