@@ -29,9 +29,6 @@ import (
 	"github.com/icheckteam/ichain/client/tx"
 	asset "github.com/icheckteam/ichain/x/asset/client/rest"
 	identity "github.com/icheckteam/ichain/x/identity/client/rest"
-	insurance "github.com/icheckteam/ichain/x/insurance/client/rest"
-	invoice "github.com/icheckteam/ichain/x/invoice/client/rest"
-	shipping "github.com/icheckteam/ichain/x/shipping/client/rest"
 )
 
 // ServeCommand will generate a long-running rest server
@@ -116,9 +113,5 @@ func createHandler(cdc *wire.Codec) http.Handler {
 
 	asset.RegisterRoutes(ctx, r, cdc, kb, "asset")
 	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
-	insurance.RegisterRoutes(ctx, r, cdc, kb, "insurance")
-	shipping.RegisterRoutes(ctx, r, cdc, kb, "shipping")
-	invoice.RegisterHTTPHandle(r, ctx, cdc, kb)
-
 	return r
 }

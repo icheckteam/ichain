@@ -23,7 +23,7 @@ var (
 	freeFermionsAcc = int64(50)
 )
 
-// get app init parameters for server init command
+// GaiaAppInit get app init parameters for server init command
 func GaiaAppInit() server.AppInit {
 	fsAppGenState := pflag.NewFlagSet("", pflag.ContinueOnError)
 
@@ -41,14 +41,14 @@ func GaiaAppInit() server.AppInit {
 	}
 }
 
-// simple genesis tx
+// GaiaGenTx simple genesis tx
 type GaiaGenTx struct {
 	Name    string         `json:"name"`
 	Address sdk.AccAddress `json:"address"`
 	PubKey  string         `json:"pub_key"`
 }
 
-// Generate a gaia genesis transaction with flags
+// GaiaAppGenTx Generate a gaia genesis transaction with flags
 func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 	if genTxConfig.Name == "" {
@@ -74,7 +74,7 @@ func GaiaAppGenTx(cdc *wire.Codec, pk crypto.PubKey, genTxConfig config.GenTx) (
 	return
 }
 
-// Generate a gaia genesis transaction without flags
+// GaiaAppGenTxNF Generate a gaia genesis transaction without flags
 func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.AccAddress, name string) (
 	appGenTx, cliPrint json.RawMessage, validator tmtypes.GenesisValidator, err error) {
 
@@ -97,7 +97,7 @@ func GaiaAppGenTxNF(cdc *wire.Codec, pk crypto.PubKey, addr sdk.AccAddress, name
 	return
 }
 
-// Create the core parameters for genesis initialization for gaia
+// GaiaAppGenState GaiaAppGenTxNF Create the core parameters for genesis initialization for gaia
 // note that the pubkey input is this machines pubkey
 func GaiaAppGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (genesisState types.GenesisState, err error) {
 
@@ -164,7 +164,7 @@ func GaiaAppGenState(cdc *wire.Codec, appGenTxs []json.RawMessage) (genesisState
 	return
 }
 
-// GaiaAppGenState but with JSON
+// GaiaAppGenStateJSON GaiaAppGenState but with JSON
 func GaiaAppGenStateJSON(cdc *wire.Codec, appGenTxs []json.RawMessage) (appState json.RawMessage, err error) {
 
 	// create the final app state
