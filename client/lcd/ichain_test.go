@@ -8,120 +8,13 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/tests"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/icheckteam/ichain/x/asset"
 	"github.com/icheckteam/ichain/x/identity"
 	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
-
-func TestCreateAsset(t *testing.T) {
-
-	name, password := "test", "1234567890"
-	addr, seed := CreateAddr(t, "test", password, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
-	defer cleanup()
-
-	// CreateAsset tests
-	resultTx := doCreateAsset(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	asset := getAsset(t, port, "test")
-	assert.Equal(t, asset.ID, "test")
-	assert.Equal(t, len(asset.Properties), 1)
-
-	records := getAssetsByAccount(t, port, asset.Owner)
-	assert.Equal(t, len(records), 1)
-
-	properties := getTxsProperties(t, port)
-	assert.Equal(t, len(properties), 1)
-
-	owners := getRecordOwners(t, port)
-	assert.Equal(t, len(owners), 1)
-
-	// UpdateProperties tests
-	resultTx = doUpdateProperties(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// AddMaterials Tests
-	resultTx = doAddMaterials(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	txs := getTxsTransferMaterials(t, port)
-	assert.Equal(t, len(txs), 1)
-
-	// AddQuantity
-	resultTx = doAddQuantity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// SubtractQuantity
-	resultTx = doSubtractQuantity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// doFinalizeAsset
-	resultTx = doFinalizeAsset(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-}
-
-func TestCreateProposal(t *testing.T) {
-	name, password := "test", "1234567890"
-	name2, password2 := "test2", "1234567890"
-	addr, seed := CreateAddr(t, name, password, GetKeyBase(t))
-	addr2, seed2 := CreateAddr(t, name2, password2, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr, addr2})
-	defer cleanup()
-
-	// CreateAsset tests
-	resultTx := doCreateAsset(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-
-	// CreateProposal tests
-	resultTx = doCreateProposal(t, port, seed, name, password, addr, addr2)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// getProposals
-	proposals := getProposals(t, port)
-	assert.Equal(t, len(proposals), 1)
-
-	proposalsOwner := getProposalByOwner(t, port, addr2)
-	assert.Equal(t, len(proposalsOwner), 1)
-
-	// AnswerProposal tests
-	resultTx = doAnswerProposal(t, port, seed2, name2, password2, addr2, addr2)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	asset := getAsset(t, port, "test")
-	assert.Equal(t, len(asset.Reporters), 1)
-
-	// RevokeReporter tests
-	resultTx = doRevokeReporter(t, port, seed2, name, password, addr, addr2)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	asset = getAsset(t, port, "test")
-	assert.Equal(t, len(asset.Reporters), 0)
-}
 
 func doCreateAsset(t *testing.T, port, seed, name, password string, addr sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
@@ -461,87 +354,6 @@ func getRecordOwners(t *testing.T, port string) []asset.HistoryTransferOutput {
 	return owners
 }
 
-// Test Identity Module
-// -------------------------------------------------------------------------------------------------
-
-func TestAddTrust(t *testing.T) {
-	name, password := "test", "1234567890"
-	addr, seed := CreateAddr(t, name, password, GetKeyBase(t))
-	name2, _ := "test2", "1234567890"
-	addr2, _ := CreateAddr(t, name2, password, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr, addr2})
-	defer cleanup()
-
-	// AddTrust tests
-	resultTx := doAddTrust(t, port, seed, name, password, addr, addr2)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	trusts := getTrusts(t, port, addr)
-	assert.Equal(t, len(trusts), 1)
-
-}
-
-func TestAddCerts(t *testing.T) {
-	name, password := "test", "1234567890"
-	addr, seed := CreateAddr(t, name, password, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
-	defer cleanup()
-
-	resultTx := doRegisterIdentity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// AddCerts tests
-	resultTx = doAddCerts(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	certs := getCertsByOwner(t, port)
-	assert.Equal(t, len(certs), 2)
-}
-
-func TestRegisterIdent(t *testing.T) {
-	name, password := "test", "1234567890"
-	addr, seed := CreateAddr(t, name, password, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
-	defer cleanup()
-
-	// AddCerts tests
-	resultTx := doRegisterIdentity(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// Onwers
-	owners := getOwners(t, port, addr)
-	assert.Equal(t, len(owners), 1)
-
-	// Test AddOwner
-	resultTx = doAddOwner(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// Onwers
-	owners = getOwners(t, port, addr)
-	assert.Equal(t, len(owners), 2)
-
-	// Test DeleteOwner
-	resultTx = doDelOwner(t, port, seed, name, password, addr)
-	tests.WaitForHeight(resultTx.Height+1, port)
-	assert.Equal(t, uint32(0), resultTx.CheckTx.Code)
-	assert.Equal(t, uint32(0), resultTx.DeliverTx.Code)
-
-	// Onwers
-	owners = getOwners(t, port, addr)
-	assert.Equal(t, len(owners), 1)
-
-}
-
 func doAddTrust(t *testing.T, port, seed, name, password string, addr, trusting sdk.AccAddress) (resultTx ctypes.ResultBroadcastTxCommit) {
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
@@ -739,15 +551,6 @@ func doDelOwner(t *testing.T, port, seed, name, password string, addr sdk.AccAdd
 	require.Nil(t, err)
 
 	return resultTx
-}
-
-func TestAppLogin(t *testing.T) {
-	name, password := "test", "1234567890"
-	addr, _ := CreateAddr(t, name, password, GetKeyBase(t))
-	cleanup, _, port := InitializeTestLCD(t, 1, []sdk.AccAddress{addr})
-	defer cleanup()
-	doAppSignAndVerify(t, port)
-
 }
 
 func doAppSignAndVerify(t *testing.T, port string) {
