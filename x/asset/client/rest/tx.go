@@ -12,7 +12,7 @@ import (
 )
 
 // CreateProposalHandlerFn
-func createProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func createProposalHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgCreateCreateProposalBody
@@ -40,7 +40,7 @@ func createProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 }
 
 // AnswerProposalHandlerFn
-func answerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func answerProposalHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgAnswerProposalBody
@@ -69,7 +69,7 @@ func answerProposalHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	})
 }
 
-func addAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func addAssetQuantityHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m addAssetQuantityBody
@@ -93,7 +93,7 @@ func addAssetQuantityHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys
 }
 
 // AddMaterialsHandlerFn  REST handler
-func addMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func addMaterialsHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m addMaterialsBody
@@ -118,7 +118,7 @@ func addMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Key
 }
 
 // FinalizeHandlerFn ...
-func finalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func finalizeHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
@@ -142,7 +142,7 @@ func finalizeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 }
 
 // Create asset REST handler
-func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func createAssetHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		var m createAssetBody
 		if err := validateAndGetDecodeBody(r, cdc, &m); err != nil {
@@ -168,7 +168,7 @@ func createAssetHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keyb
 	})
 }
 
-func revokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func revokeReporterHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m revokeReporterBody
@@ -198,7 +198,7 @@ func revokeReporterHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.K
 	})
 }
 
-func subtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func subtractQuantityBodyHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m subtractAssetQuantityBody
@@ -223,7 +223,7 @@ func subtractQuantityBodyHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb 
 	})
 }
 
-func updateAttributeHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func updateAttributeHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return withErrHandler(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m updateAttributeBody

@@ -41,18 +41,19 @@ import (
 	"github.com/icheckteam/ichain/types"
 )
 
-// f**ing long, but unique for each test
+// makePathname creates a unique pathname for each test. It will panic if it
+// cannot get the current working directory.
 func makePathname() string {
-	// get path
 	p, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
+
 	sep := string(filepath.Separator)
 	return strings.Replace(p, sep, "_", -1)
 }
 
-// GetConfig returns a config for the test cases as a singleton
+// GetConfig returns a Tendermint config for the test cases.
 func GetConfig() *tmcfg.Config {
 	pathname := makePathname()
 	config := tmcfg.ResetTestRoot(pathname)
@@ -61,52 +62,73 @@ func GetConfig() *tmcfg.Config {
 	if err != nil {
 		panic(err)
 	}
+
 	rcpAddr, _, err := server.FreeTCPAddr()
+	if err != nil {
+		panic(err)
+	}
+
+	grpcAddr, _, err := server.FreeTCPAddr()
 	if err != nil {
 		panic(err)
 	}
 
 	config.P2P.ListenAddress = tmAddr
 	config.RPC.ListenAddress = rcpAddr
+	config.RPC.GRPCListenAddress = grpcAddr
+
 	return config
 }
 
-// get the lcd test keybase
-// note can't use a memdb because the request is expecting to interact with the default location
-func GetKB(t *testing.T) crkeys.Keybase {
+// GetKeyBase returns the LCD test keybase. It also requires that a directory
+// could be made and a keybase could be fetched.
+//
+// NOTE: memDB cannot be used because the request is expecting to interact with
+// the default location.
+func GetKeyBase(t *testing.T) crkeys.Keybase {
 	dir, err := ioutil.TempDir("", "lcd_test")
 	require.NoError(t, err)
+
 	viper.Set(cli.HomeFlag, dir)
-	keybase, err := keys.GetKeyBase() // dbm.NewMemDB()) // :(
+
+	keybase, err := keys.GetKeyBase()
 	require.NoError(t, err)
+
 	return keybase
 }
 
-// add an address to the store return name and password
-func CreateAddr(t *testing.T, name, password string, kb crkeys.Keybase) (addr sdk.AccAddress, seed string) {
-	var info crkeys.Info
-	var err error
+// CreateAddr adds an address to the key store and returns an address and seed.
+// It also requires that the key could be created.
+func CreateAddr(t *testing.T, name, password string, kb crkeys.Keybase) (sdk.AccAddress, string) {
+	var (
+		err  error
+		info crkeys.Info
+		seed string
+	)
+
 	info, seed, err = kb.CreateMnemonic(name, crkeys.English, password, crkeys.Secp256k1)
 	require.NoError(t, err)
-	addr = sdk.AccAddress(info.GetPubKey().Address())
-	return
+
+	return sdk.AccAddress(info.GetPubKey().Address()), seed
 }
 
-// strt TM and the LCD in process, listening on their respective sockets
-//   nValidators = number of validators
-//   initAddrs = accounts to initialize with some steaks
-func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress) (cleanup func(), validatorsPKs []crypto.PubKey, port string) {
-
+// InitializeTestLCD starts Tendermint and the LCD in process, listening on
+// their respective sockets where nValidators is the total number of validators
+// and initAddrs are the accounts to initialize with some steak tokens. It
+// returns a cleanup function, a set of validator public keys, and a port.
+func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress) (func(), []crypto.PubKey, string) {
 	config := GetConfig()
 	config.Consensus.TimeoutCommit = 100
 	config.Consensus.SkipTimeoutCommit = false
 	config.TxIndex.IndexAllTags = true
 
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.NewFilter(logger, log.AllowDebug())
+	logger = log.NewFilter(logger, log.AllowError())
+
 	privValidatorFile := config.PrivValidatorFile()
 	privVal := pvm.LoadOrGenFilePV(privValidatorFile)
 	privVal.Reset()
+
 	db := dbm.NewMemDB()
 	app := gapp.NewIchainApp(logger, db, nil)
 	cdc = gapp.MakeCodec()
@@ -115,10 +137,10 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 	genDoc, err := tmtypes.GenesisDocFromFile(genesisFile)
 	require.NoError(t, err)
 
-	// add more validators
 	if nValidators < 1 {
 		panic("InitializeTestLCD must use at least one validator")
 	}
+
 	for i := 1; i < nValidators; i++ {
 		genDoc.Validators = append(genDoc.Validators,
 			tmtypes.GenesisValidator{
@@ -129,14 +151,18 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 		)
 	}
 
-	// NOTE it's bad practice to reuse pk address for the owner address but doing in the
-	// test for simplicity
+	var validatorsPKs []crypto.PubKey
+
+	// NOTE: It's bad practice to reuse public key address for the owner
+	// address but doing in the test for simplicity.
 	var appGenTxs []json.RawMessage
 	for _, gdValidator := range genDoc.Validators {
 		pk := gdValidator.PubKey
-		validatorsPKs = append(validatorsPKs, pk) // append keys for output
+		validatorsPKs = append(validatorsPKs, pk)
+
 		appGenTx, _, _, err := gapp.GaiaAppGenTxNF(cdc, pk, sdk.AccAddress(pk.Address()), "test_val1")
 		require.NoError(t, err)
+
 		appGenTxs = append(appGenTxs, appGenTx)
 	}
 
@@ -148,7 +174,7 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 		accAuth := types.AppAccount{
 			BaseAccount: auth.NewBaseAccountWithAddress(addr),
 		}
-		accAuth.Coins = sdk.Coins{sdk.NewCoin("steak", 100)}
+		accAuth.Coins = sdk.Coins{sdk.NewCoin("steak", sdk.NewInt(100))}
 		acc := types.NewGenesisAccount(&accAuth)
 		genesisState.Accounts = append(genesisState.Accounts, acc)
 		genesisState.StakeData.Pool.LooseTokens = genesisState.StakeData.Pool.LooseTokens.Add(sdk.NewRat(100))
@@ -158,62 +184,63 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 	require.NoError(t, err)
 	genDoc.AppState = appState
 
-	// LCD listen address
-	var listenAddr string
-	listenAddr, port, err = server.FreeTCPAddr()
+	listenAddr, port, err := server.FreeTCPAddr()
 	require.NoError(t, err)
 
-	// XXX: need to set this so LCD knows the tendermint node address!
+	// XXX: Need to set this so LCD knows the tendermint node address!
 	viper.Set(client.FlagNode, config.RPC.ListenAddress)
 	viper.Set(client.FlagChainID, genDoc.ChainID)
 
 	node, err := startTM(config, logger, genDoc, privVal, app)
 	require.NoError(t, err)
+
 	lcd, err := startLCD(logger, listenAddr, cdc)
 	require.NoError(t, err)
 
-	//time.Sleep(time.Second)
-	//tests.WaitForHeight(2, port)
 	tests.WaitForLCDStart(port)
 	tests.WaitForHeight(1, port)
 
-	// for use in defer
-	cleanup = func() {
+	cleanup := func() {
+		logger.Debug("cleaning up LCD initialization")
 		node.Stop()
 		node.Wait()
 		lcd.Close()
 	}
 
-	return
+	return cleanup, validatorsPKs, port
 }
 
 // Create & start in-process tendermint node with memdb
 // and in-process abci application.
 // TODO: need to clean up the WAL dir or enable it to be not persistent
-func startTM(tmcfg *tmcfg.Config, logger log.Logger, genDoc *tmtypes.GenesisDoc, privVal tmtypes.PrivValidator, app abci.Application) (*nm.Node, error) {
+func startTM(
+	tmcfg *tmcfg.Config, logger log.Logger, genDoc *tmtypes.GenesisDoc,
+	privVal tmtypes.PrivValidator, app abci.Application,
+) (*nm.Node, error) {
 	genDocProvider := func() (*tmtypes.GenesisDoc, error) { return genDoc, nil }
 	dbProvider := func(*nm.DBContext) (dbm.DB, error) { return dbm.NewMemDB(), nil }
-	n, err := nm.NewNode(tmcfg,
+	node, err := nm.NewNode(
+		tmcfg,
 		privVal,
 		proxy.NewLocalClientCreator(app),
 		genDocProvider,
 		dbProvider,
-		nm.DefaultMetricsProvider,
-		logger.With("module", "node"))
+		nm.DefaultMetricsProvider(tmcfg.Instrumentation),
+		logger.With("module", "node"),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	err = n.Start()
+	err = node.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	// wait for rpc
 	tests.WaitForRPC(tmcfg.RPC.ListenAddress)
-
 	logger.Info("Tendermint running!")
-	return n, err
+
+	return node, err
 }
 
 // start the LCD. note this blocks!
@@ -222,7 +249,7 @@ func startLCD(logger log.Logger, listenAddr string, cdc *wire.Codec) (net.Listen
 	return tmrpc.StartHTTPServer(listenAddr, handler, logger, tmrpc.Config{})
 }
 
-// make a test lcd test request
+// Request make a test lcd test request
 func Request(t *testing.T, port, method, path string, payload []byte) (*http.Response, string) {
 	var res *http.Response
 	var err error

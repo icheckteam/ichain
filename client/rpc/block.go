@@ -36,7 +36,7 @@ func BlockCommand(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func getBlock(ctx context.CoreContext, cdc *wire.Codec, height *int64) ([]byte, error) {
+func getBlock(ctx context.CLIContext, cdc *wire.Codec, height *int64) ([]byte, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -61,7 +61,7 @@ func getBlock(ctx context.CoreContext, cdc *wire.Codec, height *int64) ([]byte, 
 	return output, nil
 }
 
-func getBlockWithTxs(ctx context.CoreContext, cdc *wire.Codec, height *int64) ([]byte, error) {
+func getBlockWithTxs(ctx context.CLIContext, cdc *wire.Codec, height *int64) ([]byte, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -112,7 +112,7 @@ func parseTx(cdc *wire.Codec, txBytes []byte) (sdk.Tx, error) {
 }
 
 // get the current blockchain height
-func GetChainHeight(ctx context.CoreContext) (int64, error) {
+func GetChainHeight(ctx context.CLIContext) (int64, error) {
 	node, err := ctx.GetNode()
 	if err != nil {
 		return -1, err
@@ -141,7 +141,7 @@ func printBlock(cmd *cobra.Command, cdc *wire.Codec, args []string) error {
 		}
 	}
 
-	output, err := getBlock(context.NewCoreContextFromViper(), cdc, height)
+	output, err := getBlock(context.NewCLIContext(), cdc, height)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func printBlock(cmd *cobra.Command, cdc *wire.Codec, args []string) error {
 // REST
 
 // REST handler to get a block
-func BlockRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func BlockRequestHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		height, err := strconv.ParseInt(vars["height"], 10, 64)
@@ -177,7 +177,7 @@ func BlockRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Handle
 	}
 }
 
-func BlockTxsRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func BlockTxsRequestHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		height, err := strconv.ParseInt(vars["height"], 10, 64)
@@ -203,7 +203,7 @@ func BlockTxsRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 }
 
 // REST handler to get the latest block
-func LatestBlockRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func LatestBlockRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		height, err := GetChainHeight(ctx)
 		if err != nil {

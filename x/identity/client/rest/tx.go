@@ -14,7 +14,7 @@ import (
 )
 
 // SetTrustHandlerFn ...
-func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func SetTrustHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var m msgSetTrustBody
@@ -59,7 +59,7 @@ func SetTrustHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 }
 
 // SetCertsHandlerFn ...
-func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func SetCertsHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var m msgSetCertsBody
@@ -107,7 +107,7 @@ func SetCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 	}
 }
 
-func registerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+func registerHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
 	return withErr(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgRegBody
@@ -137,7 +137,7 @@ func registerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 	})
 }
 
-func addOwnerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+func addOwnerHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
 	return withErr(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgAddOwnerBody
@@ -168,7 +168,7 @@ func addOwnerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase
 	})
 }
 
-func delOwnerHandlerFn(ctx context.CoreContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
+func delOwnerHandlerFn(ctx context.CLIContext, cdc *wire.Codec, kb keys.Keybase) http.HandlerFunc {
 	return withErr(func(w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		var m msgDelOwnerBody

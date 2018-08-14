@@ -45,7 +45,7 @@ func initClientCommand() *cobra.Command {
 }
 
 // Register REST endpoints
-func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec) {
+func RegisterRoutes(ctx context.CLIContext, r *mux.Router, cdc *wire.Codec) {
 	r.HandleFunc("/node_info", NodeInfoRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/syncing", NodeSyncingRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/blocks/latest", LatestBlockRequestHandlerFn(ctx)).Methods("GET")

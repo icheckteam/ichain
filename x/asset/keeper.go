@@ -42,7 +42,7 @@ func (k Keeper) CreateAsset(ctx sdk.Context, msg MsgCreateAsset) (sdk.Tags, sdk.
 		Parent:   msg.Parent,
 		Final:    false,
 		Height:   ctx.BlockHeight(),
-		Created:  ctx.BlockHeader().Time,
+		Created:  ctx.BlockHeader().Time.Unix(),
 	}
 
 	if len(msg.Parent) > 0 {

@@ -32,7 +32,7 @@ func QueryTxCmd(cdc *wire.Codec) *cobra.Command {
 			hashHexStr := args[0]
 			trustNode := viper.GetBool(client.FlagTrustNode)
 
-			output, err := QueryTx(cdc, context.NewCoreContextFromViper(), hashHexStr, trustNode)
+			output, err := QueryTx(cdc, context.NewCLIContext(), hashHexStr, trustNode)
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func QueryTxCmd(cdc *wire.Codec) *cobra.Command {
 }
 
 // QueryTx ...
-func QueryTx(cdc *wire.Codec, ctx context.CoreContext, hashHexStr string, trustNode bool) ([]byte, error) {
+func QueryTx(cdc *wire.Codec, ctx context.CLIContext, hashHexStr string, trustNode bool) ([]byte, error) {
 	hash, err := hex.DecodeString(hashHexStr)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func ParseTx(cdc *wire.Codec, txBytes []byte) (auth.StdTx, error) {
 // REST
 
 // QueryTxRequestHandlerFn  transaction query REST handler
-func QueryTxRequestHandlerFn(cdc *wire.Codec, ctx context.CoreContext) http.HandlerFunc {
+func QueryTxRequestHandlerFn(cdc *wire.Codec, ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		hashHexStr := vars["hash"]

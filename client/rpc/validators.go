@@ -58,7 +58,7 @@ func bech32ValidatorOutput(validator *tmtypes.Validator) (ValidatorOutput, error
 	}, nil
 }
 
-func getValidators(ctx context.CoreContext, height *int64) ([]byte, error) {
+func getValidators(ctx context.CLIContext, height *int64) ([]byte, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -104,7 +104,7 @@ func printValidators(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	output, err := getValidators(context.NewCoreContextFromViper(), height)
+	output, err := getValidators(context.NewCLIContext(), height)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func printValidators(cmd *cobra.Command, args []string) error {
 // REST
 
 // Validator Set at a height REST handler
-func ValidatorSetRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func ValidatorSetRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		height, err := strconv.ParseInt(vars["height"], 10, 64)
@@ -143,7 +143,7 @@ func ValidatorSetRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
 }
 
 // Latest Validator Set REST handler
-func LatestValidatorSetRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func LatestValidatorSetRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		height, err := GetChainHeight(ctx)
 		if err != nil {

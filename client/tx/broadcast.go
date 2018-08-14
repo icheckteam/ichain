@@ -13,7 +13,7 @@ type BroadcastTxBody struct {
 }
 
 // BroadcastTxRequestHandlerFn BroadcastTx REST Handler
-func BroadcastTxRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func BroadcastTxRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var m BroadcastTxBody
 

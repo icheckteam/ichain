@@ -9,14 +9,14 @@ import (
 	"github.com/icheckteam/ichain/version"
 )
 
-// cli version REST handler endpoint
+// CLIVersionRequestHandler cli version REST handler endpoint
 func CLIVersionRequestHandler(w http.ResponseWriter, r *http.Request) {
 	v := version.GetVersion()
 	w.Write([]byte(v))
 }
 
-// connected node version REST handler endpoint
-func NodeVersionRequestHandler(cdc *wire.Codec, ctx context.CoreContext) http.HandlerFunc {
+// NodeVersionRequestHandler connected node version REST handler endpoint
+func NodeVersionRequestHandler(cdc *wire.Codec, ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		version, err := ctx.QueryStore([]byte("/app/version"), "main")
 		if err != nil {

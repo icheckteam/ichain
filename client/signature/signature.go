@@ -21,12 +21,14 @@ type LoginBody struct {
 	Nonce    string `json:"nonce"`
 }
 
+// ClaimMsg ...
 type ClaimMsg struct {
 	PubKey  crypto.PubKey `json:"pubkey"`
 	Expires int64         `json:"expires"`
 	Nonce   string        `json:"nonce"`
 }
 
+// Bytes ...
 func (msg ClaimMsg) Bytes() []byte {
 	b, err := cdc.MarshalJSON(msg)
 	if err != nil {
@@ -35,15 +37,16 @@ func (msg ClaimMsg) Bytes() []byte {
 	return sdk.MustSortJSON(b)
 }
 
+// Claim ...
 type Claim struct {
-	Msg       ClaimMsg         `json:"msg"`
-	Signature crypto.Signature `json:"signature"`
+	Msg       ClaimMsg `json:"msg"`
+	Signature []byte   `json:"signature"`
 }
 
 ///////////////////////////
 // REST
 
-// get key REST handler
+// SignHandler get key REST handler
 func SignHandler(w http.ResponseWriter, r *http.Request) {
 	var m LoginBody
 
@@ -95,11 +98,13 @@ func SignHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(b64))
 }
 
+// VerifyOutput ...
 type VerifyOutput struct {
 	Status  bool           `json:"status"`
 	Address sdk.AccAddress `json:"address"`
 }
 
+// VerifiyHandler ...
 func VerifiyHandler(w http.ResponseWriter, r *http.Request) {
 	var m Claim
 	body, err := ioutil.ReadAll(r.Body)
@@ -135,7 +140,7 @@ func verify(m Claim) bool {
 	return m.Msg.PubKey.VerifyBytes(m.Msg.Bytes(), m.Signature)
 }
 
-// resgister REST routes
+// RegisterRoutes resgister REST routes
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/apps/sign", SignHandler).Methods("POST")
 	r.HandleFunc("/apps/verify", VerifiyHandler).Methods("POST")
