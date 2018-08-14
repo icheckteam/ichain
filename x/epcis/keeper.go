@@ -10,8 +10,3 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 	cdc      *wire.Codec
 }
-
-// RegisterActor register new an actor ...
-func (k Keeper) RegisterActor() {
-
-}
