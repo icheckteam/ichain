@@ -296,12 +296,6 @@
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
 
 [[projects]]
-  name = "github.com/rs/cors"
-  packages = ["."]
-  revision = "ca016a06a5753f8ba03029c0aa5e54afb1bf713f"
-  version = "v1.4.0"
-
-[[projects]]
   name = "github.com/spf13/afero"
   packages = [
     ".",
@@ -381,8 +375,8 @@
 [[projects]]
   name = "github.com/tendermint/go-amino"
   packages = ["."]
-  revision = "a8328986c1608950fa5d3d1c0472cccc4f8fc02c"
-  version = "v0.12.0-rc0"
+  revision = "2106ca61d91029c931fd54968c2bb02dc96b1412"
+  version = "0.10.1"
 
 [[projects]]
   name = "github.com/tendermint/go-crypto"
@@ -596,6 +590,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "981cf426440c827f009f6f9601fade0360b4624decac0576fce9355361e438cd"
+  inputs-digest = "f467c013c90492bea56b3ab096807d452e8351198eb57201654fb975b4d8b1d8"
   solver-name = "gps-cdcl"
   solver-version = 1

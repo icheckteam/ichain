@@ -12,10 +12,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	keys "github.com/cosmos/cosmos-sdk/client/keys"
+	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/tests"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/icheckteam/ichain/app"
+	"github.com/icheckteam/ichain/types"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmcfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
@@ -28,17 +38,6 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 	tmrpc "github.com/tendermint/tendermint/rpc/lib/server"
 	tmtypes "github.com/tendermint/tendermint/types"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	keys "github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/tests"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/wire"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-
-	gapp "github.com/icheckteam/ichain/app"
-	"github.com/icheckteam/ichain/types"
 )
 
 // makePathname creates a unique pathname for each test. It will panic if it
@@ -118,7 +117,7 @@ func CreateAddr(t *testing.T, name, password string, kb crkeys.Keybase) (sdk.Acc
 // returns a cleanup function, a set of validator public keys, and a port.
 func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress) (func(), []crypto.PubKey, string) {
 	config := GetConfig()
-	config.Consensus.TimeoutCommit = 100
+	config.Consensus.TimeoutCommit = 10
 	config.Consensus.SkipTimeoutCommit = false
 	config.TxIndex.IndexAllTags = true
 
@@ -130,8 +129,8 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 	privVal.Reset()
 
 	db := dbm.NewMemDB()
-	app := gapp.NewIchainApp(logger, db, nil)
-	cdc = gapp.MakeCodec()
+	iapp := app.NewIchainApp(logger, db, nil)
+	cdc = app.MakeCodec()
 
 	genesisFile := config.GenesisFile()
 	genDoc, err := tmtypes.GenesisDocFromFile(genesisFile)
@@ -160,22 +159,20 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 		pk := gdValidator.PubKey
 		validatorsPKs = append(validatorsPKs, pk)
 
-		appGenTx, _, _, err := gapp.GaiaAppGenTxNF(cdc, pk, sdk.AccAddress(pk.Address()), "test_val1")
+		appGenTx, _, _, err := app.GaiaAppGenTxNF(cdc, pk, sdk.AccAddress(pk.Address()), "test_val1")
 		require.NoError(t, err)
 
 		appGenTxs = append(appGenTxs, appGenTx)
 	}
 
-	genesisState, err := gapp.GaiaAppGenState(cdc, appGenTxs[:])
+	genesisState, err := app.GaiaAppGenState(cdc, appGenTxs[:])
 	require.NoError(t, err)
 
 	// add some tokens to init accounts
 	for _, addr := range initAddrs {
-		accAuth := types.AppAccount{
-			BaseAccount: auth.NewBaseAccountWithAddress(addr),
-		}
-		accAuth.Coins = sdk.Coins{sdk.NewCoin("steak", sdk.NewInt(100))}
-		acc := types.NewGenesisAccount(&accAuth)
+		accAuth := auth.NewBaseAccountWithAddress(addr)
+		accAuth.Coins = sdk.Coins{sdk.NewInt64Coin("steak", 100)}
+		acc := types.NewGenesisAccountI(&accAuth)
 		genesisState.Accounts = append(genesisState.Accounts, acc)
 		genesisState.StakeData.Pool.LooseTokens = genesisState.StakeData.Pool.LooseTokens.Add(sdk.NewRat(100))
 	}
@@ -191,7 +188,7 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 	viper.Set(client.FlagNode, config.RPC.ListenAddress)
 	viper.Set(client.FlagChainID, genDoc.ChainID)
 
-	node, err := startTM(config, logger, genDoc, privVal, app)
+	node, err := startTM(config, logger, genDoc, privVal, iapp)
 	require.NoError(t, err)
 
 	lcd, err := startLCD(logger, listenAddr, cdc)
@@ -210,9 +207,11 @@ func InitializeTestLCD(t *testing.T, nValidators int, initAddrs []sdk.AccAddress
 	return cleanup, validatorsPKs, port
 }
 
-// Create & start in-process tendermint node with memdb
-// and in-process abci application.
-// TODO: need to clean up the WAL dir or enable it to be not persistent
+// startTM creates and starts an in-process Tendermint node with memDB and
+// in-process ABCI application. It returns the new node or any error that
+// occurred.
+//
+// TODO: Clean up the WAL dir or enable it to be not persistent!
 func startTM(
 	tmcfg *tmcfg.Config, logger log.Logger, genDoc *tmtypes.GenesisDoc,
 	privVal tmtypes.PrivValidator, app abci.Application,
@@ -243,21 +242,27 @@ func startTM(
 	return node, err
 }
 
-// start the LCD. note this blocks!
+// startLCD starts the LCD.
+//
+// NOTE: This causes the thread to block.
 func startLCD(logger log.Logger, listenAddr string, cdc *wire.Codec) (net.Listener, error) {
-	handler := createHandler(cdc)
-	return tmrpc.StartHTTPServer(listenAddr, handler, logger, tmrpc.Config{})
+	return tmrpc.StartHTTPServer(listenAddr, createHandler(cdc), logger, tmrpc.Config{})
 }
 
-// Request make a test lcd test request
+// Request makes a test LCD test request. It returns a response object and a
+// stringified response body.
 func Request(t *testing.T, port, method, path string, payload []byte) (*http.Response, string) {
-	var res *http.Response
-	var err error
+	var (
+		err error
+		res *http.Response
+	)
 	url := fmt.Sprintf("http://localhost:%v%v", port, path)
+	fmt.Println("REQUEST " + method + " " + url)
+
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(payload))
 	require.Nil(t, err)
+
 	res, err = http.DefaultClient.Do(req)
-	//	res, err = http.Post(url, "application/json", bytes.NewBuffer(payload))
 	require.Nil(t, err)
 
 	output, err := ioutil.ReadAll(res.Body)
