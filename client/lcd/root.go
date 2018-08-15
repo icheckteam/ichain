@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
@@ -43,22 +42,13 @@ func ServeCommand(cdc *wire.Codec) *cobra.Command {
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			allowedOrigins := viper.GetString(flagCORS)
 			listenAddr := viper.GetString(flagListenAddr)
 			handler := createHandler(cdc)
 			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 			maxOpen := viper.GetInt(flagMaxOpenConnections)
 
-			c := cors.New(cors.Options{
-				AllowedOrigins:   []string{allowedOrigins},
-				AllowCredentials: true,
-				AllowedMethods:   []string{"PUT", "GET", "POST", "DELETE"},
-				// Enable Debugging for testing, consider disabling in production
-				Debug: true,
-			})
-
 			listener, err := tmserver.StartHTTPServer(
-				listenAddr, c.Handler(handler), logger,
+				listenAddr, handler, logger,
 				tmserver.Config{MaxOpenConnections: maxOpen},
 			)
 			if err != nil {
@@ -76,11 +66,13 @@ func ServeCommand(cdc *wire.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	cmd.Flags().String(flagListenAddr, "tcp://localhost:1317", "The address for the server to listen on")
 	cmd.Flags().String(flagCORS, "", "Set the domains that can make CORS requests (* for all)")
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, "tcp://localhost:26657", "Address of the node to connect to")
 	cmd.Flags().Int(flagMaxOpenConnections, 1000, "The number of maximum open connections")
+
 	return cmd
 }
 
@@ -92,26 +84,25 @@ func createHandler(cdc *wire.Codec) http.Handler {
 		panic(err)
 	}
 
-	ctx := context.NewCoreContextFromViper()
+	cliCtx := context.NewCLIContext().WithCodec(cdc).WithLogger(os.Stdout)
 
 	// TODO make more functional? aka r = keys.RegisterRoutes(r)
 	r.HandleFunc("/version", CLIVersionRequestHandler).Methods("GET")
-	r.HandleFunc("/node_version", NodeVersionRequestHandler(cdc, ctx)).Methods("GET")
+	r.HandleFunc("/node_version", NodeVersionRequestHandler(cliCtx)).Methods("GET")
 
 	// TODO make more functional? aka r = keys.RegisterRoutes(r)
 	keys.RegisterRoutes(r)
-	rpc.RegisterRoutes(ctx, r, cdc)
-	tx.RegisterRoutes(ctx, r, cdc)
-	auth.RegisterRoutes(ctx, r, cdc, "acc")
-	bank.RegisterRoutes(ctx, r, cdc, kb)
-	ibc.RegisterRoutes(ctx, r, cdc, kb)
-	stake.RegisterRoutes(ctx, r, cdc, kb)
-	slashing.RegisterRoutes(ctx, r, cdc, kb)
-	gov.RegisterRoutes(ctx, r, cdc)
+	rpc.RegisterRoutes(cliCtx, r, cdc)
+	tx.RegisterRoutes(cliCtx, r, cdc)
+	auth.RegisterRoutes(cliCtx, r, cdc, "acc")
+	bank.RegisterRoutes(cliCtx, r, cdc, kb)
+	ibc.RegisterRoutes(cliCtx, r, cdc, kb)
+	stake.RegisterRoutes(cliCtx, r, cdc, kb)
+	slashing.RegisterRoutes(cliCtx, r, cdc, kb)
+	gov.RegisterRoutes(cliCtx, r, cdc)
 
 	signature.RegisterRoutes(r)
-
-	asset.RegisterRoutes(ctx, r, cdc, kb, "asset")
-	identity.RegisterRoutes(ctx, r, cdc, kb, "identity")
+	asset.RegisterRoutes(cliCtx, r, cdc, kb, "asset")
+	identity.RegisterRoutes(cliCtx, r, cdc, kb, "identity")
 	return r
 }

@@ -22,7 +22,7 @@ func statusCommand() *cobra.Command {
 	return cmd
 }
 
-func getNodeStatus(ctx context.CoreContext) (*ctypes.ResultStatus, error) {
+func getNodeStatus(ctx context.CLIContext) (*ctypes.ResultStatus, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {
@@ -34,7 +34,7 @@ func getNodeStatus(ctx context.CoreContext) (*ctypes.ResultStatus, error) {
 // CMD
 
 func printNodeStatus(cmd *cobra.Command, args []string) error {
-	status, err := getNodeStatus(context.NewCoreContextFromViper())
+	status, err := getNodeStatus(context.NewCLIContext())
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func printNodeStatus(cmd *cobra.Command, args []string) error {
 // REST
 
 // REST handler for node info
-func NodeInfoRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func NodeInfoRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {
@@ -73,7 +73,7 @@ func NodeInfoRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
 }
 
 // REST handler for node syncing
-func NodeSyncingRequestHandlerFn(ctx context.CoreContext) http.HandlerFunc {
+func NodeSyncingRequestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, err := getNodeStatus(ctx)
 		if err != nil {

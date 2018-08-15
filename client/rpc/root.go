@@ -19,7 +19,7 @@ const (
 
 // XXX: remove this when not needed
 func todoNotImplemented(_ *cobra.Command, _ []string) error {
-	return errors.New("TODO: Command not yet implemented")
+	return errors.New("todo: Command not yet implemented")
 }
 
 // AddCommands adds a number of rpc-related subcommands
@@ -37,15 +37,15 @@ func initClientCommand() *cobra.Command {
 		RunE:  todoNotImplemented,
 	}
 	cmd.Flags().StringP(client.FlagChainID, "c", "", "ID of chain we connect to")
-	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:46657", "Node to connect to")
+	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
 	cmd.Flags().String(flagGenesis, "", "Genesis file to verify header validity")
 	cmd.Flags().String(flagCommit, "", "File with trusted and signed header")
 	cmd.Flags().String(flagValHash, "", "Hash of trusted validator set (hex-encoded)")
 	return cmd
 }
 
-// Register REST endpoints
-func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec) {
+// RegisterRoutes Register REST endpoints
+func RegisterRoutes(ctx context.CLIContext, r *mux.Router, cdc *wire.Codec) {
 	r.HandleFunc("/node_info", NodeInfoRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/syncing", NodeSyncingRequestHandlerFn(ctx)).Methods("GET")
 	r.HandleFunc("/blocks/latest", LatestBlockRequestHandlerFn(ctx)).Methods("GET")

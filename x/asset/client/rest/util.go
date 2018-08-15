@@ -5,30 +5,30 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/icheckteam/ichain/client/errors"
-	"github.com/icheckteam/ichain/x/asset"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
+	"github.com/icheckteam/ichain/client/errors"
+	"github.com/icheckteam/ichain/x/asset"
 )
 
 type bodyI interface {
 	ValidateBasic() error
 }
 
-func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
-	ctx = ctx.WithGas(m.Gas)
-	ctx = ctx.WithAccountNumber(m.AccountNumber)
-	ctx = ctx.WithSequence(m.Sequence)
-	ctx = ctx.WithChainID(m.ChainID)
+func signAndBuild(ctx context.CLIContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
 
-	if len(m.Memo) > 0 {
-		ctx = ctx.WithMemo(m.Memo)
+	txCtx := authctx.TxContext{
+		Codec:         cdc,
+		Gas:           m.Gas,
+		ChainID:       m.ChainID,
+		AccountNumber: m.AccountNumber,
+		Sequence:      m.Sequence,
+		Memo:          m.Memo,
 	}
 
-	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
-
+	txBytes, err := txCtx.BuildAndSign(m.Name, m.Password, []sdk.Msg{msg})
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))
@@ -98,9 +98,9 @@ func withErrHandler(fn func(http.ResponseWriter, *http.Request) error) func(http
 	}
 }
 
-func getReporters(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]asset.Reporter, error) {
+func getReporters(ctx context.CLIContext, recordID string, cdc *wire.Codec) ([]asset.Reporter, error) {
 	reportersPrefixKey := asset.GetReportersKey(recordID)
-	kvs, err := ctx.QuerySubspace(cdc, reportersPrefixKey, storeName)
+	kvs, err := ctx.QuerySubspace(reportersPrefixKey, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +115,9 @@ func getReporters(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]
 	return reporters, nil
 }
 
-func getProperties(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]asset.Property, error) {
+func getProperties(ctx context.CLIContext, recordID string, cdc *wire.Codec) ([]asset.Property, error) {
 	propertiesPrefixKey := asset.GetPropertiesKey(recordID)
-	kvs, err := ctx.QuerySubspace(cdc, propertiesPrefixKey, storeName)
+	kvs, err := ctx.QuerySubspace(propertiesPrefixKey, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -132,9 +132,9 @@ func getProperties(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([
 	return properties, nil
 }
 
-func getMaterials(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]asset.Material, error) {
+func getMaterials(ctx context.CLIContext, recordID string, cdc *wire.Codec) ([]asset.Material, error) {
 	materialsPrefixKey := asset.GetMaterialsKey(recordID)
-	kvs, err := ctx.QuerySubspace(cdc, materialsPrefixKey, storeName)
+	kvs, err := ctx.QuerySubspace(materialsPrefixKey, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func getMaterials(ctx context.CoreContext, recordID string, cdc *wire.Codec) ([]
 	return materials, nil
 }
 
-func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
+func widthMoreRecord(ctx context.CLIContext, record asset.Asset, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
 	recordOutput := asset.RecordOutput{
 		ID:       record.ID,
 		Name:     record.Name,
@@ -200,7 +200,7 @@ func widthMoreRecord(ctx context.CoreContext, record asset.Asset, cdc *wire.Code
 	return &recordOutput, nil
 }
 
-func getRecord(ctx context.CoreContext, recordID string, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
+func getRecord(ctx context.CLIContext, recordID string, cdc *wire.Codec, includes ...string) (*asset.RecordOutput, error) {
 	recordKey := asset.GetAssetKey(recordID)
 	res, err := ctx.QueryStore(recordKey, storeName)
 	if err != nil {
@@ -250,29 +250,29 @@ func formatRecordProperties(record *asset.RecordOutput, props asset.Properties) 
 	}
 }
 
-func getRecordsByAccount(ctx context.CoreContext, addr sdk.AccAddress, cdc *wire.Codec) ([]*asset.RecordOutput, error) {
+func getRecordsByAccount(ctx context.CLIContext, addr sdk.AccAddress, cdc *wire.Codec) (asset.RecordsOutput, error) {
 	recordsPrefixKey := asset.GetAccountAssetsKey(addr)
-	kvs, err := ctx.QuerySubspace(cdc, recordsPrefixKey, storeName)
+	kvs, err := ctx.QuerySubspace(recordsPrefixKey, storeName)
 	if err != nil {
 		return nil, err
 	}
 	return getRecordsByKvs(ctx, kvs, cdc)
 }
 
-func getRecordsByKvs(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) ([]*asset.RecordOutput, error) {
-	records := make([]*asset.RecordOutput, len(kvs))
+func getRecordsByKvs(ctx context.CLIContext, kvs []sdk.KVPair, cdc *wire.Codec) (asset.RecordsOutput, error) {
+	records := make(asset.RecordsOutput, len(kvs))
 	for i, kv := range kvs {
 		recordID := string(kv.Key[1+sdk.AddrLen:])
 		record, err := getRecord(ctx, recordID, cdc)
 		if err != nil {
 			return nil, err
 		}
-		records[i] = record
+		records[i] = *record
 	}
 	return records, nil
 }
 
-func getProposals(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (asset.Proposals, error) {
+func getProposals(ctx context.CLIContext, kvs []sdk.KVPair, cdc *wire.Codec) (asset.Proposals, error) {
 	proposals := make(asset.Proposals, len(kvs))
 	for i, kv := range kvs {
 		proposal, err := asset.UnmarshalProposal(cdc, kv.Value)
@@ -284,7 +284,7 @@ func getProposals(ctx context.CoreContext, kvs []sdk.KVPair, cdc *wire.Codec) (a
 	return proposals, nil
 }
 
-func getProposal(ctx context.CoreContext, addr sdk.AccAddress, recordID string, cdc *wire.Codec) (proposal asset.Proposal, err error) {
+func getProposal(ctx context.CLIContext, addr sdk.AccAddress, recordID string, cdc *wire.Codec) (proposal asset.Proposal, err error) {
 	res, err := ctx.QueryStore(asset.GetProposalKey(recordID, addr), storeName)
 	if err != nil {
 		return

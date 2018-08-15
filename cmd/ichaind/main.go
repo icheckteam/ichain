@@ -42,5 +42,5 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 
 func exportAppState(logger log.Logger, db dbm.DB, traceStore io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 	bapp := app.NewIchainApp(logger, db, traceStore)
-	return bapp.ExportAppStateJSON()
+	return bapp.ExportAppStateAndValidators()
 }

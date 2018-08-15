@@ -24,7 +24,7 @@ type AssetOutput struct {
 // REST
 
 // get key REST handler
-func queryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
+func queryAssetRequestHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		record, err := getRecord(ctx, vars["id"], cdc)
@@ -46,7 +46,7 @@ func queryAssetRequestHandlerFn(ctx context.CoreContext, storeName string, cdc *
 	}
 }
 
-func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryAccountAssetsHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		items, err := queryAccountAssets(ctx, storeName, cdc, vars["address"])
@@ -55,6 +55,7 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
+		items = items.Sort()
 		output, err := cdc.MarshalJSON(items)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -67,7 +68,7 @@ func queryAccountAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc 
 }
 
 // TxsHandlerFn ...
-func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func assetTxsHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
@@ -86,7 +87,7 @@ func assetTxsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Code
 	}
 }
 
-func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func queryHistoryUpdatePropertiesHandlerFn(ctx context.CLIContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
@@ -99,7 +100,7 @@ func queryHistoryUpdatePropertiesHandlerFn(ctx context.CoreContext, cdc *wire.Co
 	}
 }
 
-func queryHistoryOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func queryHistoryOwnersHandlerFn(ctx context.CLIContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
@@ -111,7 +112,7 @@ func queryHistoryOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(
 		WriteJSON2(w, cdc, filterTxChangeOwner(info))
 	}
 }
-func queryHistoryTransferMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
+func queryHistoryTransferMaterialsHandlerFn(ctx context.CLIContext, cdc *wire.Codec) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		info, err := queryAssetTxs(ctx, vars["id"], cdc, 0)
@@ -124,7 +125,7 @@ func queryHistoryTransferMaterialsHandlerFn(ctx context.CoreContext, cdc *wire.C
 	}
 }
 
-func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryAssetChildrensHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		items, err := queryAssetChildrens(ctx, storeName, cdc, vars["id"])
@@ -133,11 +134,12 @@ func queryAssetChildrensHandlerFn(ctx context.CoreContext, storeName string, cdc
 			w.Write([]byte(fmt.Sprintf("Couldn't get assets. Error: %s", err.Error())))
 			return
 		}
+		items = items.Sort()
 		WriteJSON(w, cdc, items)
 	}
 }
 
-func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Codec, account string) ([]*asset.RecordOutput, error) {
+func queryAccountAssets(ctx context.CLIContext, storeName string, cdc *wire.Codec, account string) (asset.RecordsOutput, error) {
 	address, err := sdk.AccAddressFromBech32(account)
 	if err != nil {
 		return nil, err
@@ -145,8 +147,8 @@ func queryAccountAssets(ctx context.CoreContext, storeName string, cdc *wire.Cod
 	return getRecordsByAccount(ctx, address, cdc)
 }
 
-func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Codec, assetID string) ([]*asset.RecordOutput, error) {
-	kvs, err := ctx.QuerySubspace(cdc, asset.GetAssetChildrensKey(assetID), storeName)
+func queryAssetChildrens(ctx context.CLIContext, storeName string, cdc *wire.Codec, assetID string) (asset.RecordsOutput, error) {
+	kvs, err := ctx.QuerySubspace(asset.GetAssetChildrensKey(assetID), storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +156,7 @@ func queryAssetChildrens(ctx context.CoreContext, storeName string, cdc *wire.Co
 	return getRecordsByKvs(ctx, kvs, cdc)
 }
 
-func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryReporterAssetsHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -165,7 +167,7 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 			return
 		}
 
-		kvs, err := ctx.QuerySubspace(cdc, asset.GetReporterAssetsKey(address), storeName)
+		kvs, err := ctx.QuerySubspace(asset.GetReporterAssetsKey(address), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
@@ -173,6 +175,7 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 		}
 
 		records, err := getRecordsByKvs(ctx, kvs, cdc)
+		records = records.Sort()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -182,10 +185,10 @@ func queryReporterAssetsHandlerFn(ctx context.CoreContext, storeName string, cdc
 	}
 }
 
-func queryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryProposalsHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		kvs, err := ctx.QuerySubspace(cdc, asset.GetProposalsKey(vars["asset_id"]), storeName)
+		kvs, err := ctx.QuerySubspace(asset.GetProposalsKey(vars["asset_id"]), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))
@@ -203,7 +206,7 @@ func queryProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wir
 	}
 }
 
-func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
+func queryAccountProposalsHandlerFn(ctx context.CLIContext, storeName string, cdc *wire.Codec, kb keys.Keybase) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -214,7 +217,7 @@ func queryAccountProposalsHandlerFn(ctx context.CoreContext, storeName string, c
 			return
 		}
 
-		kvs, err := ctx.QuerySubspace(cdc, asset.GetProposalsAccountKey(address), storeName)
+		kvs, err := ctx.QuerySubspace(asset.GetProposalsAccountKey(address), storeName)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("Couldn't get proposals. Error: %s", err.Error())))

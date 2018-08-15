@@ -2,7 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/bartekn/go-bip39"
   packages = ["."]
   revision = "a05967ea095d81c8fe4833776774cfaff8e5036c"
@@ -43,6 +42,9 @@
     "client",
     "client/context",
     "client/keys",
+    "client/rpc",
+    "client/tx",
+    "client/utils",
     "crypto",
     "crypto/keys",
     "crypto/keys/bcrypt",
@@ -57,6 +59,7 @@
     "wire",
     "x/auth",
     "x/auth/client/cli",
+    "x/auth/client/context",
     "x/auth/client/rest",
     "x/bank",
     "x/bank/client",
@@ -65,10 +68,12 @@
     "x/gov",
     "x/gov/client/cli",
     "x/gov/client/rest",
+    "x/gov/tags",
     "x/ibc",
     "x/ibc/client/cli",
     "x/ibc/client/rest",
     "x/mock",
+    "x/params",
     "x/slashing",
     "x/slashing/client/cli",
     "x/slashing/client/rest",
@@ -79,8 +84,8 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "02d52e43261191f4a0ded4501cc3585640c6272b"
-  version = "v0.23.1"
+  revision = "0b2bf8f3a0e02844fb959099a27969186ab6fead"
+  version = "v0.24.0-rc0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -291,12 +296,6 @@
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
 
 [[projects]]
-  name = "github.com/rs/cors"
-  packages = ["."]
-  revision = "ca016a06a5753f8ba03029c0aa5e54afb1bf713f"
-  version = "v1.4.0"
-
-[[projects]]
   name = "github.com/spf13/afero"
   packages = [
     ".",
@@ -462,8 +461,8 @@
     "types",
     "version"
   ]
-  revision = "d542d2c3945116697f60451e6a407082c41c3cc9"
-  version = "v0.22.8"
+  revision = "013b9cef642f875634c614019ab13b17570778ad"
+  version = "v0.23.0"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -477,14 +476,17 @@
 [[projects]]
   name = "github.com/zondax/ledger-goclient"
   packages = ["."]
-  revision = "39ba4728c137c75718a21f9b4b3280fa31b9139b"
+  revision = "a05312e1c998ad831b70eea41d009654f7f95985"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "blowfish",
+    "chacha20poly1305",
     "curve25519",
+    "hkdf",
+    "internal/chacha20",
     "internal/subtle",
     "nacl/box",
     "nacl/secretbox",
@@ -514,7 +516,10 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "cpu",
+    "unix"
+  ]
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
 
 [[projects]]
@@ -585,6 +590,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e1861b42b081b941b58e4743db339e574c0eeb10469d000a915a468beca48578"
+  inputs-digest = "f467c013c90492bea56b3ab096807d452e8351198eb57201654fb975b4d8b1d8"
   solver-name = "gps-cdcl"
   solver-version = 1

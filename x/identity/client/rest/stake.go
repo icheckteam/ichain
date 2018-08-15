@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/stake/types"
 )
 
-func getValidators(ctx context.CoreContext, cdc *wire.Codec) ([]stake.Validator, error) {
-	kvs, err := ctx.QuerySubspace(cdc, stake.ValidatorsKey, "stake")
+func getValidators(ctx context.CLIContext, cdc *wire.Codec) ([]stake.Validator, error) {
+	kvs, err := ctx.QuerySubspace(stake.ValidatorsKey, "stake")
 	if err != nil {
 		return nil, err
 	}

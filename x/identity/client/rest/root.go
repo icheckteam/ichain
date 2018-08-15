@@ -17,7 +17,7 @@ const (
 )
 
 // RegisterRoutes REST routes
-func RegisterRoutes(ctx context.CoreContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
+func RegisterRoutes(ctx context.CLIContext, r *mux.Router, cdc *wire.Codec, kb keys.Keybase, storeName string) {
 	r.HandleFunc(fmt.Sprintf("/idents/{%s}/trusts", RestAccount), trustsHandlerFn(ctx, cdc)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("/idents/{%s}/trusts", RestAccount), SetTrustHandlerFn(ctx, cdc, kb)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/idents/{%s}/certs", RestAccount), queryCertsHandlerFn(ctx, cdc)).Methods("GET")
