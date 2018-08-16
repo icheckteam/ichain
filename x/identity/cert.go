@@ -48,7 +48,7 @@ func (k Keeper) AddCerts(ctx sdk.Context, msg MsgSetCerts) (sdk.Tags, sdk.Error)
 					Owner:     value.Owner,
 					Certifier: msg.Issuer,
 					Data:      value.Data,
-					CreatedAt: ctx.BlockHeader().Time,
+					CreatedAt: ctx.BlockHeader().Time.Unix(),
 				}
 			} else {
 				// update cert

@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	authctx "github.com/cosmos/cosmos-sdk/x/auth/client/context"
 	"github.com/icheckteam/ichain/x/identity"
 )
 
@@ -57,17 +58,18 @@ type msgDelOwnerBody struct {
 	Owner   sdk.AccAddress `json:"owner"`
 }
 
-func signAndBuild(ctx context.CoreContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
-	ctx = ctx.WithGas(m.Gas)
-	ctx = ctx.WithAccountNumber(m.AccountNumber)
-	ctx = ctx.WithSequence(m.Sequence)
-	ctx = ctx.WithChainID(m.ChainID)
+func signAndBuild(ctx context.CLIContext, cdc *wire.Codec, w http.ResponseWriter, m baseBody, msg sdk.Msg) {
 
-	if len(m.Memo) > 0 {
-		ctx = ctx.WithMemo(m.Memo)
+	txCtx := authctx.TxContext{
+		Codec:         cdc,
+		Gas:           m.Gas,
+		ChainID:       m.ChainID,
+		AccountNumber: m.AccountNumber,
+		Sequence:      m.Sequence,
+		Memo:          m.Memo,
 	}
 
-	txBytes, err := ctx.SignAndBuild(m.Name, m.Password, []sdk.Msg{msg}, cdc)
+	txBytes, err := txCtx.BuildAndSign(m.Name, m.Password, []sdk.Msg{msg})
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(err.Error()))

@@ -151,7 +151,7 @@ func (k Keeper) AnswerProposal(ctx sdk.Context, msg MsgAnswerProposal) (sdk.Tags
 		case RoleReporter:
 			k.SetReporter(ctx, asset.ID, Reporter{
 				Properties: proposal.Properties,
-				Created:    ctx.BlockHeader().Time,
+				Created:    ctx.BlockHeader().Time.Unix(),
 				Addr:       proposal.Recipient,
 			})
 			k.setAssetByReporterIndex(ctx, proposal.Recipient, asset.ID)

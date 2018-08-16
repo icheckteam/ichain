@@ -11,7 +11,7 @@ import (
 	"github.com/icheckteam/ichain/x/asset"
 )
 
-func queryAssetTxs(ctx context.CoreContext, assetID string, cdc *wire.Codec, height int64) ([]tx.TxInfo, error) {
+func queryAssetTxs(ctx context.CLIContext, assetID string, cdc *wire.Codec, height int64) ([]tx.TxInfo, error) {
 	record, err := getRecord(ctx, assetID, cdc)
 	if err != nil {
 		return nil, err

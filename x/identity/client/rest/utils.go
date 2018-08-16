@@ -31,9 +31,9 @@ func withErr(fn func(http.ResponseWriter, *http.Request) error) func(http.Respon
 	}
 }
 
-func getOwners(ctx context.CoreContext, ident sdk.AccAddress, cdc *wire.Codec) ([]sdk.AccAddress, error) {
+func getOwners(ctx context.CLIContext, ident sdk.AccAddress, cdc *wire.Codec) ([]sdk.AccAddress, error) {
 	prefixKey := identity.KeyOwners(ident)
-	kvs, err := ctx.QuerySubspace(cdc, prefixKey, storeName)
+	kvs, err := ctx.QuerySubspace(prefixKey, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +46,9 @@ func getOwners(ctx context.CoreContext, ident sdk.AccAddress, cdc *wire.Codec) (
 	return owners[:index], nil
 }
 
-func getCerts(ctx context.CoreContext, ident sdk.AccAddress, cdc *wire.Codec) (identity.Certs, error) {
+func getCerts(ctx context.CLIContext, ident sdk.AccAddress, cdc *wire.Codec) (identity.Certs, error) {
 	prefix := identity.KeyCerts(ident)
-	kvs, err := ctx.QuerySubspace(cdc, prefix, storeName)
+	kvs, err := ctx.QuerySubspace(prefix, storeName)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func getCerts(ctx context.CoreContext, ident sdk.AccAddress, cdc *wire.Codec) (i
 	return certs, nil
 }
 
-func getTrusts(ctx context.CoreContext, ident sdk.AccAddress, cdc *wire.Codec) ([]sdk.AccAddress, error) {
+func getTrusts(ctx context.CLIContext, ident sdk.AccAddress, cdc *wire.Codec) ([]sdk.AccAddress, error) {
 	prefix := identity.KeyTrusts(ident)
-	kvs, err := ctx.QuerySubspace(cdc, prefix, storeName)
+	kvs, err := ctx.QuerySubspace(prefix, storeName)
 	if err != nil {
 		return nil, err
 	}

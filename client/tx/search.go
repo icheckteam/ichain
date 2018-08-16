@@ -31,7 +31,7 @@ func SearchTxCmd(cdc *wire.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tags := viper.GetStringSlice(flagTags)
 
-			txs, err := searchTxs(context.NewCoreContextFromViper(), cdc, tags)
+			txs, err := searchTxs(context.NewCLIContext(), cdc, tags)
 			if err != nil {
 				return err
 			}
@@ -53,7 +53,7 @@ func SearchTxCmd(cdc *wire.Codec) *cobra.Command {
 	return cmd
 }
 
-func searchTxs(ctx context.CoreContext, cdc *wire.Codec, tags []string) ([]TxInfo, error) {
+func searchTxs(ctx context.CLIContext, cdc *wire.Codec, tags []string) ([]TxInfo, error) {
 	if len(tags) == 0 {
 		return nil, errors.New("Must declare at least one tag to search")
 	}
@@ -107,7 +107,7 @@ func FormatTxResults(cdc *wire.Codec, res []*ctypes.ResultTx) ([]TxInfo, error) 
 // REST
 
 // SearchTxRequestHandlerFn Search Tx REST Handler
-func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func SearchTxRequestHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tag := r.FormValue("tag")
 		if tag == "" {
@@ -160,7 +160,7 @@ func SearchTxRequestHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.Han
 }
 
 // GetBlock ...
-func GetBlock(ctx context.CoreContext, height *int64) (*ctypes.ResultBlock, error) {
+func GetBlock(ctx context.CLIContext, height *int64) (*ctypes.ResultBlock, error) {
 	// get the node
 	node, err := ctx.GetNode()
 	if err != nil {

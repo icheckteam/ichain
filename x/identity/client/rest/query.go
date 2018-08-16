@@ -13,7 +13,7 @@ import (
 
 const storeName = "identity"
 
-func getOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func getOwnersHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		ident, err := sdk.AccAddressFromBech32(vars[RestAccount])
@@ -32,7 +32,7 @@ func getOwnersHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFu
 	}
 }
 
-func queryCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func queryCertsHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -54,7 +54,7 @@ func queryCertsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerF
 	}
 }
 
-func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc {
+func trustsHandlerFn(ctx context.CLIContext, cdc *wire.Codec) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
@@ -76,7 +76,7 @@ func trustsHandlerFn(ctx context.CoreContext, cdc *wire.Codec) http.HandlerFunc 
 	}
 }
 
-func hasTrust(ctx context.CoreContext, cdc *wire.Codec, trustor, trusting sdk.AccAddress) bool {
+func hasTrust(ctx context.CLIContext, cdc *wire.Codec, trustor, trusting sdk.AccAddress) bool {
 	res, err := ctx.QueryStore(identity.KeyTrust(trustor, trusting), "identity")
 	if err != nil {
 		panic(err)

@@ -1,7 +1,7 @@
 # Simple usage with a mounted data directory:
-# > docker build -t ichain .
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.ichaind:/root/.ichaind -v ~/.ichaincli:/root/.ichaincli ichain ichaind init
-# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.ichaind:/root/.ichaind -v ~/.ichaincli:/root/.ichaincli ichain ichaind start
+# > docker build -t gaia .
+# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli gaia gaiad init
+# > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli gaia gaiad start
 FROM golang:alpine AS build-env
 
 # Set up dependencies
@@ -31,5 +31,5 @@ WORKDIR /root
 COPY --from=build-env /go/bin/ichaind /usr/bin/ichaind
 COPY --from=build-env /go/bin/ichaincli /usr/bin/ichaincli
 
-# Run gaiad by default, omit entrypoint to ease using container with ichaincli
+# Run gaiad by default, omit entrypoint to ease using container with gaiacli
 CMD ["ichaind"]
