@@ -1,9 +1,14 @@
 package epcis
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // Event ....
 type Event struct {
+	Time          time.Time   `json:"time"`
 	Action        ActionType  `json:"action"` // ADD/DELETE/OBSERVE
 	EpcList       []Epc       `json:"epc_list"`
 	ParentID      Epc         `json:"parent_id"`
@@ -32,6 +37,7 @@ type BizLocation struct {
 
 // Location ...
 type Location struct {
+	ID         string             `json:"id"`
 	Children   []ChildrenLocation `json:"chilren"`
 	Attributes []Attribute        `json:"attributes"`
 }
@@ -51,15 +57,15 @@ type Record struct {
 
 // Edge ...
 type Edge struct {
-	Key    string `json:"key"`
-	Source string `json:"source"`
-	Target string `json:"target"`
+	Key    []byte `json:"key"`
+	Source []byte `json:"source"`
+	Target []byte `json:"target"`
 	Type   string `json:"type"`
 }
 
 // Vertice ...
 type Vertice struct {
-	Key  string `json:"key"`
+	Key  []byte `json:"key"`
 	Data []byte `json:"data"`
 	Type string `json:"type"`
 }
@@ -85,5 +91,6 @@ type Product struct {
 // Batch ...
 type Batch struct {
 	ID         string      `json:"id"`
+	ProductID  string      `json:"product_id"`
 	Attributes []Attribute `json:"attributes"`
 }
