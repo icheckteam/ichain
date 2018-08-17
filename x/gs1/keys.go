@@ -1,6 +1,7 @@
 package gs1
 
 import (
+	"crypto/md5"
 	"encoding/binary"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,139 +23,76 @@ var (
 	AtKey            = []byte{0x10}
 	ReadPointKey     = []byte{0x11}
 	RecordKey        = []byte{0x12}
+	RecordIDKey      = []byte{0x13}
 )
 
 // GetRecordKey ...
-func GetRecordKey(recordID string) []byte {
-	return append(
-		RecordKey,
-		[]byte(recordID)...,
-	)
+func GetRecordKey(recordID int64) []byte {
+	id := make([]byte, 8)
+	binary.LittleEndian.PutUint64(id, uint64(recordID))
+	return append(RecordKey, id...)
 }
 
 // GetLocationKey ...
 func GetLocationKey(sender sdk.AccAddress, location Location) []byte {
-	return append(
-		append(LocationKey, sender.Bytes()...),
-		[]byte(location.ID)...,
-	)
+	return GetKey(LocationKey, sender.Bytes(), []byte(location.ID))
 }
 
 // GetChildLocationKey ...
 func GetChildLocationKey(sender sdk.AccAddress, location Location, child ChildrenLocation) []byte {
-	return append(
-		append(ChildLocationKey, sender.Bytes()...),
-		append(
-			[]byte(location.ID),
-			[]byte(child.ID)...,
-		)...,
-	)
+	return GetKey(ChildLocationKey, sender.Bytes(), []byte(location.ID), []byte(child.ID))
 }
 
 // GetActorKey ...
 func GetActorKey(sender sdk.AccAddress, actor Actor) []byte {
-	return append(
-		append(ActorKey, sender.Bytes()...),
-		actor.Addr.Bytes()...,
-	)
+	return GetKey(ActorKey, sender.Bytes(), actor.Addr.Bytes())
 }
 
 // GetProductKey ...
 func GetProductKey(sender sdk.AccAddress, product Product) []byte {
-	return append(
-		append(ProductKey, sender.Bytes()...),
-		[]byte(product.ID)...,
-	)
+	return GetKey(ProductKey, sender.Bytes(), []byte(product.ID))
 }
 
 // GetBatchKey ...
 func GetBatchKey(sender sdk.AccAddress, batch Batch) []byte {
-	return append(
-		append(BatchKey, sender.Bytes()...),
-		append(
-			[]byte(batch.ID),
-			[]byte(batch.ProductID)...,
-		)...,
-	)
+	return GetKey(BatchKey, sender.Bytes(), []byte(batch.ID), []byte(batch.ProductID))
 }
 
 // GetEventKey ...
 func GetEventKey(sender sdk.AccAddress, event Event) []byte {
 	timeB := make([]byte, 8)
 	binary.LittleEndian.PutUint64(timeB, uint64(event.Time.Unix()))
-	return append(
-		append(BatchKey, sender.Bytes()...),
-		timeB...,
-	)
+	return GetKey(EventKey, sender.Bytes(), timeB)
 }
 
 // GetEventBatchKey ...
 func GetEventBatchKey(sender sdk.AccAddress, event Event, batchID string) []byte {
-	return append(
-		GetEventKey(sender, event),
-		append(
-			EventBatch,
-			append(
-				sender.Bytes(),
-				[]byte(batchID)...,
-			)...,
-		)...,
-	)
+	return GetKey(EventBatch, GetEventKey(sender, event), []byte(batchID))
 }
 
 // GetBatchProductKey ...
 func GetBatchProductKey(sender sdk.AccAddress, batch Vertice, productID string) []byte {
-	return append(
-		BatchProduct,
-		append(
-			batch.Key,
-			[]byte(productID)...,
-		)...,
-	)
+	return GetKey(BatchProduct, batch.Key, []byte(productID))
 }
 
 // GetIsKey ...
 func GetIsKey(sender sdk.AccAddress, vertice Vertice, prefix []byte) []byte {
-	return append(
-		IsKey,
-		append(
-			vertice.Key,
-			prefix...,
-		)...,
-	)
+	return GetKey(IsKey, vertice.Key, prefix)
 }
 
 // GetOwnedByKey ...
 func GetOwnedByKey(sender sdk.AccAddress, actor sdk.AccAddress, locationKey []byte) []byte {
-	return append(
-		OwnedByKey,
-		append(
-			actor.Bytes(),
-			locationKey...,
-		)...,
-	)
+	return GetKey(OwnedByKey, sender.Bytes(), actor.Bytes(), locationKey)
 }
 
 // GetAtKey ...
 func GetAtKey(sender sdk.AccAddress, actor sdk.AccAddress, bizLocation BizLocation) []byte {
-	return append(
-		AtKey,
-		append(
-			actor.Bytes(),
-			[]byte(bizLocation.ID)...,
-		)...,
-	)
+	return GetKey(AtKey, sender.Bytes(), actor.Bytes(), []byte(bizLocation.ID))
 }
 
 // GetReadPointKey ...
 func GetReadPointKey(sender sdk.AccAddress, actor sdk.AccAddress, readPoint ReadPoint) []byte {
-	return append(
-		ReadPointKey,
-		append(
-			actor.Bytes(),
-			[]byte(readPoint.ID)...,
-		)...,
-	)
+	return GetKey(ReadPointKey, sender.Bytes(), actor.Bytes(), []byte(readPoint.ID))
 }
 
 // GetKey ...
@@ -163,5 +101,6 @@ func GetKey(args ...[]byte) []byte {
 	for _, arg := range args {
 		key = append(key, arg...)
 	}
-	return key
+	sum := md5.Sum(key)
+	return Key(sum[:])
 }
