@@ -1,4 +1,4 @@
-package epcis
+package gs1
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,17 +48,18 @@ func (k Keeper) getLocationGraph(sender sdk.AccAddress, locations []Location) ([
 		})
 
 		for _, childLocation := range location.Children {
-			childLocationKey := GetChildLocationKey(sender, location, childLocation)
-			attributes := []Attribute{
+			childLocation.Attributes = []Attribute{
 				{Name: "parent_id", Value: location.ID},
 			}
+			childLocationKey := GetKey(ChildLocationKey, sender.Bytes(), []byte(childLocation.ID), childLocation.Attributes.Bytes())
 			locationVertices = append(locationVertices, Vertice{
 				Key:        childLocationKey,
 				Type:       VertexTypeLocation,
-				Attributes: attributes,
+				Attributes: childLocation.Attributes,
 			})
 
 			locationEdges = append(locationEdges, Edge{
+				Key:    GetKey(ChildLocationKey, sender.Bytes(), []byte(location.ID), []byte(childLocation.ID)),
 				Source: childLocationKey,
 				Target: locationKey,
 				Type:   EdgeTypeChildLocation,

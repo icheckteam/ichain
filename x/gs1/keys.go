@@ -1,4 +1,4 @@
-package epcis
+package gs1
 
 import (
 	"encoding/binary"
@@ -155,4 +155,13 @@ func GetReadPointKey(sender sdk.AccAddress, actor sdk.AccAddress, readPoint Read
 			[]byte(readPoint.ID)...,
 		)...,
 	)
+}
+
+// GetKey ...
+func GetKey(args ...[]byte) []byte {
+	var key []byte
+	for _, arg := range args {
+		key = append(key, arg...)
+	}
+	return key
 }

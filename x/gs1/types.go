@@ -1,4 +1,4 @@
-package epcis
+package gs1
 
 import (
 	"time"
@@ -50,12 +50,13 @@ type Location struct {
 	ID          string             `json:"id"`
 	Children    []ChildrenLocation `json:"chilren"`
 	Participant sdk.AccAddress     `json:"participant"`
-	Attributes  []Attribute        `json:"attributes"`
+	Attributes  Attributes         `json:"attributes"`
 }
 
 // ChildrenLocation ...
 type ChildrenLocation struct {
-	ID string `json:"id"`
+	ID         string     `json:"id"`
+	Attributes Attributes `json:"attributes"`
 }
 
 // Record ...
@@ -104,4 +105,16 @@ type Batch struct {
 	ID         string      `json:"id"`
 	ProductID  string      `json:"product_id"`
 	Attributes []Attribute `json:"attributes"`
+}
+
+// Attributes slice attributge
+type Attributes []Attribute
+
+// Bytes ...
+func (attrs Attributes) Bytes() []byte {
+	b, err := msgCdc.MarshalJSON(attrs)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
 }
