@@ -10,3 +10,8 @@ type Keeper struct {
 	storeKey sdk.StoreKey
 	cdc      *wire.Codec
 }
+
+// CreateRecord create new record
+func (k Keeper) CreateRecord(ctx sdk.Context, msg MsgSend) (sdk.Tags, sdk.Error) {
+	return nil, nil
+}

@@ -4,13 +4,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// SendMsg send data message
-type SendMsg struct {
-	Sender    sdk.AccAddress   `json:"sender"`
-	Receiver  sdk.AccAddress   `json:"receiver"`
-	Actors    []sdk.AccAddress `json:"actors"`
-	Products  []string         `json:"products"`
-	Events    []Event          `json:"events"`
-	Batches   []string         `json:"batches"`
-	Locations []string         `json:"locations"`
+// MsgSend send data message
+type MsgSend struct {
+	Sender    sdk.AccAddress `json:"sender"`
+	Receiver  sdk.AccAddress `json:"receiver"`
+	Actors    []Actor        `json:"actors"`
+	Products  []Product      `json:"products"`
+	Events    []Event        `json:"events"`
+	Batches   []Batch        `json:"batches"`
+	Locations []Location     `json:"locations"`
 }
