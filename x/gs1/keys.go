@@ -21,7 +21,16 @@ var (
 	OwnedByKey       = []byte{0x09}
 	AtKey            = []byte{0x10}
 	ReadPointKey     = []byte{0x11}
+	RecordKey        = []byte{0x12}
 )
+
+// GetRecordKey ...
+func GetRecordKey(recordID string) []byte {
+	return append(
+		RecordKey,
+		[]byte(recordID)...,
+	)
+}
 
 // GetLocationKey ...
 func GetLocationKey(sender sdk.AccAddress, location Location) []byte {
@@ -32,10 +41,13 @@ func GetLocationKey(sender sdk.AccAddress, location Location) []byte {
 }
 
 // GetChildLocationKey ...
-func GetChildLocationKey(sender sdk.AccAddress, location Location) []byte {
+func GetChildLocationKey(sender sdk.AccAddress, location Location, child ChildrenLocation) []byte {
 	return append(
 		append(ChildLocationKey, sender.Bytes()...),
-		[]byte(location.ID)...,
+		append(
+			[]byte(location.ID),
+			[]byte(child.ID)...,
+		)...,
 	)
 }
 

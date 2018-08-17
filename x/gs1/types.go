@@ -6,6 +6,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+//nolint
+const (
+	// edge
+	EdgeTypeOwnerdBy = "OWNED_BY"
+
+	// VertexType
+	VertexTypeLocation    = "LOCATION"
+	EdgeTypeChildLocation = "CHILD_LOCATION"
+)
+
 // Event ....
 type Event struct {
 	Time          time.Time   `json:"time"`
@@ -37,9 +47,10 @@ type BizLocation struct {
 
 // Location ...
 type Location struct {
-	ID         string             `json:"id"`
-	Children   []ChildrenLocation `json:"chilren"`
-	Attributes []Attribute        `json:"attributes"`
+	ID          string             `json:"id"`
+	Children    []ChildrenLocation `json:"chilren"`
+	Participant sdk.AccAddress     `json:"participant"`
+	Attributes  []Attribute        `json:"attributes"`
 }
 
 // ChildrenLocation ...
@@ -65,9 +76,9 @@ type Edge struct {
 
 // Vertice ...
 type Vertice struct {
-	Key  []byte `json:"key"`
-	Data []byte `json:"data"`
-	Type string `json:"type"`
+	Key        []byte      `json:"key"`
+	Attributes []Attribute `json:"attributes"`
+	Type       string      `json:"type"`
 }
 
 // Attribute ...
