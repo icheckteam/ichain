@@ -2,7 +2,6 @@ package gs1
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -156,5 +155,10 @@ func (k Key) String() string {
 
 // MarshalJSON to JSON using Bech32
 func (k Key) MarshalJSON() ([]byte, error) {
-	return json.Marshal(fmt.Sprintf("%x", k))
+	return json.Marshal(string(k[:]))
+}
+
+// Bytes ...
+func (k Key) Bytes() []byte {
+	return k
 }

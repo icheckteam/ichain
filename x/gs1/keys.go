@@ -96,11 +96,11 @@ func GetReadPointKey(sender sdk.AccAddress, actor sdk.AccAddress, readPoint Read
 }
 
 // GetKey ...
-func GetKey(args ...[]byte) []byte {
-	var key []byte
-	for _, arg := range args {
-		key = append(key, arg...)
+func GetKey(params ...[]byte) []byte {
+	newKey := []byte{}
+	for _, param := range params {
+		newKey = append(newKey, param...)
 	}
-	sum := md5.Sum(key)
+	sum := md5.Sum(newKey)
 	return Key(sum[:])
 }
