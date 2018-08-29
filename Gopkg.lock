@@ -84,8 +84,8 @@
     "x/stake/tags",
     "x/stake/types"
   ]
-  revision = "0b2bf8f3a0e02844fb959099a27969186ab6fead"
-  version = "v0.24.0-rc0"
+  revision = "1c38c70468ec721e3a555ba2f3bf5f9da31f0cc9"
+  version = "v0.24.2"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -375,8 +375,8 @@
 [[projects]]
   name = "github.com/tendermint/go-amino"
   packages = ["."]
-  revision = "2106ca61d91029c931fd54968c2bb02dc96b1412"
-  version = "0.10.1"
+  revision = "a8328986c1608950fa5d3d1c0472cccc4f8fc02c"
+  version = "v0.12.0-rc0"
 
 [[projects]]
   name = "github.com/tendermint/go-crypto"
@@ -461,8 +461,8 @@
     "types",
     "version"
   ]
-  revision = "013b9cef642f875634c614019ab13b17570778ad"
-  version = "v0.23.0"
+  revision = "81df19e68ab1519399fccf0cab81cb75bf9d782e"
+  version = "v0.23.1-rc0"
 
 [[projects]]
   name = "github.com/tendermint/tmlibs"
@@ -476,7 +476,7 @@
 [[projects]]
   name = "github.com/zondax/ledger-goclient"
   packages = ["."]
-  revision = "a05312e1c998ad831b70eea41d009654f7f95985"
+  revision = "4296ee5701e945f9b3a7dbe51f402e0b9be57259"
 
 [[projects]]
   branch = "master"
@@ -590,6 +590,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f467c013c90492bea56b3ab096807d452e8351198eb57201654fb975b4d8b1d8"
+  inputs-digest = "db684db24435c51f498fd86eeab4014964d259ba882eb07e87cf39cfb5ef4fea"
   solver-name = "gps-cdcl"
   solver-version = 1
