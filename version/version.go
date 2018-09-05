@@ -7,10 +7,10 @@ const Maj = "0"
 const Min = "22"
 
 // Fix ...
-const Fix = "4"
+const Fix = "5"
 
 // Version ...
-const Version = "0.22.4-dev"
+const Version = "0.22.5-dev"
 
 // GitCommit set by build flags
 var GitCommit = ""
