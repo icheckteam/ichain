@@ -26,7 +26,8 @@
 
 [[override]]
   name = "github.com/cosmos/cosmos-sdk"
-  version ="=0.24.2"
+  version = "=0.24.2"
+
 [[constraint]]
   name = "github.com/bgentry/speakeasy"
   version = "~0.1.0"
@@ -62,6 +63,7 @@
 [[override]]
   name = "github.com/tendermint/iavl"
   version = "=v0.9.2"
+
 
 [[override]]
   name = "github.com/tendermint/tendermint"
